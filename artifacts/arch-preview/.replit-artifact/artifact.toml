@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Arch Linux Book - Preview"
+version = "1.0.0"
+id = "artifacts/arch-preview"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21961
+
+[services.development]
+run = "pnpm --filter @workspace/arch-preview run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/arch-preview", "run", "build" ]
+publicDir = "artifacts/arch-preview/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21961"
+BASE_PATH = "/"
