@@ -13,222 +13,291 @@ export default function Visualizacao() {
       <p>
         Saber ler e filtrar conteúdo de arquivos é fundamental no Linux — especialmente para
         analisar logs, verificar configurações e processar dados. Esses comandos são suas
-        ferramentas de leitura e inspeção.
+        ferramentas de leitura e inspeção do dia a dia.
       </p>
 
-      <h2>cat — Concatenar e Exibir</h2>
+      <h2>cat — Mostrar Conteúdo de Arquivos</h2>
       <CodeBlock
-        title="Usando o cat"
-        code={`# Exibir o conteúdo de um arquivo
+        title="cat: concatenar e exibir arquivos"
+        code={`# Exibir o conteúdo de um arquivo na tela
 cat arquivo.txt
+# cat = concatenate (concatenar). Pode mostrar um ou vários arquivos em sequência.
 
-# Exibir múltiplos arquivos em sequência
+# Exibir múltiplos arquivos em sequência (um após o outro)
 cat arquivo1.txt arquivo2.txt
 
-# Exibir com número de linha
+# -n = number (numerar as linhas)
 cat -n arquivo.txt
+# Saída:
+#      1	Primeira linha
+#      2	Segunda linha
+#      3	Terceira linha
 
-# Exibir mostrando caracteres especiais (tabs como ^I, fim de linha como $)
-cat -A arquivo.txt
+# -A = show all (mostrar tudo, incluindo caracteres especiais)
+# Tabs aparecem como ^I, fim de linha como $
+# Útil para detectar problemas de formatação em scripts
+cat -A script.sh
 
-# Criar um arquivo digitando diretamente (Ctrl+D para terminar):
+# Criar um arquivo novo digitando o conteúdo diretamente:
 cat > novo-arquivo.txt
-Conteúdo que você quer escrever
-Ctrl+D
+# Digite o conteúdo, pressione Enter para nova linha.
+# Pressione Ctrl+D quando terminar (EOF = End Of File).
 
 # Concatenar dois arquivos em um terceiro:
 cat parte1.txt parte2.txt > completo.txt
+# > = redirecionar saída para arquivo (cria ou sobrescreve)
 
-# Adicionar ao final de um arquivo (append):
-cat adicao.txt >> arquivo-existente.txt`}
+# Adicionar conteúdo ao FINAL de um arquivo existente:
+cat adicao.txt >> arquivo-existente.txt
+# >> = append (adicionar ao fim, sem apagar o que já existe)`}
       />
 
-      <h2>less e more — Paginação</h2>
+      <h2>less — Navegação em Arquivos Longos</h2>
       <CodeBlock
-        title="Navegando em arquivos longos"
-        code={`# Abrir arquivo com paginação
+        title="less: ler arquivos sem travamento"
+        code={`# Abrir arquivo com paginação (essencial para arquivos longos!)
 less /var/log/syslog
+# Diferente do cat, o less não despeja tudo na tela de uma vez.
+# Você navega pelo arquivo como num leitor.
 
-# Navegação dentro do less:
+# === TECLAS DE NAVEGAÇÃO DENTRO DO LESS ===
 # Espaço ou PgDown  → Avançar uma página
 # b ou PgUp         → Voltar uma página
 # ↑ ↓               → Avançar/voltar uma linha
-# /termo            → Pesquisar "termo" (n para próximo, N para anterior)
-# ?termo            → Pesquisar para trás
-# g                 → Ir para o início do arquivo
-# G                 → Ir para o final do arquivo
+# g                 → Ir para o INÍCIO do arquivo
+# G                 → Ir para o FIM do arquivo
 # q                 → Sair do less
 
-# Ver arquivo em tempo real (como journalctl -f):
+# Pesquisar dentro do less:
+# /termo    → buscar "termo" para frente (n = próxima ocorrência, N = anterior)
+# ?termo    → buscar "termo" para trás
+
+# Monitorar arquivo em tempo real (como logs ao vivo):
 less +F /var/log/syslog
-# Ctrl+C para sair do modo follow, q para sair do less
+# +F = Follow mode (equivalente ao tail -f, mas dentro do less)
+# Ctrl+C para sair do modo follow e voltar a navegar normalmente
+# q para sair do less completamente
 
-# Abrir com pesquisa já ativada
-less +/termo arquivo.txt
-
-# Mostrar número de linhas
+# -N = Number lines (mostrar número de cada linha)
 less -N arquivo.txt`}
       />
 
-      <h2>head e tail — Começo e Fim</h2>
+      <h2>head e tail — Começo e Fim de Arquivos</h2>
       <CodeBlock
-        title="Lendo começo e fim de arquivos"
-        code={`# Ver as primeiras 10 linhas (padrão)
+        title="head e tail: ver partes do arquivo"
+        code={`# head: ver as primeiras linhas de um arquivo
+
+# Ver as primeiras 10 linhas (padrão)
 head /etc/passwd
 
-# Ver as primeiras 20 linhas
-head -n 20 /var/log/syslog
+# -n = number of lines (número de linhas)
+head -n 20 /var/log/syslog   # Ver as primeiras 20 linhas
+head -n 5 arquivo.txt        # Ver as primeiras 5 linhas
 
-# Ver os primeiros 500 bytes
-head -c 500 arquivo.txt
+# -c = bytes count (número de bytes em vez de linhas)
+head -c 500 arquivo.txt      # Ver os primeiros 500 bytes
+
+# ---
+
+# tail: ver as últimas linhas de um arquivo
 
 # Ver as últimas 10 linhas (padrão)
 tail /var/log/auth.log
 
-# Ver as últimas 30 linhas
-tail -n 30 /var/log/syslog
+# -n = number of lines (número de linhas)
+tail -n 30 /var/log/syslog   # Ver as últimas 30 linhas
+tail -n 50 /var/log/nginx/access.log
 
-# MUITO ÚTIL: monitorar log em tempo real
+# -f = follow (seguir/monitorar em tempo real)
+# O comando não termina — fica mostrando novas linhas à medida que aparecem
+# Pressione Ctrl+C para sair
 tail -f /var/log/syslog
 
-# Monitorar múltiplos arquivos simultaneamente
+# Monitorar MÚLTIPLOS arquivos ao mesmo tempo
 tail -f /var/log/syslog /var/log/auth.log
+# O tail indica qual arquivo tem novas entradas com um cabeçalho
 
-# Ver do início e do fim ao mesmo tempo para um arquivo novo:
-head -n 5 arquivo.txt && tail -n 5 arquivo.txt`}
+# Combinar head e tail para ver um arquivo de ambos os lados:
+echo "=== INÍCIO ===" && head -n 5 arquivo.txt
+echo "=== FIM ===" && tail -n 5 arquivo.txt`}
       />
 
-      <h2>grep — Filtrar Linhas</h2>
+      <h2>grep — Filtrar Linhas por Padrão</h2>
       <CodeBlock
-        title="O comando grep — seu melhor amigo para logs"
+        title="grep: seu melhor amigo para analisar logs"
         code={`# Buscar uma palavra em um arquivo
 grep "erro" /var/log/syslog
+# Mostra apenas as linhas que CONTÊM a palavra "erro"
 
-# Sem diferenciar maiúsculas/minúsculas
+# -i = ignore case (ignorar diferença entre maiúsculas e minúsculas)
 grep -i "error" /var/log/syslog
+# Encontra "error", "Error", "ERROR", etc.
 
-# Mostrar apenas o número das linhas que combinam
+# -n = number (mostrar o NÚMERO da linha)
 grep -n "SSH" /etc/ssh/sshd_config
+# Saída: 15:PermitRootLogin no    ← número 15 = linha 15 do arquivo
 
-# Inverter a busca (mostrar linhas que NÃO contêm o padrão)
-grep -v "^#" /etc/ssh/sshd_config  # Excluir comentários e linhas vazias
+# -v = invert (inverter = mostrar linhas que NÃO contêm o padrão)
+grep -v "^#" /etc/ssh/sshd_config
+# ^# = linhas que COMEÇAM com # (comentários)
+# -v inverte: mostra apenas as linhas que NÃO são comentários
 
-# Contar quantas linhas combinam
+# -c = count (contar quantas linhas combinam)
 grep -c "Failed" /var/log/auth.log
+# Saída: 47   ← há 47 linhas com "Failed"
 
-# Mostrar X linhas antes da linha correspondente
-grep -B 2 "error" /var/log/nginx/error.log
+# -l = list files (listar apenas os NOMES dos arquivos que contêm o padrão)
+grep -rl "ubuntu" /etc/
+# -r = recursive (buscar em todos os arquivos do diretório)
+# -l = mostrar apenas o nome do arquivo, não o conteúdo
 
-# Mostrar X linhas depois da linha correspondente
-grep -A 3 "FAILED" /var/log/auth.log
-
-# Mostrar X linhas antes E depois (context)
-grep -C 2 "error" /var/log/syslog
-
-# Buscar recursivamente em todos os arquivos de um diretório
+# -r = recursive (buscar em todos os arquivos de um diretório)
 grep -r "PermitRootLogin" /etc/ssh/
 
-# Mostrar apenas o nome dos arquivos que contêm o padrão
-grep -rl "ubuntu" /etc/
+# -B = before (mostrar N linhas ANTES da linha correspondente)
+grep -B 2 "error" /var/log/nginx/error.log
+# Mostra 2 linhas antes de cada linha com "error"
 
-# Usar expressão regular
+# -A = after (mostrar N linhas DEPOIS da linha correspondente)
+grep -A 3 "FAILED" /var/log/auth.log
+# Mostra 3 linhas depois de cada linha com "FAILED"
+
+# -C = context (mostrar N linhas antes E depois)
+grep -C 2 "error" /var/log/syslog
+# Mostra 2 linhas antes E 2 depois de cada match
+
+# -E = extended regex (usar expressão regular estendida)
 grep -E "error|warning|critical" /var/log/syslog
+# O | (pipe) dentro do grep -E significa OU: encontrar "error" OU "warning" OU "critical"
 
-# Exemplos práticos para análise de logs do Ubuntu:
-grep "Failed password" /var/log/auth.log        # tentativas de login SSH falhas
-grep "sudo" /var/log/auth.log                   # uso de sudo
-grep "UFW BLOCK" /var/log/ufw.log               # conexões bloqueadas pelo firewall
-grep -i "error" /var/log/nginx/error.log        # erros do Nginx
-grep "kernel" /var/log/syslog | tail -20        # mensagens recentes do kernel`}
+# === EXEMPLOS PRÁTICOS PARA O DIA A DIA ===
+
+# Ver tentativas de login SSH falhas:
+grep "Failed password" /var/log/auth.log
+
+# Ver uso de sudo (quem rodou o quê como root):
+grep "sudo" /var/log/auth.log
+
+# Ver conexões bloqueadas pelo firewall UFW:
+grep "UFW BLOCK" /var/log/ufw.log
+
+# Ver erros do Nginx:
+grep -i "error" /var/log/nginx/error.log
+
+# Ver mensagens recentes do kernel:
+grep "kernel" /var/log/syslog | tail -20
+# O | passa a saída do grep para o tail, que mostra apenas as últimas 20`}
       />
 
-      <h2>wc — Contar Linhas, Palavras e Caracteres</h2>
+      <h2>wc — Contar Linhas, Palavras e Bytes</h2>
       <CodeBlock
-        title="Contando com wc"
-        code={`# Contar linhas, palavras e caracteres de um arquivo
+        title="wc: word count (contador)"
+        code={`# wc = word count (contagem de palavras)
+# Por padrão mostra: linhas, palavras e bytes
+
 wc arquivo.txt
 # 42 315 1823 arquivo.txt
-# ^   ^   ^   nome
-# linhas  palavras  bytes
+# ^   ^   ^
+# linhas  palavras  bytes/caracteres
 
-# Contar apenas linhas
+# -l = lines (contar apenas LINHAS)
 wc -l /var/log/syslog
+# 12345 /var/log/syslog   ← 12345 linhas no arquivo
 
-# Contar apenas palavras
+# -w = words (contar apenas PALAVRAS)
 wc -w arquivo.txt
 
-# Contar apenas bytes/caracteres
+# -c = characters/bytes (contar apenas BYTES)
 wc -c arquivo.txt
 
-# Uso com pipe: contar quantas tentativas de login falhou
+# Uso com pipe (muito comum na prática):
+
+# Quantas tentativas de login falhas houve?
 grep "Failed password" /var/log/auth.log | wc -l
 
-# Contar quantos processos estão rodando:
-ps aux | wc -l`}
+# Quantos processos estão rodando?
+ps aux | wc -l
+
+# Quantos arquivos há em um diretório?
+ls /var/log | wc -l`}
       />
 
       <h2>sort e uniq — Ordenar e Deduplicar</h2>
       <CodeBlock
-        title="Ordenando e removendo duplicatas"
-        code={`# Ordenar linhas de um arquivo (alfabético)
+        title="sort e uniq: organizando dados"
+        code={`# sort: ordenar linhas de um arquivo
+
+# Ordenar alfabeticamente (padrão)
 sort arquivo.txt
 
-# Ordenar em ordem reversa
+# -r = reverse (ordem reversa/decrescente)
 sort -r arquivo.txt
 
-# Ordenar numericamente (não alfanumericamente)
+# -n = numeric (ordenar NUMERICAMENTE, não alfabeticamente)
+# Sem -n: "10" vem antes de "2" (pois "1" < "2" alfabeticamente)
+# Com -n: "2" vem antes de "10" (numericamente correto)
 sort -n numeros.txt
 
-# Ordenar por tamanho de arquivo (combinado com ls)
-ls -l | sort -k5 -n    # -k5 = ordenar pela 5a coluna (tamanho)
+# -k = key (ordenar por uma coluna específica)
+# -k5 = ordenar pela 5ª coluna
+ls -l | sort -k5 -n    # Ordenar pela coluna de tamanho (5ª), numericamente
 
-# Remover linhas duplicadas (o arquivo deve estar ordenado!)
-sort lista.txt | uniq
+# ---
 
-# Contar ocorrências de cada linha
-sort lista.txt | uniq -c
+# uniq: remover ou contar linhas DUPLICADAS
+# IMPORTANTE: o arquivo precisa estar ordenado para o uniq funcionar corretamente!
 
-# Mostrar apenas as linhas duplicadas
-sort lista.txt | uniq -d
+sort lista.txt | uniq       # Remover duplicatas
+sort lista.txt | uniq -c   # Contar ocorrências de cada linha
+# -c = count (contar)
+# Saída:
+#       3 apple    ← "apple" aparece 3 vezes
+#       1 banana
+#       2 cherry
 
-# Mostrar apenas linhas únicas (não duplicadas)
-sort lista.txt | uniq -u
+sort lista.txt | uniq -d   # -d = duplicates: mostrar apenas linhas duplicadas
+sort lista.txt | uniq -u   # -u = unique: mostrar apenas linhas que aparecem UMA vez
 
-# Exemplo prático: IPs que mais tentaram acessar via SSH
+# EXEMPLO PRÁTICO: IPs que mais tentaram invadir via SSH
 grep "Failed password" /var/log/auth.log | \\
     grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | \\
-    sort | uniq -c | sort -rn | head -10`}
+    # -o = only matching (mostrar APENAS a parte que combina, não a linha inteira)
+    # -E = extended regex (para usar o padrão de IP)
+    sort | \\
+    uniq -c | \\
+    sort -rn | \\
+    # -r = reverso (maior primeiro)
+    # -n = numérico
+    head -10   # Top 10 IPs mais frequentes`}
       />
 
-      <h2>Lendo Logs do Ubuntu</h2>
+      <h2>Lendo Logs Importantes do Ubuntu</h2>
       <CodeBlock
-        title="Logs mais importantes do Ubuntu"
-        code={`# Log geral do sistema
+        title="Os logs mais úteis do dia a dia"
+        code={`# Log geral do sistema (tudo que acontece no Ubuntu)
 tail -f /var/log/syslog
 
-# Autenticação, SSH, sudo (MUITO importante para segurança)
+# Autenticação: login, SSH, sudo (monitorar segurança)
 tail -f /var/log/auth.log
-sudo grep "Failed password" /var/log/auth.log | tail -20
 
-# Log do kernel
-dmesg
-dmesg | tail -30
-dmesg | grep -i error
+# Log do kernel (hardware, drivers, erros de boot)
+dmesg              # Mostrar todas as mensagens do kernel
+dmesg | tail -30   # Apenas as 30 mais recentes
+dmesg | grep -i error  # Apenas erros
 
-# Logs do APT (histórico de instalações)
+# Histórico de instalações de pacotes
 cat /var/log/apt/history.log | tail -50
 cat /var/log/dpkg.log | tail -50
 
-# Logs do Nginx
-sudo tail -f /var/log/nginx/access.log
-sudo tail -f /var/log/nginx/error.log
+# Logs de serviços web
+sudo tail -f /var/log/nginx/access.log   # Todas as requisições ao Nginx
+sudo tail -f /var/log/nginx/error.log    # Apenas erros do Nginx
 
-# Ver todos os logs via journalctl (systemd)
-journalctl -n 50              # Últimas 50 linhas
-journalctl -f                 # Tempo real
-journalctl --since "1 hour ago"
-journalctl -p err             # Apenas erros
-journalctl -u nginx -f        # Logs de um serviço específico`}
+# Todos os logs via journalctl (sistema do systemd):
+journalctl -n 50        # -n = número: ver as últimas 50 linhas
+journalctl -f           # -f = follow: monitorar em tempo real
+journalctl -p err       # -p = priority: apenas erros (err = nível de erro)
+journalctl -u nginx -f  # -u = unit: logs de um serviço específico`}
       />
     </PageContainer>
   );

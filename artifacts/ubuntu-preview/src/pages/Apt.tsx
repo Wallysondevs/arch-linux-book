@@ -25,28 +25,40 @@ export default function Apt() {
         do dia a dia, use sempre <code>apt</code>.
       </p>
 
+      <AlertBox type="info" title="O que é uma flag (parâmetro)?">
+        Flags são instruções extras passadas a um comando, sempre precedidas por <code>-</code>
+        (flag curta, uma letra) ou <code>--</code> (flag longa, palavra completa).
+        Exemplo: <code>apt install -y nginx</code> — o <code>-y</code> é a flag, o <code>nginx</code>
+        é o pacote. Flags modificam o comportamento do comando.
+      </AlertBox>
+
       <h2>1. Atualização do Sistema</h2>
       <CodeBlock
         title="Manter o sistema atualizado"
-        code={`# PASSO 1: Atualizar a lista de pacotes disponíveis
+        code={`# PASSO 1: Atualizar a LISTA de pacotes disponíveis
 sudo apt update
-# Baixa informações dos repositórios sobre versões novas
-# NÃO instala nada, só verifica o que há de novo
+# Baixa informações dos repositórios sobre versões novas.
+# Não instala nada — apenas "verifica o que há de novo".
 
 # PASSO 2: Instalar as atualizações
 sudo apt upgrade
-# Instala versões mais novas dos pacotes já instalados
-# Não remove pacotes nem instala novos
+# Instala versões mais novas dos pacotes já instalados.
+# Vai perguntar "Deseja continuar? [S/n]" antes de instalar.
+
+# A flag -y (ou --yes) responde "sim" automaticamente para todas as confirmações.
+# Sem ela, o apt sempre pede confirmação antes de instalar ou remover.
+sudo apt upgrade -y
+
+# Fazer os dois de uma vez (a forma mais comum no dia a dia):
+sudo apt update && sudo apt upgrade -y
+# O && significa "execute o próximo comando SOMENTE se o anterior funcionou"
 
 # PASSO AVANÇADO: Atualização completa (inclui mudanças de dependências)
-sudo apt full-upgrade
-# Pode instalar e remover pacotes se necessário
-# Necessário para grandes atualizações (ex: nova versão do kernel)
+sudo apt full-upgrade -y
+# Pode instalar E remover pacotes se necessário.
+# Necessário para grandes atualizações (ex: nova versão do kernel).
 
-# Fazer os dois de uma vez (o mais comum):
-sudo apt update && sudo apt upgrade -y
-
-# Ver o que seria atualizado sem instalar:
+# Ver o que seria atualizado SEM instalar nada:
 apt list --upgradable`}
       />
 
@@ -61,35 +73,41 @@ apt list --upgradable`}
         title="Instalar software com apt"
         code={`# Instalar um único pacote
 sudo apt install vim
+# Vai perguntar "Deseja continuar? [S/n]" — confirme com Enter ou S
 
-# Instalar múltiplos pacotes de uma vez
+# Instalar múltiplos pacotes de uma vez (separe por espaço)
 sudo apt install git curl wget htop
 
-# Instalar sem confirmação (útil em scripts)
+# A flag -y confirma automaticamente, sem precisar responder às perguntas
 sudo apt install -y nginx mysql-server php
+# Equivalente a ficar digitando "S" para cada confirmação
 
-# Instalar uma versão específica
+# Instalar uma versão específica de um pacote
 sudo apt install firefox=124.0+build3-0ubuntu0.24.04.1
+# O = especifica a versão exata desejada
 
-# Instalar pacote .deb local
+# Instalar um arquivo .deb baixado manualmente
 sudo apt install ./nome-do-arquivo.deb
-# (O apt resolve as dependências automaticamente!)
+# O ./ indica que é um arquivo LOCAL (na pasta atual), não do repositório.
+# O apt resolve as dependências automaticamente!
 
-# Reinstalar um pacote (útil se ficou corrompido)
+# Reinstalar um pacote que ficou corrompido
 sudo apt install --reinstall nginx
+# --reinstall = baixa e instala de novo, sobrescrevendo os arquivos atuais
 
-# Instalar sem pacotes recomendados (instalação mais enxuta)
-sudo apt install --no-install-recommends python3`}
+# Instalar sem pacotes recomendados (instalação mais enxuta/mínima)
+sudo apt install --no-install-recommends python3
+# Pacotes recomendados são opcionais — sem esta flag, o apt os instala automaticamente`}
       />
 
       <h2>3. Busca e Informações</h2>
       <CodeBlock
         title="Pesquisar e inspecionar pacotes"
-        code={`# Buscar pacotes pelo nome ou descrição
+        code={`# Buscar pacotes pelo nome ou pela descrição
 apt search vlc
 apt search "video player"
 
-# Ver informações detalhadas de um pacote (ANTES de instalar)
+# Ver informações detalhadas de um pacote ANTES de instalar
 apt show nginx
 
 # Saída do apt show:
@@ -98,44 +116,52 @@ apt show nginx
 # Priority: optional
 # Section: web
 # Installed-Size: 3.021 kB
-# Depends: libpcre2-8-0, ...
+# Depends: libpcre2-8-0, ...   ← dependências que serão instaladas junto
 # Description: small, powerful, scalable web/proxy server
 
-# Listar todos os pacotes instalados
+# Listar TODOS os pacotes instalados no sistema
 apt list --installed
+# --installed = filtrar apenas os que já estão no sistema
 
-# Ver se um pacote específico está instalado
-dpkg -l nginx
+# Verificar se um pacote específico está instalado
 apt list --installed | grep nginx
+# O | (pipe) passa a saída de um comando como entrada do próximo.
+# grep filtra as linhas que contêm "nginx".
 
 # Ver quais arquivos um pacote instalou
 dpkg -L nginx
+# -L = List files (listar arquivos do pacote)
 
-# Descobrir qual pacote fornece um arquivo específico
+# Descobrir qual pacote instalou um arquivo específico
 dpkg -S /usr/bin/python3
+# -S = Search (buscar qual pacote possui esse arquivo)
 
 # Ver dependências de um pacote
 apt depends nginx
 
 # Ver quais pacotes dependem de um dado pacote
-apt rdepends nginx`}
+apt rdepends nginx
+# rdepends = reverse depends (dependências reversas)`}
       />
 
       <h2>4. Remoção de Pacotes</h2>
       <CodeBlock
         title="Remover software de forma limpa"
-        code={`# Remover pacote (mantém arquivos de configuração)
+        code={`# Remover um pacote (mantém arquivos de configuração em /etc/)
 sudo apt remove nginx
 
-# Remover pacote E arquivos de configuração (purge)
+# Remover um pacote E seus arquivos de configuração (purge = limpeza total)
 sudo apt purge nginx
-# Use purge quando quiser começar do zero com um serviço
+# Use purge quando quiser começar do zero com um serviço,
+# ou quando a configuração estiver corrompida.
 
 # Remover dependências que não são mais necessárias
 sudo apt autoremove
+# Quando você remove um pacote, suas dependências ficam "órfãs".
+# autoremove identifica e remove essas dependências desnecessárias.
 
-# Remover E limpar dependências (o mais completo):
-sudo apt purge nginx && sudo apt autoremove
+# A combinação mais completa e limpa:
+sudo apt purge nginx && sudo apt autoremove -y
 
 # Remover múltiplos pacotes de uma vez
 sudo apt purge apache2 apache2-utils apache2-data`}
@@ -152,21 +178,26 @@ sudo apt purge apache2 apache2-utils apache2-data`}
       <CodeBlock
         title="Liberar espaço em disco"
         code={`# O APT guarda todos os .deb baixados em /var/cache/apt/archives/
-# Com o tempo, isso pode ocupar vários GB
+# Com o tempo, isso pode ocupar vários GB.
 
 # Ver quanto espaço o cache ocupa:
 du -sh /var/cache/apt/archives/
+# du = disk usage (uso de disco)
+# -s = summary (mostrar apenas o total, não listar cada arquivo)
+# -h = human readable (mostrar em KB, MB, GB — não em bytes brutos)
 
-# Remover .deb de versões antigas (mantém a versão atual)
+# Remover .deb de versões ANTIGAS (mantém a versão atual instalada)
 sudo apt autoclean
+# Seguro — mantém os pacotes atuais no cache caso precise reinstalar sem internet.
 
 # Remover TODOS os .deb do cache (economiza mais espaço)
 sudo apt clean
 
-# Ver o que o autoremove iria remover sem fazer nada:
+# Ver o que o autoremove iria remover SEM fazer nada (simulação):
 sudo apt autoremove --dry-run
+# --dry-run = "ensaio geral" — mostra o que aconteceria, mas não executa
 
-# Remover pacotes desnecessários + limpar cache:
+# Limpeza completa de uma vez:
 sudo apt autoremove -y && sudo apt clean`}
       />
 
@@ -185,95 +216,88 @@ cat /etc/apt/sources.list
 # ^   ^                                 ^      ^    ^         ^        ^
 # tipo  URL do servidor                  codinome componentes
 
-# Habilitar repositório universe (pacotes da comunidade):
+# Habilitar repositório universe (pacotes mantidos pela comunidade):
 sudo add-apt-repository universe
+# universe = pacotes open source mantidos pela comunidade (não pela Canonical)
 
 # Habilitar multiverse (software com restrições de licença):
 sudo add-apt-repository multiverse
+# multiverse = software proprietário ou com restrições legais (ex: codecs de vídeo)
 
 # Adicionar repositório PPA (Personal Package Archive):
 sudo add-apt-repository ppa:nome/repositorio
+# PPA = repositórios mantidos por desenvolvedores independentes no Launchpad
 
 # Exemplos de PPAs populares:
 sudo add-apt-repository ppa:graphics-drivers/ppa     # Drivers NVIDIA recentes
-sudo add-apt-repository ppa:neovim-ppa/unstable      # Neovim mais recente
-sudo add-apt-repository ppa:librecad-dev/librecad    # LibreCAD atualizado
 
 # Remover um PPA:
 sudo add-apt-repository --remove ppa:nome/repositorio
+# --remove = inverso do comando, remove em vez de adicionar
 
-# Após adicionar qualquer repositório, sempre atualize:
+# Após adicionar qualquer repositório, sempre atualize a lista:
 sudo apt update`}
       />
 
       <h2>7. Repositório de Terceiros (Manual)</h2>
       <CodeBlock
-        title="Adicionar repositório de terceiros com chave GPG"
+        title="Adicionar repositório com chave GPG"
         code={`# Exemplo: Adicionar repositório oficial do VS Code (Microsoft)
 
 # 1. Baixar e instalar a chave GPG do repositório
 wget -qO- https://packages.microsoft.com/keys/microsoft.asc | \\
     gpg --dearmor | \\
     sudo tee /usr/share/keyrings/microsoft.gpg > /dev/null
+# wget = baixar da internet
+# -q = quiet (silencioso, sem barra de progresso)
+# -O- = output para stdout (- = saída padrão, em vez de salvar em arquivo)
+# gpg --dearmor = converter a chave do formato texto para binário
+# tee = salvar em arquivo E também mostrar na tela
+# > /dev/null = descartar a saída da tela (só queremos salvar o arquivo)
 
 # 2. Adicionar o repositório
 echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] \\
     https://packages.microsoft.com/repos/code stable main" | \\
     sudo tee /etc/apt/sources.list.d/vscode.list
+# arch=amd64 = este repositório é para processadores 64-bit (x86_64)
+# signed-by = usar esta chave para verificar a autenticidade dos pacotes
 
 # 3. Atualizar e instalar
 sudo apt update
-sudo apt install code
-
-# O mesmo processo funciona para: Docker, NodeJS, PostgreSQL,
-# MongoDB, Google Chrome, GitHub CLI, e muitos outros.`}
+sudo apt install code`}
       />
 
       <h2>8. Comandos Úteis do dpkg</h2>
       <CodeBlock
-        title="dpkg — gerenciador de pacotes de baixo nível"
-        code={`# Instalar um arquivo .deb manualmente
+        title="dpkg — o instalador de baixo nível"
+        code={`# dpkg é o programa que de fato instala os .deb. O APT usa o dpkg por baixo.
+
+# Instalar um arquivo .deb manualmente (sem resolver dependências!)
 sudo dpkg -i google-chrome-stable_current_amd64.deb
-# Se faltar dependências, corrija com:
+# -i = install (instalar)
+# Se faltar dependências, o dpkg falhará. Corrija com:
 sudo apt install -f
+# -f = fix-broken (corrigir dependências quebradas)
 
 # Ver todos os pacotes instalados
 dpkg -l
+# -l = list (listar)
 
 # Ver arquivos instalados por um pacote
 dpkg -L firefox
+# -L = List files of package (listar arquivos DO pacote, letra maiúscula)
 
 # Ver qual pacote instalou um arquivo específico
 dpkg -S /usr/bin/firefox
+# -S = Search (buscar qual pacote possui esse caminho)
 
-# Verificar status de um pacote
+# Verificar status e informações de um pacote
 dpkg -s nginx
+# -s = status
 
-# Extrair arquivos de um .deb sem instalar
-dpkg -x arquivo.deb /pasta/destino
-
-# Reconfigurar pacote (útil quando pede perguntas de configuração)
-sudo dpkg-reconfigure tzdata
-sudo dpkg-reconfigure locales`}
-      />
-
-      <h2>9. apt-cache: Consultas Avançadas</h2>
-      <CodeBlock
-        title="apt-cache para consultas rápidas"
-        code={`# Buscar pacotes (mais rápido que apt search)
-apt-cache search python3
-
-# Ver informações de um pacote
-apt-cache show python3
-
-# Ver dependências
-apt-cache depends python3
-
-# Ver o que depende de um pacote
-apt-cache rdepends python3
-
-# Mostrar estatísticas dos repositórios
-apt-cache stats`}
+# Reconfigurar um pacote (refaz as perguntas de configuração):
+sudo dpkg-reconfigure tzdata     # Reconfigurar fuso horário
+sudo dpkg-reconfigure locales    # Reconfigurar idioma do sistema`}
       />
     </PageContainer>
   );
