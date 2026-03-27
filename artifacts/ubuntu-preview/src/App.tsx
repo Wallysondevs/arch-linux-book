@@ -8,7 +8,30 @@ import { Header } from "@/components/layout/Header";
 
 import Home from "@/pages/Home";
 import Ssh from "@/pages/Ssh";
-import GenericPage from "@/pages/GenericPage";
+import Historia from "@/pages/Historia";
+import Filosofia from "@/pages/Filosofia";
+import Instalacao from "@/pages/Instalacao";
+import PrimeirosPassos from "@/pages/PrimeirosPassos";
+import AmbienteGrafico from "@/pages/AmbienteGrafico";
+import Apt from "@/pages/Apt";
+import SnapFlatpak from "@/pages/SnapFlatpak";
+import Systemd from "@/pages/Systemd";
+import SistemaArquivos from "@/pages/SistemaArquivos";
+import Navegacao from "@/pages/Navegacao";
+import ManipulacaoArquivos from "@/pages/ManipulacaoArquivos";
+import Visualizacao from "@/pages/Visualizacao";
+import Permissoes from "@/pages/Permissoes";
+import Usuarios from "@/pages/Usuarios";
+import Processos from "@/pages/Processos";
+import Redes from "@/pages/Redes";
+import Disco from "@/pages/Disco";
+import ShellBash from "@/pages/ShellBash";
+import Redirecionamento from "@/pages/Redirecionamento";
+import Compressao from "@/pages/Compressao";
+import Avancado from "@/pages/Avancado";
+import Seguranca from "@/pages/Seguranca";
+import Troubleshooting from "@/pages/Troubleshooting";
+import Referencias from "@/pages/Referencias";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -41,79 +64,31 @@ function Router() {
     <Layout>
       <Switch>
         <Route path="/" component={Home} />
+        <Route path="/historia" component={Historia} />
+        <Route path="/filosofia" component={Filosofia} />
+        <Route path="/instalacao" component={Instalacao} />
+        <Route path="/primeiros-passos" component={PrimeirosPassos} />
+        <Route path="/ambiente-grafico" component={AmbienteGrafico} />
+        <Route path="/apt" component={Apt} />
+        <Route path="/snap-flatpak" component={SnapFlatpak} />
+        <Route path="/systemd" component={Systemd} />
+        <Route path="/sistema-arquivos" component={SistemaArquivos} />
+        <Route path="/navegacao" component={Navegacao} />
+        <Route path="/manipulacao-arquivos" component={ManipulacaoArquivos} />
+        <Route path="/visualizacao" component={Visualizacao} />
+        <Route path="/permissoes" component={Permissoes} />
+        <Route path="/usuarios" component={Usuarios} />
+        <Route path="/processos" component={Processos} />
+        <Route path="/redes" component={Redes} />
         <Route path="/ssh" component={Ssh} />
-        <Route path="/historia">
-          <GenericPage title="História do Ubuntu" subtitle="De Mark Shuttleworth ao Ubuntu 24.04 LTS — a trajetória da distro Linux mais popular do mundo." difficulty="iniciante" timeToRead="15 min" />
-        </Route>
-        <Route path="/filosofia">
-          <GenericPage title="Filosofia Ubuntu" subtitle="'Eu sou porque nós somos' — a visão de software livre, comunidade e o papel da Canonical." difficulty="iniciante" timeToRead="10 min" />
-        </Route>
-        <Route path="/instalacao">
-          <GenericPage title="Guia de Instalação" subtitle="Instalação do Ubuntu Desktop e Server — passo a passo completo com exemplos práticos." difficulty="iniciante" timeToRead="30 min" />
-        </Route>
-        <Route path="/primeiros-passos">
-          <GenericPage title="Primeiros Passos" subtitle="Configurações essenciais após a instalação do Ubuntu — atualizações, drivers e personalização." difficulty="iniciante" timeToRead="20 min" />
-        </Route>
-        <Route path="/ambiente-grafico">
-          <GenericPage title="GNOME & Desktop" subtitle="Configurando o ambiente gráfico GNOME, extensões e personalizações no Ubuntu." difficulty="iniciante" timeToRead="20 min" />
-        </Route>
-        <Route path="/apt">
-          <GenericPage title="APT — Gerenciador de Pacotes" subtitle="Domine o APT: instalação, remoção, atualização, repositórios PPA e muito mais." difficulty="iniciante" timeToRead="25 min" />
-        </Route>
-        <Route path="/snap-flatpak">
-          <GenericPage title="Snap & Flatpak" subtitle="Instalando aplicativos via Snap Store e Flathub — vantagens, limitações e comparações." difficulty="iniciante" timeToRead="15 min" />
-        </Route>
-        <Route path="/systemd">
-          <GenericPage title="Systemd" subtitle="Gerenciando serviços, timers e o processo de boot no Ubuntu com systemd e systemctl." difficulty="intermediario" timeToRead="25 min" />
-        </Route>
-        <Route path="/sistema-arquivos">
-          <GenericPage title="Hierarquia FHS" subtitle="Estrutura de diretórios do Linux — o que fica em /etc, /var, /usr e todos os outros." difficulty="iniciante" timeToRead="20 min" />
-        </Route>
-        <Route path="/navegacao">
-          <GenericPage title="Navegação" subtitle="Movendo-se pelo sistema de arquivos com ls, cd, find, tree e muito mais." difficulty="iniciante" timeToRead="15 min" />
-        </Route>
-        <Route path="/manipulacao-arquivos">
-          <GenericPage title="Manipulação de Arquivos" subtitle="cp, mv, rm, mkdir, touch, ln — manipulando arquivos e diretórios no Ubuntu." difficulty="iniciante" timeToRead="20 min" />
-        </Route>
-        <Route path="/visualizacao">
-          <GenericPage title="Visualização" subtitle="cat, less, head, tail, grep, wc — lendo e filtrando conteúdo de arquivos." difficulty="iniciante" timeToRead="15 min" />
-        </Route>
-        <Route path="/permissoes">
-          <GenericPage title="Permissões" subtitle="chmod, chown, umask — entendendo e gerenciando permissões de arquivos no Linux." difficulty="intermediario" timeToRead="20 min" />
-        </Route>
-        <Route path="/usuarios">
-          <GenericPage title="Usuários e Grupos" subtitle="Criando e gerenciando usuários, grupos e sudo no Ubuntu." difficulty="intermediario" timeToRead="20 min" />
-        </Route>
-        <Route path="/processos">
-          <GenericPage title="Processos" subtitle="ps, top, htop, kill, nice — monitorando e gerenciando processos no Ubuntu." difficulty="intermediario" timeToRead="20 min" />
-        </Route>
-        <Route path="/redes">
-          <GenericPage title="Redes" subtitle="ip, ifconfig, ping, traceroute, netstat, nmcli — configuração e diagnóstico de rede." difficulty="intermediario" timeToRead="25 min" />
-        </Route>
-        <Route path="/disco">
-          <GenericPage title="Discos e Partições" subtitle="fdisk, parted, mkfs, mount, lsblk — gerenciando discos e partições no Ubuntu." difficulty="intermediario" timeToRead="25 min" />
-        </Route>
-        <Route path="/shell-bash">
-          <GenericPage title="Shell Bash" subtitle="Variáveis, funções, scripts, loops e condicionais — scripting Bash no Ubuntu." difficulty="intermediario" timeToRead="30 min" />
-        </Route>
-        <Route path="/redirecionamento">
-          <GenericPage title="Redirecionamento" subtitle="stdin, stdout, stderr, pipes — dominando o redirecionamento de I/O no terminal." difficulty="intermediario" timeToRead="15 min" />
-        </Route>
-        <Route path="/compressao">
-          <GenericPage title="Compressão" subtitle="tar, gzip, bzip2, zip, xz — comprimindo e descomprimindo arquivos no Ubuntu." difficulty="iniciante" timeToRead="15 min" />
-        </Route>
-        <Route path="/avancado">
-          <GenericPage title="Comandos Avançados" subtitle="awk, sed, xargs, find avançado, substituição de processos e mais." difficulty="avancado" timeToRead="35 min" />
-        </Route>
-        <Route path="/seguranca">
-          <GenericPage title="Segurança" subtitle="UFW, fail2ban, AppArmor, auditd — hardening e segurança no Ubuntu Server." difficulty="avancado" timeToRead="30 min" />
-        </Route>
-        <Route path="/troubleshooting">
-          <GenericPage title="Troubleshooting" subtitle="Diagnosticando e resolvendo problemas comuns no Ubuntu — boot, rede, espaço em disco." difficulty="intermediario" timeToRead="25 min" />
-        </Route>
-        <Route path="/referencias">
-          <GenericPage title="Referências" subtitle="Links, man pages e documentação oficial do Ubuntu para aprofundamento." difficulty="iniciante" timeToRead="5 min" />
-        </Route>
+        <Route path="/disco" component={Disco} />
+        <Route path="/shell-bash" component={ShellBash} />
+        <Route path="/redirecionamento" component={Redirecionamento} />
+        <Route path="/compressao" component={Compressao} />
+        <Route path="/avancado" component={Avancado} />
+        <Route path="/seguranca" component={Seguranca} />
+        <Route path="/troubleshooting" component={Troubleshooting} />
+        <Route path="/referencias" component={Referencias} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
