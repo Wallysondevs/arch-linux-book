@@ -20,76 +20,92 @@ export default function ManipulacaoArquivos() {
       <CodeBlock
         title="Criando diretórios"
         code={`# Criar um diretório simples
-mkdir MeusDiretorio
+mkdir MeuDiretorio
 
-# Criar com caminho completo (incluindo pais que não existem)
+# -p = parents (criar diretórios pais se não existirem)
+# Sem -p, daria erro se /home/joao/Projetos/novo-site não existisse
 mkdir -p /home/joao/Projetos/novo-site/src/components
 
-# Criar múltiplos diretórios de uma vez
+# Criar múltiplos diretórios de uma vez (apenas separe por espaço)
 mkdir pasta1 pasta2 pasta3
 
-# Criar com permissões específicas
+# -m = mode (definir permissões ao criar)
+# 755 = dono pode tudo, grupo e outros só podem ler e entrar
 mkdir -m 755 diretorio-publico
+# 700 = apenas o dono tem acesso (grupo e outros não podem nem entrar)
 mkdir -m 700 diretorio-privado
 
-# Criar estrutura de projeto de uma vez:
+# Criar estrutura completa de projeto de uma vez com chaves {}:
+# {src,tests,docs} = criar três pastas: src, tests e docs
 mkdir -p meu-projeto/{src,tests,docs,public/{css,js,img}}`}
       />
 
-      <h2>touch — Criar Arquivos e Atualizar Timestamps</h2>
+      <h2>touch — Criar Arquivos Vazios</h2>
       <CodeBlock
-        title="Criando e tocando arquivos"
+        title="Criando arquivos com touch"
         code={`# Criar um arquivo vazio
 touch arquivo.txt
+# Se o arquivo já existir, touch apenas atualiza sua data de modificação.
 
-# Criar múltiplos arquivos
+# Criar múltiplos arquivos de uma vez
 touch index.html style.css script.js
 
-# Atualizar a data de modificação de um arquivo existente
-touch arquivo-existente.txt
-
-# Criar com data de modificação específica
-touch -t 202401011200 arquivo.txt  # 2024-01-01 12:00`}
+# -t = timestamp (definir data de modificação específica)
+# Formato: AAAAMMDDHHMM
+touch -t 202401011200 arquivo.txt
+# Define a data como 2024-01-01 às 12:00`}
       />
 
       <h2>cp — Copiar Arquivos e Diretórios</h2>
       <CodeBlock
-        title="Copiando com precisão"
+        title="Copiando com todas as flags explicadas"
         code={`# Copiar um arquivo para outro local
 cp arquivo.txt /tmp/
 
-# Copiar e renomear ao mesmo tempo
+# Copiar e renomear ao mesmo tempo (especifique o nome de destino)
 cp arquivo.txt /tmp/copia-do-arquivo.txt
 
-# Copiar múltiplos arquivos para um diretório
+# Copiar múltiplos arquivos para um diretório (destino deve ser diretório)
 cp foto1.jpg foto2.jpg video.mp4 /media/backup/
 
-# Copiar diretório (recursivo — OBRIGATÓRIO o -r)
+# -r = recursive (recursivo) — OBRIGATÓRIO para copiar diretórios!
+# Sem -r, dá erro ao tentar copiar uma pasta.
 cp -r /home/joao/Projetos /media/backup/
 
-# Copiar preservando atributos (permissões, timestamps, donos)
+# -a = archive (arquivo/preservar tudo)
+# Equivale a -r + preservar permissões, timestamps, links simbólicos e donos
+# Use quando quiser uma cópia IDÊNTICA ao original
 cp -a /home/joao/Projetos /media/backup/
 
-# Copiar somente se o arquivo de destino for mais antigo (sincronizar)
+# -u = update (atualizar)
+# Copia apenas se o arquivo de origem for MAIS NOVO que o destino
+# Útil para sincronização manual
 cp -u arquivo.txt /media/backup/
 
-# Copiar com progresso (para arquivos grandes)
-cp --progress arquivo-grande.iso /media/usb/
+# -v = verbose (verboso)
+# Mostra cada arquivo sendo copiado (útil para ver o progresso)
+cp -rv /home/joao/Projetos /media/backup/
 
-# Perguntar antes de sobrescrever
-cp -i arquivo.txt /tmp/    # "-i" = interactive
+# -i = interactive (interativo)
+# Pergunta antes de sobrescrever arquivos existentes no destino
+cp -i arquivo.txt /tmp/
 
-# Copiar sem sobrescrever (pular se destino existir)
-cp -n arquivo.txt /tmp/    # "-n" = no-clobber
+# -n = no-clobber (não substituir)
+# NUNCA sobrescreve — pula silenciosamente se o destino existir
+cp -n arquivo.txt /tmp/
 
-# Fazer backup automático antes de sobrescrever
-cp -b arquivo.txt /tmp/    # Cria /tmp/arquivo.txt~`}
+# -b = backup (fazer cópia de segurança antes de sobrescrever)
+# Cria /tmp/arquivo.txt~ antes de sobrescrever com o novo
+cp -b arquivo.txt /tmp/
+
+# --progress = mostrar barra de progresso (para arquivos grandes)
+cp --progress arquivo-grande.iso /media/usb/`}
       />
 
       <h2>mv — Mover e Renomear</h2>
       <CodeBlock
-        title="Movendo e renomeando"
-        code={`# Renomear um arquivo
+        title="Movendo e renomeando arquivos"
+        code={`# Renomear um arquivo (mover para o mesmo lugar com novo nome)
 mv nome-antigo.txt nome-novo.txt
 
 # Mover um arquivo para outro diretório
@@ -99,136 +115,134 @@ mv arquivo.txt /tmp/
 mv rascunho.txt /home/joao/Documents/relatorio-final.txt
 
 # Mover múltiplos arquivos para um diretório
+# Quando o destino é um diretório, todos os arquivos vão para lá
 mv *.jpg /home/joao/Pictures/
 
-# Mover diretório inteiro
+# Mover diretório inteiro (não precisa de -r como o cp)
 mv Projetos/ /media/backup/
 
-# Perguntar antes de sobrescrever
+# -i = interactive (interativo)
+# Pergunta "sobrescrever?" antes de substituir arquivo existente
 mv -i arquivo.txt /tmp/
 
-# Não sobrescrever (pular se destino existir)
+# -n = no-clobber (não substituir)
+# Nunca sobrescreve — ignora silenciosamente se o destino existir
 mv -n arquivo.txt /tmp/
 
-# Renomear em lote (usando rename ou um loop):
-# Renomear todos os .jpeg para .jpg:
-rename 's/.jpeg/.jpg/' *.jpeg
+# -v = verbose (verboso)
+# Mostra o que está sendo movido
+mv -v pasta-antiga/ /nova/localização/
 
-# Ou com loop bash:
-for f in *.jpeg; do mv "$f" "\${f%.jpeg}.jpg"; done`}
+# Renomear em lote com um loop:
+for f in *.jpeg; do
+    mv "\$f" "\${f%.jpeg}.jpg"
+    # \${f%.jpeg} = remove a extensão .jpeg do nome
+    # então adiciona .jpg no lugar
+done`}
       />
 
       <h2>rm — Remover Arquivos e Diretórios</h2>
       <AlertBox type="danger" title="Não existe lixeira no terminal!">
         Arquivos removidos com <code>rm</code> são deletados permanentemente — sem lixeira,
-        sem confirmação (a menos que você use <code>-i</code>). Tenha certeza antes de executar,
-        especialmente com wildcards (*). Um <code>rm -rf /*</code> por engano pode destruir
-        o sistema inteiro.
+        sem "Ctrl+Z". Se usar curingas (*) com descuido, pode apagar coisas importantes.
+        Na dúvida, use <code>rm -i</code> para confirmar cada remoção, ou mova para
+        <code>/tmp/</code> primeiro e só depois delete.
       </AlertBox>
       <CodeBlock
         title="Removendo arquivos com segurança"
-        code={`# Remover um arquivo
+        code={`# Remover um arquivo (não pede confirmação)
 rm arquivo.txt
 
-# Remover múltiplos arquivos
+# Remover múltiplos arquivos de uma vez
 rm foto1.jpg foto2.jpg video.mp4
 
-# Remover com confirmação para cada arquivo
+# -i = interactive (interativo) — RECOMENDADO para iniciantes!
+# Pergunta "remover este arquivo?" para cada arquivo antes de deletar
 rm -i *.log
 
-# Remover diretório VAZIO
-rmdir diretorio-vazio/
-
-# Remover diretório e TODO o conteúdo (recursivo)
+# -r = recursive (recursivo)
+# Necessário para remover diretórios e todo o seu conteúdo
 rm -r diretorio/
 
-# Forçar remoção sem confirmação (PERIGOSO — use com cuidado)
+# -f = force (forçar)
+# Remove sem pedir confirmação e sem dar erro se o arquivo não existir
+rm -f arquivo-que-pode-nao-existir.txt
+
+# -rf combinados = remover diretório inteiro sem confirmação (MUITO PERIGOSO!)
 rm -rf diretorio/
+# Use com extremo cuidado. rm -rf /pasta-errada pode destruir o sistema.
 
-# Verificar o que seria removido antes de remover:
-ls diretorio/   # Ver o conteúdo primeiro
-rm -ri diretorio/  # Remover com confirmação para cada item
+# -v = verbose (verboso)
+# Mostra cada arquivo sendo removido
+rm -rv diretorio/
 
-# Alternativa mais segura: mover para /tmp antes de deletar
-mv arquivo-importante.conf /tmp/
-# Depois que confirmar que não precisa mais:
-rm /tmp/arquivo-importante.conf`}
+# Prática mais segura: verificar ANTES de remover
+ls *.log       # Ver o que seria removido
+rm -i *.log    # Remover com confirmação um a um
+
+# Alternativa segura: mover para /tmp antes de deletar definitivamente
+mv arquivo-duvidoso.conf /tmp/
+# O /tmp é limpo automaticamente no reboot — dá tempo de recuperar se errar`}
       />
 
-      <h2>ln — Links Simbólicos e Hard Links</h2>
+      <h2>ln — Links Simbólicos</h2>
       <CodeBlock
-        title="Criando links"
-        code={`# Link simbólico (symlink) — como um atalho
+        title="Criando links (atalhos) no Linux"
+        code={`# -s = symbolic (simbólico) — o tipo de link mais comum
+# Um symlink é como um "atalho" do Windows: aponta para outro arquivo/pasta
 ln -s /caminho/original /caminho/do/link
 
 # Exemplos práticos:
-# Apontar /usr/local/python para uma versão específica:
+
+# Criar atalho para uma versão específica do Python:
 ln -s /usr/bin/python3.12 /usr/local/bin/python
 
-# Criar link de uma pasta (muito útil para desenvolvimento):
+# Criar atalho de uma pasta de projeto no seu home:
 ln -s /opt/meu-projeto /home/joao/meu-projeto
+# Agora /home/joao/meu-projeto aponta para /opt/meu-projeto
 
-# Link simbólico de arquivo de configuração:
+# Ativar site no Nginx (symlink de sites-available para sites-enabled):
 ln -s /etc/nginx/sites-available/meu-site /etc/nginx/sites-enabled/meu-site
 
 # Ver para onde um symlink aponta:
 ls -la /etc/nginx/sites-enabled/
+# lrwxrwxrwx  meu-site -> ../sites-available/meu-site
+# ^ l = link simbólico
 
-# Remover um symlink (NÃO use rm -r):
-rm /etc/nginx/sites-enabled/meu-site  # Correto
-# unlink /etc/nginx/sites-enabled/meu-site  # Alternativa
-
-# Hard link — dois nomes para o mesmo dado no disco
-ln /arquivo/original.txt /outro/caminho/copia.txt
-# Hard links compartilham o mesmo inode (bloco no disco)
-# Deletar um não apaga o outro`}
+# Remover um symlink (use rm, NÃO use rm -r!):
+rm /etc/nginx/sites-enabled/meu-site   # CORRETO — remove apenas o link
+# rm -r /etc/nginx/sites-enabled/meu-site  ← ERRADO: removeria o destino também!`}
       />
 
       <h2>Wildcards — Curingas</h2>
       <CodeBlock
-        title="Usando curingas para selecionar múltiplos arquivos"
-        code={`# * = qualquer sequência de caracteres
-ls *.txt       # todos os arquivos .txt
-rm *.log       # remover todos os arquivos .log
-cp *.jpg /tmp/ # copiar todos os .jpg
+        title="Selecionando múltiplos arquivos com padrões"
+        code={`# * = qualquer sequência de caracteres (zero ou mais)
+ls *.txt          # todos os arquivos que TERMINAM em .txt
+rm *.log          # remover todos os arquivos que terminam em .log
+cp *.jpg /tmp/    # copiar todos os .jpg
 
-# ? = um único caractere qualquer
-ls foto?.jpg   # foto1.jpg, foto2.jpg, fotoA.jpg (mas não foto10.jpg)
+# ? = exatamente UM caractere qualquer
+ls foto?.jpg      # foto1.jpg, foto2.jpg (mas NÃO foto10.jpg — são 2 chars)
 
-# [] = qualquer caractere dentro dos colchetes
-ls foto[123].jpg   # foto1.jpg, foto2.jpg, foto3.jpg
-ls arquivo[a-z].txt # arquivoa.txt, arquivob.txt ... arquivoz.txt
-ls *.[ch]           # todos os .c e .h (código C)
+# [] = qualquer caractere DENTRO dos colchetes
+ls foto[123].jpg    # aceita: foto1.jpg, foto2.jpg, foto3.jpg
+ls arquivo[a-z].txt # aceita: arquivoa.txt, arquivob.txt ... arquivoz.txt
+ls *.[ch]           # aceita: arquivo.c e arquivo.h (código em C)
 
 # {} = alternativas separadas por vírgula (brace expansion)
-echo {a,b,c}.txt  # a.txt b.txt c.txt
+# Não é um curinga, mas expande para múltiplos termos antes de executar
+echo arquivo.{txt,pdf,jpg}
+# Saída: arquivo.txt arquivo.pdf arquivo.jpg
+
 mkdir -p projeto/{src,docs,tests}
-cp arquivo.{txt,backup}  # copia arquivo.txt para arquivo.backup
+# Equivale a:
+# mkdir -p projeto/src
+# mkdir -p projeto/docs
+# mkdir -p projeto/tests
 
-# Exemplo prático: copiar apenas PDF e DOCX
-cp *.{pdf,docx} /media/pendrive/`}
-      />
-
-      <h2>stat — Informações Detalhadas de Arquivos</h2>
-      <CodeBlock
-        title="Inspecionando metadados de arquivos"
-        code={`# Ver informações detalhadas de um arquivo
-stat arquivo.txt
-
-# Saída:
-#   File: arquivo.txt
-#   Size: 1234      Blocks: 8   IO Block: 4096  regular file
-# Device: 8,3 (sda3)  Inode: 123456  Links: 1
-# Access: (0644/-rw-r--r--)  Uid: (1000/joao)  Gid: (1000/joao)
-# Access: 2024-03-27 10:00:00.000000000 -0300  ← último acesso
-# Modify: 2024-03-27 09:30:00.000000000 -0300  ← última modificação
-# Change: 2024-03-27 09:30:00.000000000 -0300  ← última mudança de metadado
-
-# Ver apenas o tamanho em bytes:
-stat -c %s arquivo.txt
-
-# Ver apenas as permissões em formato octal:
-stat -c %a arquivo.txt`}
+cp arquivo.{conf,conf.bak}
+# Equivale a: cp arquivo.conf arquivo.conf.bak (cria backup renomeando)`}
       />
     </PageContainer>
   );
