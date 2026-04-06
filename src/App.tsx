@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -7,94 +7,103 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 
 import Home from "@/pages/Home";
-import Historia from "@/pages/Historia";
-import Filosofia from "@/pages/Filosofia";
-import Instalacao from "@/pages/Instalacao";
-import PrimeirosPassos from "@/pages/PrimeirosPassos";
-import AmbienteGrafico from "@/pages/AmbienteGrafico";
-import DisplayManagers from "@/pages/DisplayManagers";
-import Dotfiles from "@/pages/Dotfiles";
-import Kernel from "@/pages/Kernel";
-import BootProcess from "@/pages/BootProcess";
-import ModulosKernel from "@/pages/ModulosKernel";
-import Initramfs from "@/pages/Initramfs";
-import Pacman from "@/pages/Pacman";
-import Aur from "@/pages/Aur";
-import Flatpak from "@/pages/Flatpak";
-import Systemd from "@/pages/Systemd";
-import SistemaArquivos from "@/pages/SistemaArquivos";
-import Navegacao from "@/pages/Navegacao";
-import ManipulacaoArquivos from "@/pages/ManipulacaoArquivos";
-import Visualizacao from "@/pages/Visualizacao";
-import Permissoes from "@/pages/Permissoes";
-import Usuarios from "@/pages/Usuarios";
-import Processos from "@/pages/Processos";
-import Disco from "@/pages/Disco";
-import Lvm from "@/pages/Lvm";
-import Btrfs from "@/pages/Btrfs";
-import Logs from "@/pages/Logs";
-import ShellBash from "@/pages/ShellBash";
-import Redirecionamento from "@/pages/Redirecionamento";
-import Compressao from "@/pages/Compressao";
-import Avancado from "@/pages/Avancado";
-import Tmux from "@/pages/Tmux";
-import VimNeovim from "@/pages/VimNeovim";
-import Redes from "@/pages/Redes";
-import Ssh from "@/pages/Ssh";
-import SshAvancado from "@/pages/SshAvancado";
-import Firewall from "@/pages/Firewall";
-import Vpn from "@/pages/Vpn";
-import WifiAvancado from "@/pages/WifiAvancado";
-import TilingWm from "@/pages/TilingWm";
-import Wayland from "@/pages/Wayland";
-import Bluetooth from "@/pages/Bluetooth";
-import Pipewire from "@/pages/Pipewire";
-import AmbienteDev from "@/pages/AmbienteDev";
-import Git from "@/pages/Git";
-import Python from "@/pages/Python";
-import Nodejs from "@/pages/Nodejs";
-import Rust from "@/pages/Rust";
-import Containers from "@/pages/Containers";
-import Virtualizacao from "@/pages/Virtualizacao";
-import Seguranca from "@/pages/Seguranca";
-import Luks from "@/pages/Luks";
-import Gpg from "@/pages/Gpg";
-import Hardening from "@/pages/Hardening";
-import Backup from "@/pages/Backup";
-import Automacao from "@/pages/Automacao";
-import Gaming from "@/pages/Gaming";
-import Troubleshooting from "@/pages/Troubleshooting";
-import Referencias from "@/pages/Referencias";
-import Mirrors from "@/pages/Mirrors";
-import Bootloaders from "@/pages/Bootloaders";
-import Fstab from "@/pages/Fstab";
-import SwapZram from "@/pages/SwapZram";
-import Locale from "@/pages/Locale";
-import Archinstall from "@/pages/Archinstall";
-import NetworkManagerPage from "@/pages/NetworkManagerPage";
-import Dns from "@/pages/Dns";
-import Fontes from "@/pages/Fontes";
-import Xorg from "@/pages/Xorg";
-import PowerManagement from "@/pages/PowerManagement";
-import Udev from "@/pages/Udev";
-import Sysctl from "@/pages/Sysctl";
-import Performance from "@/pages/Performance";
-import Makepkg from "@/pages/Makepkg";
-import PacmanHooks from "@/pages/PacmanHooks";
-import SecureBoot from "@/pages/SecureBoot";
-import AppArmor from "@/pages/AppArmor";
-import Polkit from "@/pages/Polkit";
-import Wine from "@/pages/Wine";
-import Samba from "@/pages/Samba";
-import Zfs from "@/pages/Zfs";
-import Impressao from "@/pages/Impressao";
-import Cgroups from "@/pages/Cgroups";
-import Plymouth from "@/pages/Plymouth";
-import InstalacaoSoftware from "@/pages/InstalacaoSoftware";
-import JavaSdks from "@/pages/JavaSdks";
-import NotFound from "@/pages/not-found";
+
+const Historia = lazy(() => import("@/pages/Historia"));
+const Filosofia = lazy(() => import("@/pages/Filosofia"));
+const Instalacao = lazy(() => import("@/pages/Instalacao"));
+const PrimeirosPassos = lazy(() => import("@/pages/PrimeirosPassos"));
+const AmbienteGrafico = lazy(() => import("@/pages/AmbienteGrafico"));
+const DisplayManagers = lazy(() => import("@/pages/DisplayManagers"));
+const Dotfiles = lazy(() => import("@/pages/Dotfiles"));
+const Kernel = lazy(() => import("@/pages/Kernel"));
+const BootProcess = lazy(() => import("@/pages/BootProcess"));
+const ModulosKernel = lazy(() => import("@/pages/ModulosKernel"));
+const Initramfs = lazy(() => import("@/pages/Initramfs"));
+const Pacman = lazy(() => import("@/pages/Pacman"));
+const Aur = lazy(() => import("@/pages/Aur"));
+const Flatpak = lazy(() => import("@/pages/Flatpak"));
+const Systemd = lazy(() => import("@/pages/Systemd"));
+const SistemaArquivos = lazy(() => import("@/pages/SistemaArquivos"));
+const Navegacao = lazy(() => import("@/pages/Navegacao"));
+const ManipulacaoArquivos = lazy(() => import("@/pages/ManipulacaoArquivos"));
+const Visualizacao = lazy(() => import("@/pages/Visualizacao"));
+const Permissoes = lazy(() => import("@/pages/Permissoes"));
+const Usuarios = lazy(() => import("@/pages/Usuarios"));
+const Processos = lazy(() => import("@/pages/Processos"));
+const Disco = lazy(() => import("@/pages/Disco"));
+const Lvm = lazy(() => import("@/pages/Lvm"));
+const Btrfs = lazy(() => import("@/pages/Btrfs"));
+const Logs = lazy(() => import("@/pages/Logs"));
+const ShellBash = lazy(() => import("@/pages/ShellBash"));
+const Redirecionamento = lazy(() => import("@/pages/Redirecionamento"));
+const Compressao = lazy(() => import("@/pages/Compressao"));
+const Avancado = lazy(() => import("@/pages/Avancado"));
+const Tmux = lazy(() => import("@/pages/Tmux"));
+const VimNeovim = lazy(() => import("@/pages/VimNeovim"));
+const Redes = lazy(() => import("@/pages/Redes"));
+const Ssh = lazy(() => import("@/pages/Ssh"));
+const SshAvancado = lazy(() => import("@/pages/SshAvancado"));
+const Firewall = lazy(() => import("@/pages/Firewall"));
+const Vpn = lazy(() => import("@/pages/Vpn"));
+const WifiAvancado = lazy(() => import("@/pages/WifiAvancado"));
+const TilingWm = lazy(() => import("@/pages/TilingWm"));
+const Wayland = lazy(() => import("@/pages/Wayland"));
+const Bluetooth = lazy(() => import("@/pages/Bluetooth"));
+const Pipewire = lazy(() => import("@/pages/Pipewire"));
+const AmbienteDev = lazy(() => import("@/pages/AmbienteDev"));
+const Git = lazy(() => import("@/pages/Git"));
+const Python = lazy(() => import("@/pages/Python"));
+const Nodejs = lazy(() => import("@/pages/Nodejs"));
+const Rust = lazy(() => import("@/pages/Rust"));
+const Containers = lazy(() => import("@/pages/Containers"));
+const Virtualizacao = lazy(() => import("@/pages/Virtualizacao"));
+const Seguranca = lazy(() => import("@/pages/Seguranca"));
+const Luks = lazy(() => import("@/pages/Luks"));
+const Gpg = lazy(() => import("@/pages/Gpg"));
+const Hardening = lazy(() => import("@/pages/Hardening"));
+const Backup = lazy(() => import("@/pages/Backup"));
+const Automacao = lazy(() => import("@/pages/Automacao"));
+const Gaming = lazy(() => import("@/pages/Gaming"));
+const Troubleshooting = lazy(() => import("@/pages/Troubleshooting"));
+const Referencias = lazy(() => import("@/pages/Referencias"));
+const Mirrors = lazy(() => import("@/pages/Mirrors"));
+const Bootloaders = lazy(() => import("@/pages/Bootloaders"));
+const Fstab = lazy(() => import("@/pages/Fstab"));
+const SwapZram = lazy(() => import("@/pages/SwapZram"));
+const Locale = lazy(() => import("@/pages/Locale"));
+const Archinstall = lazy(() => import("@/pages/Archinstall"));
+const NetworkManagerPage = lazy(() => import("@/pages/NetworkManagerPage"));
+const Dns = lazy(() => import("@/pages/Dns"));
+const Fontes = lazy(() => import("@/pages/Fontes"));
+const Xorg = lazy(() => import("@/pages/Xorg"));
+const PowerManagement = lazy(() => import("@/pages/PowerManagement"));
+const Udev = lazy(() => import("@/pages/Udev"));
+const Sysctl = lazy(() => import("@/pages/Sysctl"));
+const Performance = lazy(() => import("@/pages/Performance"));
+const Makepkg = lazy(() => import("@/pages/Makepkg"));
+const PacmanHooks = lazy(() => import("@/pages/PacmanHooks"));
+const SecureBoot = lazy(() => import("@/pages/SecureBoot"));
+const AppArmor = lazy(() => import("@/pages/AppArmor"));
+const Polkit = lazy(() => import("@/pages/Polkit"));
+const Wine = lazy(() => import("@/pages/Wine"));
+const Samba = lazy(() => import("@/pages/Samba"));
+const Zfs = lazy(() => import("@/pages/Zfs"));
+const Impressao = lazy(() => import("@/pages/Impressao"));
+const Cgroups = lazy(() => import("@/pages/Cgroups"));
+const Plymouth = lazy(() => import("@/pages/Plymouth"));
+const InstalacaoSoftware = lazy(() => import("@/pages/InstalacaoSoftware"));
+const JavaSdks = lazy(() => import("@/pages/JavaSdks"));
+const NotFound = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient();
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 function Layout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -110,7 +119,11 @@ function Layout({ children }: { children: React.ReactNode }) {
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       <div className="flex-1 lg:pl-72 flex flex-col min-w-0 transition-all duration-300">
         <Header onMenuClick={() => setIsSidebarOpen(true)} />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1">
+          <Suspense fallback={<PageLoader />}>
+            {children}
+          </Suspense>
+        </main>
       </div>
     </div>
   );
