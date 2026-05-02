@@ -487,7 +487,7 @@ job 4 at Wed Mar 26 23:30:00 2026`}
 
       <TerminalBlock
         command="atq"
-        output="4	Wed Mar 26 23:30:00 2026 a user"
+        output="4       Wed Mar 26 23:30:00 2026 a user"
       />
 
       <TerminalBlock
@@ -622,6 +622,384 @@ processar linha-a-linha       awk
 paralelizar                   xargs -P
 agendar uma vez               at
 agendar recorrente            systemd timer (preferido), cron`}
+      />
+
+      <h2>Utilitários essenciais (watch, tee, time, bc, date)</h2>
+
+      <p>
+        Cinco ferramentas pequenas que aparecem o tempo todo no dia-a-dia: monitorar saída em
+        tempo real, espelhar stdout em arquivo, medir tempo/recursos, fazer matemática no shell
+        e formatar datas. Todas vêm por padrão no Arch (exceto <code>/usr/bin/time</code> que está
+        no pacote <code>time</code>).
+      </p>
+
+      <h3>watch — repete um comando e mostra a saída atualizando</h3>
+
+      <CommandFlagList
+        command="watch"
+        items={[
+          { flag: "-n N", long: "--interval=N", description: "Intervalo em segundos entre execuções (default 2). Aceita fração: -n 0.5.", example: "watch -n 1 'free -h'" },
+          { flag: "-d", long: "--differences[=permanent]", description: "Destaca os caracteres que mudaram desde a execução anterior. =permanent mantém o destaque.", example: "watch -d -n 2 'ls -la /var/log'" },
+          { flag: "-t", long: "--no-title", description: "Suprime o cabeçalho de duas linhas (relógio + comando), libera espaço de tela." },
+          { flag: "-g", long: "--chgexit", description: "Sai (exit code 0) assim que a saída do comando mudar — ótimo para esperar evento.", example: "watch -g 'pgrep -c nginx'" },
+          { flag: "-c", long: "--color", description: "Interpreta sequências ANSI de cor da saída (sem isso, watch achata as cores)." },
+          { flag: "-e", long: "--errexit", description: "Sai se o comando terminar com exit code != 0." },
+          { flag: "-b", long: "--beep", description: "Toca o BEL do terminal quando o exit code for != 0." },
+          { flag: "-x", long: "--exec", description: "Passa o comando direto a execvp em vez de 'sh -c' (evita problemas com quoting)." },
+        ]}
+      />
+
+      <TerminalBlock
+        comment="acompanha uso de RAM atualizando a cada 1 segundo"
+        command="watch -n 1 'free -h'"
+        output={`Every 1.0s: free -h                                archlinux: Wed Mar 26 19:42:08 2026
+
+               total        used        free      shared  buff/cache   available
+Mem:            15Gi       6.2Gi       2.8Gi       412Mi       6.4Gi       8.6Gi
+Swap:          8.0Gi          0B       8.0Gi`}
+      />
+
+      <TerminalBlock
+        comment="-d destaca o que mudou (tamanho/data dos arquivos crescendo)"
+        command="watch -d -n 2 'ls -la /var/log | tail -5'"
+        output={`Every 2.0s: ls -la /var/log | tail -5             archlinux: Wed Mar 26 19:42:30 2026
+
+-rw-r----- 1 root systemd-journal  4194304 Mar 26 19:42 journal/system.journal
+-rw-r--r-- 1 root root              {y}  98214{/} Mar 26 19:42 pacman.log
+-rw-r--r-- 1 root root               24102 Mar 26 19:30 Xorg.0.log
+-rw------- 1 root root              {y} 187234{/} Mar 26 19:42 auth.log
+drwxr-xr-x 2 root root                4096 Mar 26 18:10 old/`}
+      />
+
+      <TerminalBlock
+        comment="acompanha o status de um serviço sem precisar repetir systemctl"
+        command="watch -n 5 'systemctl status nginx --no-pager'"
+        output={`Every 5.0s: systemctl status nginx --no-pager     archlinux: Wed Mar 26 19:43:00 2026
+
+● nginx.service - A high performance web server and a reverse proxy server
+     Loaded: loaded (/usr/lib/systemd/system/nginx.service; enabled; preset: disabled)
+     Active: {g}active (running){/} since Wed 2026-03-26 18:01:10 -03; 1h 41min ago
+   Main PID: 1842 (nginx)
+      Tasks: 5 (limit: 18843)
+     Memory: 12.4M
+        CPU: 842ms`}
+      />
+
+      <TerminalBlock
+        comment="-g sai assim que o comando muda — espera por um job concluir"
+        command="watch -g -n 1 'systemctl is-active backup.service'"
+        output={`(roda em loop mostrando 'active' ou 'activating' até virar 'inactive', e então sai)`}
+      />
+
+      <AlertBox type="info" title="Como sair do watch?">
+        <kbd>Ctrl+C</kbd> encerra. O cabeçalho mostra <em>Every Ns</em>, o nome do host e o
+        horário da última execução à direita — útil para confirmar que o terminal não congelou.
+      </AlertBox>
+
+      <h3>tee — espelha stdin para arquivo(s) E stdout</h3>
+
+      <p>
+        O nome vem do <strong>T</strong> de encanamento: divide um fluxo em dois. Resolve o
+        problema clássico "quero ver a saída <em>e</em> salvá-la em arquivo ao mesmo tempo".
+      </p>
+
+      <CommandFlagList
+        command="tee"
+        items={[
+          { flag: "(sem flag)", description: "Sobrescreve o(s) arquivo(s) destino e duplica a saída para stdout.", example: "echo oi | tee log.txt" },
+          { flag: "-a", long: "--append", description: "Adiciona ao final em vez de truncar — equivalente ao >> do shell.", example: "echo linha | tee -a app.log" },
+          { flag: "-i", long: "--ignore-interrupts", description: "Ignora SIGINT (Ctrl+C). Útil quando o pipe à esquerda pode receber sinal mas você quer terminar de gravar." },
+          { flag: "-p", description: "Diagnostica erros de escrita em pipes (uso raro)." },
+          { flag: "--output-error=warn|exit", description: "Controla o que fazer se uma escrita falhar (ex: disco cheio em um dos destinos)." },
+        ]}
+      />
+
+      <TerminalBlock
+        command={`echo "primeira linha" | tee arquivo.log`}
+        output="primeira linha"
+      />
+
+      <TerminalBlock
+        command="cat arquivo.log"
+        output="primeira linha"
+      />
+
+      <TerminalBlock
+        comment="-a anexa em vez de sobrescrever"
+        command={`echo "segunda linha" | tee -a arquivo.log`}
+        output="segunda linha"
+      />
+
+      <TerminalBlock
+        command="cat arquivo.log"
+        output={`primeira linha
+segunda linha`}
+      />
+
+      <TerminalBlock
+        comment="vários destinos de uma vez (cada arquivo recebe a saída completa)"
+        command={`uname -a | tee /tmp/host1.txt /tmp/host2.txt`}
+        output="Linux archlinux 6.12.1-arch1-1 #1 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux"
+      />
+
+      <TerminalBlock
+        comment="o caso clássico: escrever em arquivo de root sem rodar o editor todo como sudo"
+        command={`echo "vm.swappiness=10" | sudo tee /etc/sysctl.d/99-swap.conf > /dev/null`}
+        output=""
+      />
+
+      <TerminalBlock
+        comment="process substitution: divide a saída em dois greps simultâneos"
+        command={`journalctl -b | tee >(grep -i error > /tmp/errors.log) >(grep -i warn > /tmp/warns.log) > /dev/null`}
+        output=""
+      />
+
+      <TerminalBlock
+        command="wc -l /tmp/errors.log /tmp/warns.log"
+        output={`   42 /tmp/errors.log
+  187 /tmp/warns.log
+  229 total`}
+      />
+
+      <h3>time — mede tempo (e memória) de execução</h3>
+
+      <p>
+        Existem <strong>dois</strong> <code>time</code> diferentes: o <em>builtin</em> do bash
+        (sempre presente, formato simples) e o <em>binário</em> em <code>/usr/bin/time</code> (do
+        pacote <code>time</code>, com saída detalhada incluindo memória de pico, page faults, IO).
+      </p>
+
+      <TerminalBlock
+        comment="builtin do bash: real / user / sys"
+        command="time ls -R /usr > /dev/null"
+        output={`
+real    0m1.842s
+user    0m0.412s
+sys     0m1.392s`}
+      />
+
+      <OutputBlock
+        title="o que cada linha significa"
+        annotations={[
+          { line: 0, note: "tempo de relógio (wall-clock) total" },
+          { line: 1, note: "CPU em modo usuário (código da aplicação)" },
+          { line: 2, note: "CPU em modo kernel (syscalls, IO)" },
+        ]}
+        output={`real    0m1.842s
+user    0m0.412s
+sys     0m1.392s`}
+      />
+
+      <TerminalBlock
+        comment="instala o /usr/bin/time (separado do builtin)"
+        command="sudo pacman -S --needed time"
+        output={`Packages (1) time-1.9-5
+Total Installed Size:  0.06 MiB`}
+      />
+
+      <TerminalBlock
+        comment="-v (verbose) — relatório completo de recursos do kernel"
+        command={`/usr/bin/time -v ls -R /usr > /dev/null`}
+        output={`        Command being timed: "ls -R /usr"
+        User time (seconds): 0.41
+        System time (seconds): 1.39
+        Percent of CPU this job got: 97%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.84
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): {y}18432{/}
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 4218
+        Voluntary context switches: 12
+        Involuntary context switches: 184
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0`}
+      />
+
+      <TerminalBlock
+        comment="formato customizado: só wall-time + RSS de pico, ótimo para benchmark"
+        command={`/usr/bin/time -f 'wall=%e  rss_max=%M KB' grep -r TODO /usr/include 2>/dev/null`}
+        output={`wall=2.18  rss_max=14336 KB`}
+      />
+
+      <AlertBox type="warning" title="Builtin do bash NÃO mostra memória">
+        Se você quiser <strong>Maximum resident set size</strong>, page faults ou qualquer
+        métrica que não seja real/user/sys, precisa do <code>/usr/bin/time -v</code>.
+        Note o caminho absoluto: rodar só <code>time -v</code> usa o builtin do bash, que
+        ignora <code>-v</code> e quebra. Use <code>command time -v</code> ou{" "}
+        <code>\time -v</code> (a barra desativa o alias/builtin).
+      </AlertBox>
+
+      <h3>bc — calculadora de precisão arbitrária</h3>
+
+      <CommandFlagList
+        command="bc"
+        items={[
+          { flag: "(sem flag)", description: "Modo interativo. Aritmética inteira por padrão (scale=0)." },
+          { flag: "-l", long: "--mathlib", description: "Carrega biblioteca matemática (scale=20, define s/c/a/l/e e sqrt). Sem isso, não há ponto flutuante por padrão." },
+          { flag: "-q", long: "--quiet", description: "Suprime o cabeçalho de versão ao iniciar interativo." },
+          { flag: "-w", long: "--warn", description: "Avisa sobre construções não-POSIX." },
+          { flag: "-s", long: "--standard", description: "Modo POSIX estrito." },
+        ]}
+      />
+
+      <TerminalBlock
+        command={`echo "2+2" | bc`}
+        output="4"
+      />
+
+      <TerminalBlock
+        comment="sem -l e sem scale, divisão é inteira"
+        command={`echo "22/7" | bc`}
+        output="3"
+      />
+
+      <TerminalBlock
+        comment="scale=N define dígitos depois da vírgula"
+        command={`echo "scale=4; 22/7" | bc`}
+        output="3.1428"
+      />
+
+      <TerminalBlock
+        comment="-l carrega mathlib: sqrt, sin, cos, log, e()"
+        command={`echo "scale=10; sqrt(2)" | bc -l`}
+        output="1.4142135623"
+      />
+
+      <TerminalBlock
+        comment="potências e raízes — pi a 50 casas via 4*atan(1)"
+        command={`echo "scale=50; 4*a(1)" | bc -l`}
+        output="3.14159265358979323846264338327950288419716939937508"
+      />
+
+      <TerminalBlock
+        comment="conversão de base: decimal → binário (obase=base de saída)"
+        command={`echo "obase=2; 255" | bc`}
+        output="11111111"
+      />
+
+      <TerminalBlock
+        comment="binário → decimal (ibase=base de entrada)"
+        command={`echo "ibase=2; 11111111" | bc`}
+        output="255"
+      />
+
+      <TerminalBlock
+        comment="modo interativo (Ctrl+D para sair)"
+        command="bc -lq"
+        output={`(2^64) - 1
+18446744073709551615
+sqrt(2) * sqrt(2)
+1.99999999999999999998
+quit`}
+      />
+
+      <h3>date — formatar, converter e calcular datas</h3>
+
+      <TerminalBlock
+        command="date"
+        output="Wed Mar 26 19:42:08 -03 2026"
+      />
+
+      <TerminalBlock
+        comment="-u força UTC"
+        command="date -u"
+        output="Wed Mar 26 22:42:08 UTC 2026"
+      />
+
+      <TerminalBlock
+        comment="epoch (segundos desde 1970-01-01 UTC)"
+        command="date +%s"
+        output="1774572128"
+      />
+
+      <TerminalBlock
+        comment="-d aceita datas humanas e calcula relativo"
+        command={`date -d "2026-12-25 10:00" +%s`}
+        output="1798686000"
+      />
+
+      <TerminalBlock
+        comment="epoch → humano (prefixe @ no -d)"
+        command={`date -d "@1735128000"`}
+        output="Thu Dec 25 13:00:00 -03 2024"
+      />
+
+      <TerminalBlock
+        comment="formato ISO 8601 com timezone — padrão de logs/APIs"
+        command={`date +"%Y-%m-%dT%H:%M:%S%z"`}
+        output="2026-03-26T19:42:08-0300"
+      />
+
+      <TerminalBlock
+        comment="formato RFC 3339 (alternativa nativa)"
+        command="date --rfc-3339=seconds"
+        output="2026-03-26 19:42:08-03:00"
+      />
+
+      <TerminalBlock
+        comment="aritmética de datas em linguagem natural"
+        command={`date -d "next friday"`}
+        output="Fri Mar 27 00:00:00 -03 2026"
+      />
+
+      <TerminalBlock
+        command={`date -d "2 days ago"`}
+        output="Mon Mar 24 19:42:08 -03 2026"
+      />
+
+      <TerminalBlock
+        command={`date -d "1 month ago + 3 hours"`}
+        output="Wed Feb 26 22:42:08 -03 2026"
+      />
+
+      <TerminalBlock
+        comment="diferença em dias entre duas datas (via epoch)"
+        command={`echo $(( ( $(date -d "2026-12-25" +%s) - $(date +%s) ) / 86400 )) dias até o Natal`}
+        output="273 dias até o Natal"
+      />
+
+      <OutputBlock
+        title="format specifiers de date(1)"
+        output={`%Y   ano com 4 dígitos      (2026)
+%y   ano com 2 dígitos      (26)
+%m   mês [01-12]            (03)
+%d   dia do mês [01-31]     (26)
+%H   hora [00-23]           (19)
+%M   minutos [00-59]        (42)
+%S   segundos [00-60]       (08)
+%s   epoch (UTC)            (1774572128)
+%z   offset numérico de TZ  (-0300)
+%Z   nome do TZ             (-03)
+%a   dia da semana abrev.   (Wed)
+%A   dia da semana          (Wednesday)
+%b / %h  mês abreviado      (Mar)
+%B   mês por extenso        (March)
+%j   dia do ano [001-366]   (085)
+%U   semana do ano (dom=0)  (12)
+%V   semana ISO 8601        (13)
+%N   nanossegundos          (842193100)
+%n   newline   |   %t  tab`}
+      />
+
+      <TerminalBlock
+        comment="util em scripts: timestamp seguro para nome de arquivo"
+        command={`tar czf "backup-$(date +%Y%m%d-%H%M%S).tar.gz" ~/projetos`}
+        output=""
+      />
+
+      <TerminalBlock
+        command="ls backup-*.tar.gz"
+        output="backup-20260326-194208.tar.gz"
       />
     </PageContainer>
   );

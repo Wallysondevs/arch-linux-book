@@ -3,6 +3,7 @@ import { CodeBlock } from "@/components/ui/CodeBlock";
 import { AlertBox } from "@/components/ui/AlertBox";
 import { TerminalBlock } from "@/components/ui/TerminalBlock";
 import { OutputBlock } from "@/components/ui/OutputBlock";
+import { CommandFlagList } from "@/components/ui/CommandFlag";
 
 export default function Ssh() {
   return (
@@ -363,7 +364,241 @@ total size is 4,829,001  speedup is 14,812.27 (DRY RUN)`}
 -e ssh -p 2222              porta SSH custom`}
       />
 
-      <h2>10. SSH Tunneling (port forwarding)</h2>
+      <h2>10. sftp — transferência interativa segura</h2>
+      <p>
+        O <code>sftp</code> (SSH File Transfer Protocol) vem junto com o <code>openssh</code> e abre uma{" "}
+        <strong>sessão interativa</strong> sobre a mesma porta 22 do SSH — diferente do <code>scp</code>{" "}
+        (que dispara uma rajada e some) e do <code>rsync</code> (que sincroniza diferenças). Pense no
+        sftp como um "ftp moderno" criptografado: você navega pelo servidor remoto e local com comandos
+        próprios e baixa/envia arquivos sob demanda.
+      </p>
+
+      <h3>10.1. Iniciando a sessão</h3>
+      <TerminalBlock
+        command="sftp deploy@server.example.com"
+        output={`{c}deploy@server.example.com's password:{/} {dim}********{/}
+Connected to server.example.com.
+sftp>`}
+      />
+      <p className="text-sm text-muted-foreground">
+        O prompt muda para <code>sftp&gt;</code> — você está num "mini-shell" remoto. Comandos sem prefixo
+        (<code>ls</code>, <code>cd</code>, <code>pwd</code>) operam no <strong>servidor</strong>; com
+        prefixo <code>l</code> (<code>lls</code>, <code>lcd</code>, <code>lpwd</code>) operam{" "}
+        <strong>localmente</strong>.
+      </p>
+
+      <h3>10.2. Navegando: remoto vs local</h3>
+      <TerminalBlock
+        prompt="sftp> "
+        command="pwd"
+        output={`Remote working directory: /home/deploy`}
+      />
+      <TerminalBlock
+        prompt="sftp> "
+        command="lpwd"
+        output={`Local working directory: /home/user`}
+      />
+      <TerminalBlock
+        prompt="sftp> "
+        command="ls"
+        output={`backups   docs      logs      scripts   site.tar.gz`}
+      />
+      <TerminalBlock
+        prompt="sftp> "
+        command="lls"
+        output={`Downloads  Documents  Pictures  projeto  relatorio.pdf`}
+        comment="lls = ls local"
+      />
+      <TerminalBlock
+        prompt="sftp> "
+        command="cd /var/www"
+        output={``}
+        comment="muda diretório no servidor"
+      />
+      <TerminalBlock
+        prompt="sftp> "
+        command="lcd ~/Downloads"
+        output={``}
+        comment="lcd = cd local; agora os 'get' caem em ~/Downloads"
+      />
+      <TerminalBlock
+        prompt="sftp> "
+        command="ls -la"
+        output={`drwxr-xr-x    4 deploy deploy     4096 Jan 15 14:20 .
+drwxr-xr-x    8 root   root       4096 Jan 10 09:11 ..
+-rw-r--r--    1 deploy deploy    23184 Jan 15 14:18 index.html
+-rw-r--r--    1 deploy deploy     4218 Jan 15 14:18 style.css
+drwxr-xr-x    2 deploy deploy     4096 Jan 12 11:02 img`}
+      />
+
+      <h3>10.3. Baixando arquivos (get)</h3>
+      <TerminalBlock
+        prompt="sftp> "
+        command="get site.tar.gz"
+        output={`Fetching /var/www/site.tar.gz to site.tar.gz
+/var/www/site.tar.gz                           100%   18MB   9.4MB/s   00:01`}
+      />
+      <TerminalBlock
+        prompt="sftp> "
+        command="get -r logs/"
+        output={`Fetching /var/www/logs/ to logs/
+Retrieving /var/www/logs
+/var/www/logs/access.log                       100%   28MB  18.4MB/s   00:01
+/var/www/logs/error.log                        100%  412KB   3.1MB/s   00:00
+/var/www/logs/2025-01-15.log                   100%  1.2MB   8.2MB/s   00:00`}
+        comment="-r = recursivo (diretório inteiro)"
+      />
+      <TerminalBlock
+        prompt="sftp> "
+        command="mget *.log"
+        output={`Fetching /var/www/access.log to access.log
+/var/www/access.log                            100%   28MB  18.4MB/s   00:01
+Fetching /var/www/error.log to error.log
+/var/www/error.log                             100%  412KB   3.1MB/s   00:00`}
+        comment="mget = múltiplos arquivos (aceita glob *)"
+      />
+      <TerminalBlock
+        prompt="sftp> "
+        command="get -P relatorio.pdf"
+        output={`Fetching /home/deploy/relatorio.pdf to relatorio.pdf
+/home/deploy/relatorio.pdf                     100% 4218KB   3.1MB/s   00:01`}
+        comment="-P preserva permissões e timestamps no destino local"
+      />
+
+      <h3>10.4. Enviando arquivos (put)</h3>
+      <TerminalBlock
+        prompt="sftp> "
+        command="put backup.sql"
+        output={`Uploading backup.sql to /var/www/backup.sql
+backup.sql                                     100%   42MB  21.4MB/s   00:02`}
+      />
+      <TerminalBlock
+        prompt="sftp> "
+        command="put -r site/"
+        output={`Uploading site/ to /var/www/site
+Entering site/
+site/index.html                                100% 4324    9.8KB/s   00:00
+site/style.css                                 100%  812    2.1KB/s   00:00
+site/app.js                                    100%  21KB  41.2KB/s   00:00
+site/img/logo.png                              100%  88KB 124.0KB/s   00:00`}
+        comment="-r envia diretório recursivamente"
+      />
+      <TerminalBlock
+        prompt="sftp> "
+        command="mput *.html"
+        output={`Uploading index.html to /var/www/index.html
+index.html                                     100% 4324    9.8KB/s   00:00
+Uploading sobre.html to /var/www/sobre.html
+sobre.html                                     100% 2102    5.1KB/s   00:00`}
+      />
+
+      <h3>10.5. Manipulação remota: mkdir, rm, chmod</h3>
+      <TerminalBlock
+        prompt="sftp> "
+        command="mkdir nova_pasta"
+        output={``}
+      />
+      <TerminalBlock
+        prompt="sftp> "
+        command="rm arquivo.tmp"
+        output={`Removing /var/www/arquivo.tmp`}
+      />
+      <TerminalBlock
+        prompt="sftp> "
+        command="rmdir vazia"
+        output={``}
+        comment="rmdir só funciona se a pasta estiver vazia"
+      />
+      <TerminalBlock
+        prompt="sftp> "
+        command="chmod 644 backup.sql"
+        output={`Changing mode on /var/www/backup.sql`}
+      />
+      <TerminalBlock
+        prompt="sftp> "
+        command="rename antigo.txt novo.txt"
+        output={``}
+      />
+
+      <h3>10.6. Saindo da sessão</h3>
+      <TerminalBlock
+        prompt="sftp> "
+        command="bye"
+        output={``}
+        comment="ou exit ou quit — todos fecham a conexão"
+      />
+
+      <h3>10.7. Modo batch: scripts não-interativos</h3>
+      <p>
+        Para automação (cron, CI), use <code>-b</code> apontando para um arquivo com a sequência de
+        comandos sftp:
+      </p>
+      <TerminalBlock
+        command="cat upload.sftp"
+        output={`cd /var/www/site
+lcd ~/projeto/dist
+put -r .
+chmod 644 *.html
+bye`}
+      />
+      <TerminalBlock
+        command="sftp -b upload.sftp deploy@server.example.com"
+        output={`sftp> cd /var/www/site
+sftp> lcd /home/user/projeto/dist
+sftp> put -r .
+Uploading ./index.html to /var/www/site/index.html
+Uploading ./style.css to /var/www/site/style.css
+Uploading ./app.js to /var/www/site/app.js
+sftp> chmod 644 *.html
+Changing mode on /var/www/site/index.html
+sftp> bye`}
+        comment="-b = batch mode; precisa ter chave configurada (sem prompt de senha)"
+      />
+      <AlertBox type="info" title="Batch sem senha">
+        O modo <code>-b</code> exige autenticação por chave (<code>ssh-copy-id</code> antes) — ele não
+        pode digitar senha por você. Use <code>-b -</code> para ler comandos da stdin (útil em pipes).
+      </AlertBox>
+
+      <h3>10.8. Flags úteis na linha de comando</h3>
+      <CommandFlagList
+        command="sftp [opções] usuário@host"
+        items={[
+          { flag: "-P porta", description: <>Porta SSH (cuidado: <strong>maiúsculo</strong>, igual ao <code>scp</code>; o <code>ssh</code> usa <code>-p</code> minúsculo).</>, example: "sftp -P 2222 deploy@server.example.com" },
+          { flag: "-i chave", description: <>Caminho da chave privada para autenticação.</>, example: "sftp -i ~/.ssh/keys/prod_ed25519 deploy@prod" },
+          { flag: "-r", description: <>Recursivo (apenas para <code>get</code>/<code>put</code> dentro da sessão; na linha de comando o sftp já preserva diretórios).</> },
+          { flag: "-b arquivo", description: <>Modo batch: lê comandos sftp de um arquivo (use <code>-</code> para stdin). Exige autenticação por chave.</>, example: "sftp -b script.sftp deploy@server" },
+          { flag: '-o "Option=value"', description: <>Passa qualquer opção do <code>ssh_config</code> (ex.: <code>StrictHostKeyChecking=no</code>, <code>ConnectTimeout=10</code>).</>, example: 'sftp -o "ConnectTimeout=5" deploy@server' },
+          { flag: "-l limite", description: <>Limita banda em Kbit/s (útil pra não saturar uplink).</>, example: "sftp -l 1024 deploy@server" },
+          { flag: "-C", description: <>Habilita compressão (igual ao <code>ssh -C</code>) — útil em links lentos com texto/log.</> },
+          { flag: "-v / -vv / -vvv", description: <>Modo verbose para debugar autenticação e protocolo.</> },
+          { flag: "-q", description: <>Modo silencioso (não mostra barra de progresso).</> },
+          { flag: "-a", description: <>No <code>get</code>/<code>put</code>, retoma transferências interrompidas.</> },
+        ]}
+      />
+
+      <h3>10.9. scp vs sftp vs rsync — quando usar cada um</h3>
+      <OutputBlock
+        title="Comparação rápida (mesma porta 22, mesma autenticação SSH)"
+        output={`┌────────┬─────────────────────┬───────────────────────────────────┬──────────────────────────────┐
+│        │ Modelo              │ Quando usar                       │ Não use quando               │
+├────────┼─────────────────────┼───────────────────────────────────┼──────────────────────────────┤
+│ scp    │ Uma rajada, e sai   │ Copiar 1 arquivo / 1 diretório    │ Sincronizar (sempre re-envia)│
+│        │ (não-interativo)    │ rápido, sem ficar conectado       │ Transferir muitos pequenos   │
+├────────┼─────────────────────┼───────────────────────────────────┼──────────────────────────────┤
+│ sftp   │ Sessão interativa   │ Navegar, escolher arquivos a olho │ Automação simples (use scp)  │
+│        │ (prompt sftp>)      │ Batch scripts (-b)                │ Sync de árvores grandes      │
+├────────┼─────────────────────┼───────────────────────────────────┼──────────────────────────────┤
+│ rsync  │ Sincronização       │ Espelhar diretórios, deploy,      │ Transferência simples 1 vez  │
+│        │ delta (só diffs)    │ backup incremental, --delete      │ (overhead de comparação)     │
+└────────┴─────────────────────┴───────────────────────────────────┴──────────────────────────────┘`}
+      />
+      <p className="text-sm text-muted-foreground">
+        Regra prática: <strong>scp</strong> = "copy and forget"; <strong>sftp</strong> = "vou ficar
+        explorando o servidor"; <strong>rsync</strong> = "quero que os dois lados fiquem idênticos
+        sem reenviar o que já existe".
+      </p>
+
+      <h2>11. SSH Tunneling (port forwarding)</h2>
 
       <h3>Local (-L) — acessar serviço remoto pela sua porta local</h3>
       <TerminalBlock
@@ -403,7 +638,7 @@ postgres=#`}
         comment={`-f = fork pro background; mate com 'pkill -f "ssh -L 5433"'`}
       />
 
-      <h2>11. Servidor SSH (sshd)</h2>
+      <h2>12. Servidor SSH (sshd)</h2>
       <TerminalBlock
         command="sudo systemctl enable --now sshd"
         output={`Created symlink /etc/systemd/system/multi-user.target.wants/sshd.service → /usr/lib/systemd/system/sshd.service.`}
@@ -457,7 +692,7 @@ LogLevel VERBOSE`}
         comment="reload = re-lê config sem matar conexões existentes"
       />
 
-      <h2>12. Diagnóstico: SSH não conecta</h2>
+      <h2>13. Diagnóstico: SSH não conecta</h2>
 
       <AlertBox type="info" title="Regra de ouro">
         Se <code>nc -zv host 22</code> falha → problema de rede/firewall. Se conecta mas SSH recusa
@@ -518,7 +753,7 @@ This private key will be ignored.`}
         comment="solução: chmod 600 ~/.ssh/id_ed25519"
       />
 
-      <h2>13. Firewall — abrindo a porta SSH</h2>
+      <h2>14. Firewall — abrindo a porta SSH</h2>
 
       <TerminalBlock
         command="sudo ufw status verbose"
@@ -556,7 +791,7 @@ To                         Action      From
         para autorrecuperação caso erre.
       </AlertBox>
 
-      <h2>14. Boas práticas — recapitulando</h2>
+      <h2>15. Boas práticas — recapitulando</h2>
       <CodeBlock
         title="Endurecimento progressivo"
         code={`# 1. Trocar porta padrão (reduz brute-force ruidoso)
@@ -584,12 +819,12 @@ ssh-audit server.example.com
 cat ~/.ssh/authorized_keys`}
       />
 
-      <h2>15. Referências</h2>
+      <h2>16. Referências</h2>
       <ul>
         <li><a href="https://wiki.archlinux.org/title/OpenSSH" target="_blank" rel="noopener noreferrer">ArchWiki — OpenSSH</a></li>
         <li><a href="https://wiki.archlinux.org/title/SSH_keys" target="_blank" rel="noopener noreferrer">ArchWiki — SSH keys</a></li>
         <li><a href="https://man.openbsd.org/sshd_config" target="_blank" rel="noopener noreferrer">man sshd_config (OpenBSD)</a></li>
-        <li><code>man ssh</code>, <code>man ssh_config</code>, <code>man ssh-keygen</code>, <code>man scp</code>, <code>man rsync</code></li>
+        <li><code>man ssh</code>, <code>man ssh_config</code>, <code>man ssh-keygen</code>, <code>man scp</code>, <code>man sftp</code>, <code>man rsync</code></li>
       </ul>
     </PageContainer>
   );

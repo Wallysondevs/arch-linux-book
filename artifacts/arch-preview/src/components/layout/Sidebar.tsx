@@ -67,6 +67,7 @@ const NAVIGATION = [
   {
     title: "8. Hardware",
     items: [
+      { path: "/hardware", label: "Inspeção de Hardware", icon: Cpu },
       { path: "/disco", label: "Discos e Partições", icon: HardDrive },
     ]
   },
