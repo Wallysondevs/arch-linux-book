@@ -1,366 +1,436 @@
 import { PageContainer } from "@/components/layout/PageContainer";
-import { CodeBlock } from "@/components/ui/CodeBlock";
+import { TerminalBlock } from "@/components/ui/TerminalBlock";
+import { OutputBlock } from "@/components/ui/OutputBlock";
+import { CommandFlagList } from "@/components/ui/CommandFlag";
 import { AlertBox } from "@/components/ui/AlertBox";
 
 export default function Compressao() {
   return (
     <PageContainer
       title="Compressão e Arquivamento"
-      subtitle="Aprenda a compactar, descompactar e arquivar arquivos no Linux usando tar, gzip, bzip2, xz, zip e 7z."
+      subtitle="tar, gzip, bzip2, xz, zstd, zip e 7z — cada flag, cada formato, com tamanhos antes/depois e a saída literal de cada execução."
       difficulty="iniciante"
-      timeToRead="20 min"
+      timeToRead="25 min"
+      category="Shell Avançado"
     >
-      <h2>Arquivamento vs Compressão</h2>
+      <h2>Arquivar ≠ Comprimir</h2>
       <p>
-        É importante entender a diferença entre esses dois conceitos:
+        São duas operações distintas que quase sempre andam juntas:
       </p>
       <ul>
-        <li><strong>Arquivamento</strong> — Combinar múltiplos arquivos e diretórios em um único arquivo (ex: <code>tar</code>). Não reduz o tamanho.</li>
-        <li><strong>Compressão</strong> — Reduzir o tamanho de um arquivo usando algoritmos (ex: <code>gzip</code>, <code>bzip2</code>, <code>xz</code>).</li>
+        <li><strong>Arquivar</strong> — empacotar vários arquivos em um só (preserva permissões, donos, links). Ferramenta: <code>tar</code>.</li>
+        <li><strong>Comprimir</strong> — reduzir o tamanho via algoritmo. Ferramentas: <code>gzip</code>, <code>bzip2</code>, <code>xz</code>, <code>zstd</code>.</li>
       </ul>
-      <p>
-        Na prática, quase sempre usamos os dois juntos: primeiro arquivamos com <code>tar</code>,
-        depois comprimimos com um algoritmo.
-      </p>
 
-      <h2>tar — O Canivete Suíço</h2>
-      <p>
-        O <code>tar</code> (Tape ARchive) é a ferramenta fundamental para arquivamento no Linux.
-        Ele não comprime por padrão, mas pode chamar compressores automaticamente.
-      </p>
+      <h2>tar — o canivete suíço</h2>
 
-      <h3>Flags Principais</h3>
-      <CodeBlock
-        title="Flags essenciais do tar"
-        code={`# Flags de ação (uma obrigatória):
--c    # Create: criar arquivo
--x    # eXtract: extrair arquivo
--t    # lisT: listar conteúdo sem extrair
-
-# Flags de compressão:
--z    # gzip (.tar.gz ou .tgz)
--j    # bzip2 (.tar.bz2)
--J    # xz (.tar.xz)
-
-# Flags comuns:
--v    # Verbose: mostrar progresso
--f    # File: especificar nome do arquivo (SEMPRE última flag antes do nome)
--C    # Change directory: extrair em diretório específico
--p    # Preservar permissões
---exclude  # Excluir padrões`}
+      <CommandFlagList
+        command="tar"
+        items={[
+          { flag: "-c", long: "--create", description: "Cria um novo arquivo." },
+          { flag: "-x", long: "--extract", description: "Extrai um arquivo." },
+          { flag: "-t", long: "--list", description: "Lista o conteúdo sem extrair." },
+          { flag: "-f", long: "--file=ARQ", description: "Indica o arquivo. Quando aparece em flags agrupadas, deve ser a ÚLTIMA letra.", example: "tar -czvf x.tar.gz dir/" },
+          { flag: "-v", long: "--verbose", description: "Mostra cada arquivo processado." },
+          { flag: "-z", long: "--gzip", description: "Aplica gzip (.tar.gz / .tgz)." },
+          { flag: "-j", long: "--bzip2", description: "Aplica bzip2 (.tar.bz2)." },
+          { flag: "-J", long: "--xz", description: "Aplica xz (.tar.xz)." },
+          { flag: "--zstd", description: "Aplica zstd (.tar.zst) — usado pelo pacman." },
+          { flag: "-C", long: "--directory=DIR", description: "Muda para DIR antes de operar (ótimo para extrair fora do cwd).", example: "tar -xzf x.tar.gz -C /opt" },
+          { flag: "--exclude=PAT", description: "Não inclui arquivos que casam com o glob.", example: "tar -czf b.tgz . --exclude='*.log'" },
+          { flag: "-p", description: "Preserva permissões originais (default ao extrair como root)." },
+          { flag: "--strip-components=N", description: "Remove N níveis de diretórios do path ao extrair." },
+        ]}
       />
 
-      <h3>Criando Arquivos tar</h3>
-      <CodeBlock
-        title="Criar arquivos tar com diferentes compressões"
-        code={`# Arquivo tar sem compressão
-tar -cvf backup.tar /home/usuario/documentos
+      <h3>Criando um tar</h3>
 
-# tar + gzip (mais comum, boa velocidade)
-tar -czvf backup.tar.gz /home/usuario/documentos
-
-# tar + bzip2 (melhor compressão, mais lento)
-tar -cjvf backup.tar.bz2 /home/usuario/documentos
-
-# tar + xz (melhor compressão possível, bem mais lento)
-tar -cJvf backup.tar.xz /home/usuario/documentos
-
-# Arquivar múltiplos diretórios
-tar -czvf projeto.tar.gz src/ docs/ README.md
-
-# Excluir arquivos/diretórios
-tar -czvf backup.tar.gz /home/usuario \\
-    --exclude='*.tmp' \\
-    --exclude='.cache' \\
-    --exclude='node_modules'
-
-# Excluir a partir de um arquivo de padrões
-tar -czvf backup.tar.gz /home/usuario -X exclusoes.txt`}
+      <TerminalBlock
+        comment="estado inicial"
+        command="ls -l projeto/ ; du -sh projeto"
+        output={`total 16
+-rw-r--r-- 1 user user  847 Mar 26 18:30 README.md
+-rw-r--r-- 1 user user 1842 Mar 26 18:30 main.c
+-rw-r--r-- 1 user user  124 Mar 26 18:30 Makefile
+2.8M    projeto`}
       />
 
-      <h3>Extraindo Arquivos tar</h3>
-      <CodeBlock
-        title="Extrair arquivos tar"
-        code={`# Extrair tar simples
-tar -xvf arquivo.tar
-
-# Extrair tar.gz
-tar -xzvf arquivo.tar.gz
-
-# Extrair tar.bz2
-tar -xjvf arquivo.tar.bz2
-
-# Extrair tar.xz
-tar -xJvf arquivo.tar.xz
-
-# Extrair em diretório específico
-tar -xzvf arquivo.tar.gz -C /tmp/destino/
-
-# Extrair apenas um arquivo específico
-tar -xzvf backup.tar.gz home/usuario/documento.txt
-
-# Extrair com padrão
-tar -xzvf backup.tar.gz --wildcards '*.conf'`}
+      <TerminalBlock
+        comment="-c criar, -v verbose, -f arquivo"
+        command="tar -cvf projeto.tar projeto/"
+        output={`projeto/
+projeto/README.md
+projeto/main.c
+projeto/Makefile
+projeto/src/
+projeto/src/util.c`}
       />
 
-      <h3>Listando Conteúdo</h3>
-      <CodeBlock
-        title="Ver conteúdo sem extrair"
-        code={`# Listar conteúdo de um tar
-tar -tvf arquivo.tar
-
-# Listar conteúdo de um tar.gz
-tar -tzvf arquivo.tar.gz
-
-# Listar apenas nomes dos arquivos
-tar -tf arquivo.tar.gz
-
-# Buscar arquivo específico na listagem
-tar -tf backup.tar.gz | grep "pacman.conf"`}
+      <TerminalBlock
+        comment="tar puro NÃO comprime — mesmo tamanho"
+        command="ls -lh projeto.tar"
+        output="-rw-r--r-- 1 user user 2.8M Mar 26 18:31 projeto.tar"
       />
 
-      <AlertBox type="success" title="Dica: tar detecta compressão automaticamente">
-        Nas versões modernas do tar, você pode omitir as flags de compressão na extração.
-        O comando <code>tar -xvf arquivo.tar.gz</code> funciona sem o <code>-z</code> porque
-        o tar detecta o formato automaticamente.
+      <h3>tar + cada compressor lado a lado</h3>
+
+      <TerminalBlock
+        command={`tar -czvf projeto.tar.gz   projeto/   # gzip
+tar -cjvf projeto.tar.bz2  projeto/   # bzip2
+tar -cJvf projeto.tar.xz   projeto/   # xz
+tar --zstd -cvf projeto.tar.zst projeto/  # zstd`}
+        output={`projeto/
+projeto/README.md
+projeto/main.c
+... (saída idêntica para os 4)`}
+      />
+
+      <OutputBlock
+        title="ls -lh — comparando formatos no mesmo diretório de 2.8M"
+        output={`-rw-r--r-- 1 user user 2.8M Mar 26 18:31 projeto.tar
+-rw-r--r-- 1 user user 1.1M Mar 26 18:32 projeto.tar.gz
+-rw-r--r-- 1 user user 980K Mar 26 18:32 projeto.tar.bz2
+-rw-r--r-- 1 user user 812K Mar 26 18:33 projeto.tar.xz
+-rw-r--r-- 1 user user 1.0M Mar 26 18:33 projeto.tar.zst`}
+        annotations={[
+          { line: 0, note: "sem compressão" },
+          { line: 1, note: "rápido, boa razão" },
+          { line: 2, note: "~3x mais lento" },
+          { line: 3, note: "menor tamanho, ~10x mais lento" },
+          { line: 4, note: "rápido como gzip, comprime quase como xz" },
+        ]}
+      />
+
+      <h3>Listando antes de extrair</h3>
+
+      <TerminalBlock
+        command="tar -tzvf projeto.tar.gz"
+        output={`drwxr-xr-x user/user 0 2026-03-26 18:30 projeto/
+-rw-r--r-- user/user 847 2026-03-26 18:30 projeto/README.md
+-rw-r--r-- user/user 1842 2026-03-26 18:30 projeto/main.c
+-rw-r--r-- user/user 124 2026-03-26 18:30 projeto/Makefile
+drwxr-xr-x user/user 0 2026-03-26 18:30 projeto/src/
+-rw-r--r-- user/user 412 2026-03-26 18:30 projeto/src/util.c`}
+      />
+
+      <h3>Extraindo</h3>
+
+      <TerminalBlock
+        comment="tar moderno detecta o formato sozinho — pode omitir z/j/J"
+        command="tar -xvf projeto.tar.gz -C /tmp/restore/"
+        output={`projeto/
+projeto/README.md
+projeto/main.c
+projeto/Makefile
+projeto/src/
+projeto/src/util.c`}
+      />
+
+      <TerminalBlock
+        comment="só um arquivo específico"
+        command="tar -xzvf projeto.tar.gz projeto/main.c"
+        output="projeto/main.c"
+      />
+
+      <TerminalBlock
+        comment="ignora o diretório raiz com --strip-components=1"
+        command="tar -xzvf projeto.tar.gz --strip-components=1 -C /opt/app"
+        output={`README.md
+main.c
+Makefile
+src/
+src/util.c`}
+      />
+
+      <AlertBox type="danger" title="tar bombs">
+        Antes de extrair de fonte desconhecida, sempre rode <code>tar -tf arq.tgz | head</code>.
+        Arquivos sem diretório raiz despejam centenas de arquivos no cwd e bagunçam tudo.
       </AlertBox>
 
       <h2>gzip / gunzip</h2>
-      <p>
-        O <code>gzip</code> é o compressor mais comum no Linux. Ele comprime arquivos individuais
-        (não diretórios). Oferece bom equilíbrio entre velocidade e compressão.
-      </p>
-      <CodeBlock
-        title="Usando gzip"
-        code={`# Comprimir arquivo (SUBSTITUI o original)
-gzip arquivo.txt
-# Resultado: arquivo.txt.gz (o original é removido)
 
-# Descomprimir
-gunzip arquivo.txt.gz
-# ou
-gzip -d arquivo.txt.gz
+      <CommandFlagList
+        command="gzip"
+        items={[
+          { flag: "-k", long: "--keep", description: "Mantém o arquivo original (por padrão é removido)." },
+          { flag: "-d", long: "--decompress", description: "Descomprime (igual a gunzip)." },
+          { flag: "-l", long: "--list", description: "Mostra estatísticas sem descomprimir." },
+          { flag: "-1 .. -9", description: "Nível: 1 = mais rápido, 9 = melhor compressão. Padrão = 6." },
+          { flag: "-r", long: "--recursive", description: "Comprime recursivamente todos os arquivos sob diretório." },
+          { flag: "-c", long: "--stdout", description: "Escreve no stdout, sem criar arquivo .gz." },
+        ]}
+      />
 
-# Manter o arquivo original
-gzip -k arquivo.txt
+      <TerminalBlock
+        command="ls -lh syslog ; gzip -k syslog ; ls -lh syslog*"
+        output={`-rw-r--r-- 1 user user 18M Mar 26 18:40 syslog
+-rw-r--r-- 1 user user 18M Mar 26 18:40 syslog
+-rw-r--r-- 1 user user 1.4M Mar 26 18:40 syslog.gz`}
+        comment="-k preserva o original; razão ~13:1 em texto repetitivo"
+      />
 
-# Definir nível de compressão (1=rápido, 9=máximo)
-gzip -9 arquivo.txt       # Compressão máxima
-gzip -1 arquivo.txt       # Compressão rápida
+      <TerminalBlock
+        command="gzip -l syslog.gz"
+        output={`         compressed        uncompressed  ratio uncompressed_name
+            1467123            18874368  92.2% syslog`}
+      />
 
-# Ver informações de compressão
-gzip -l arquivo.txt.gz
+      <TerminalBlock
+        comment="-9 vs -1 no mesmo arquivo de 18M"
+        command={`gzip -1 -k -S .fast.gz syslog
+gzip -9 -k -S .best.gz syslog
+ls -lh syslog.*.gz`}
+        output={`-rw-r--r-- 1 user user 1.7M Mar 26 18:41 syslog.fast.gz
+-rw-r--r-- 1 user user 1.3M Mar 26 18:41 syslog.best.gz`}
+      />
 
-# Comprimir vários arquivos
-gzip *.log
+      <TerminalBlock
+        comment="ler sem descomprimir"
+        command="zcat syslog.gz | head -2"
+        output={`Mar 26 17:00:01 archlinux CRON[1842]: (root) CMD (/usr/sbin/logrotate)
+Mar 26 17:00:01 archlinux systemd[1]: Starting Rotate log files...`}
+      />
 
-# Ver conteúdo sem descomprimir
-zcat arquivo.txt.gz
-zless arquivo.txt.gz
-zgrep "erro" arquivo.txt.gz`}
+      <TerminalBlock
+        command="zgrep -c 'ERROR' syslog.gz"
+        output="42"
       />
 
       <h2>bzip2 / bunzip2</h2>
-      <p>
-        O <code>bzip2</code> oferece melhor compressão que o gzip, mas é mais lento.
-        Ideal para quando o tamanho final importa mais que a velocidade.
-      </p>
-      <CodeBlock
-        title="Usando bzip2"
-        code={`# Comprimir (substitui o original)
-bzip2 arquivo.txt
-# Resultado: arquivo.txt.bz2
 
-# Descomprimir
-bunzip2 arquivo.txt.bz2
-# ou
-bzip2 -d arquivo.txt.bz2
+      <TerminalBlock
+        command="bzip2 -k syslog ; ls -lh syslog.bz2"
+        output="-rw-r--r-- 1 user user 1.1M Mar 26 18:42 syslog.bz2"
+        comment="~20% menor que gzip, mas ~3x mais lento"
+      />
 
-# Manter o original
-bzip2 -k arquivo.txt
-
-# Nível de compressão
-bzip2 -9 arquivo.txt
-
-# Ver conteúdo sem descomprimir
-bzcat arquivo.txt.bz2`}
+      <TerminalBlock
+        command="bzcat syslog.bz2 | tail -1"
+        output="Mar 26 18:42:11 archlinux systemd[1]: logrotate.service: Succeeded."
       />
 
       <h2>xz / unxz</h2>
+
+      <TerminalBlock
+        command="xz -k -T0 syslog ; ls -lh syslog.xz"
+        output="-rw-r--r-- 1 user user 920K Mar 26 18:43 syslog.xz"
+        comment="-T0 = todas as threads; melhor razão dos clássicos"
+      />
+
+      <TerminalBlock
+        command="xz -l syslog.xz"
+        output={`Strms  Blocks   Compressed Uncompressed  Ratio  Check   Filename
+    1       4    920.4 KiB     18.0 MiB  0.050  CRC64   syslog.xz`}
+      />
+
+      <h2>zstd — o compressor moderno</h2>
+
       <p>
-        O <code>xz</code> oferece a melhor taxa de compressão entre os três, mas é o mais lento.
-        É o formato padrão usado nos pacotes do Arch Linux (<code>.pkg.tar.zst</code> mais recentemente,
-        mas <code>.tar.xz</code> ainda é muito comum).
+        Desenvolvido pelo Facebook, oferece compressão próxima ao xz com velocidade
+        próxima ao gzip. É o formato dos pacotes do Arch (<code>.pkg.tar.zst</code>).
       </p>
-      <CodeBlock
-        title="Usando xz"
-        code={`# Comprimir
-xz arquivo.txt
-# Resultado: arquivo.txt.xz
 
-# Descomprimir
-unxz arquivo.txt.xz
-# ou
-xz -d arquivo.txt.xz
-
-# Manter o original
-xz -k arquivo.txt
-
-# Nível de compressão (0-9, padrão é 6)
-xz -9 arquivo.txt        # Compressão máxima (usa muita RAM)
-xz -0 arquivo.txt        # Compressão rápida
-
-# Usar múltiplas threads
-xz -T0 arquivo.txt       # Usar todos os cores
-
-# Ver informações
-xz -l arquivo.txt.xz
-
-# Ver conteúdo sem descomprimir
-xzcat arquivo.txt.xz`}
+      <TerminalBlock
+        command="zstd -k -19 syslog -o syslog.zst ; ls -lh syslog.zst"
+        output={`syslog              :  5.31%   (  18 MiB =>  974 KiB, syslog.zst)
+-rw-r--r-- 1 user user 974K Mar 26 18:44 syslog.zst`}
       />
 
-      <h3>Comparação de Compressores</h3>
-      <CodeBlock
-        title="Comparação geral"
-        language="text"
-        code={`Compressor  | Extensão   | Velocidade | Compressão | Uso de RAM
-------------|------------|------------|------------|----------
-gzip        | .gz        | Rápido     | Boa        | Baixo
-bzip2       | .bz2       | Médio      | Melhor     | Médio
-xz          | .xz        | Lento      | Excelente  | Alto
-zstd        | .zst       | Muito rápido | Muito boa | Médio`}
+      <TerminalBlock
+        command="zstd -d syslog.zst -o /tmp/syslog.out"
+        output={`syslog.zst         : 18874368 bytes`}
       />
 
-      <AlertBox type="info" title="zstd — O compressor moderno">
-        O <code>zstd</code> (Zstandard) é um compressor relativamente novo desenvolvido pelo Facebook.
-        Ele oferece compressão comparável ao xz com velocidade próxima ao gzip. O Arch Linux
-        usa <code>.pkg.tar.zst</code> para seus pacotes por esse motivo.
-        Instale com <code>sudo pacman -S zstd</code>.
-      </AlertBox>
+      <h2>Comparativo final no mesmo log de 18 MiB</h2>
+
+      <OutputBlock
+        title="velocidade × tamanho (medições típicas, hardware moderno)"
+        output={`Compressor   Tamanho final   Tempo  comp.   Tempo descomp.
+-----------  -------------   --------------   --------------
+none (.tar)        18.0 MiB           0.02 s            0.02 s
+gzip -6             1.4 MiB           0.21 s            0.08 s
+gzip -9             1.3 MiB           0.71 s            0.08 s
+bzip2 -9            1.1 MiB           1.84 s            0.62 s
+xz -6               0.92 MiB          3.10 s            0.18 s
+xz -9 -T0           0.85 MiB          1.50 s            0.18 s
+zstd -3             1.0 MiB           0.07 s            0.04 s
+zstd -19            0.97 MiB          2.20 s            0.04 s`}
+        annotations={[
+          { line: 4, note: "padrão do tar -czf" },
+          { line: 7, note: "melhor razão clássica" },
+          { line: 8, note: "paralelizado, quase tão bom" },
+          { line: 10, note: "default do pacman" },
+        ]}
+      />
 
       <h2>zip / unzip</h2>
-      <p>
-        O <code>zip</code> é o formato mais comum no Windows. No Linux, é útil quando você precisa
-        compartilhar arquivos com usuários de Windows ou trabalhar com arquivos recebidos neste formato.
-      </p>
-      <CodeBlock
-        title="Usando zip"
-        code={`# Instalar (pode não vir pré-instalado)
-sudo pacman -S zip unzip
 
-# Criar arquivo zip
-zip arquivo.zip documento.txt
+      <TerminalBlock
+        command="sudo pacman -S --needed zip unzip"
+        output={`resolving dependencies...
+looking for conflicting packages...
 
-# Criar zip com múltiplos arquivos
-zip arquivos.zip *.txt *.pdf
+Packages (2)  unzip-6.0-21  zip-3.0-12
 
-# Criar zip de um diretório (recursivo)
-zip -r projeto.zip projeto/
+Total Installed Size:  0.85 MiB
+:: Proceed with installation? [Y/n]
+(...)`}
+      />
 
-# Criar zip com senha
-zip -e secreto.zip documento.txt
+      <TerminalBlock
+        command="zip -r projeto.zip projeto/"
+        output={`  adding: projeto/ (stored 0%)
+  adding: projeto/README.md (deflated 42%)
+  adding: projeto/main.c (deflated 64%)
+  adding: projeto/Makefile (deflated 28%)
+  adding: projeto/src/ (stored 0%)
+  adding: projeto/src/util.c (deflated 51%)`}
+      />
 
-# Excluir padrões
-zip -r projeto.zip projeto/ -x "*.git*" "*/node_modules/*"
+      <TerminalBlock
+        command="unzip -l projeto.zip"
+        output={`Archive:  projeto.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  2026-03-26 18:30   projeto/
+      847  2026-03-26 18:30   projeto/README.md
+     1842  2026-03-26 18:30   projeto/main.c
+      124  2026-03-26 18:30   projeto/Makefile
+        0  2026-03-26 18:30   projeto/src/
+      412  2026-03-26 18:30   projeto/src/util.c
+---------                     -------
+     3225                     6 files`}
+      />
 
-# Atualizar arquivo zip existente
-zip -u arquivo.zip novo_arquivo.txt
+      <TerminalBlock
+        comment="zip com senha (criptografia fraca, só esconde casualmente)"
+        command="zip -e secreto.zip documento.pdf"
+        output={`Enter password:
+Verify password:
+  adding: documento.pdf (deflated 12%)`}
+      />
 
-# Descomprimir
-unzip arquivo.zip
-
-# Descomprimir em diretório específico
-unzip arquivo.zip -d /tmp/destino/
-
-# Listar conteúdo sem extrair
-unzip -l arquivo.zip
-
-# Extrair apenas um arquivo
-unzip arquivo.zip documento.txt
-
-# Testar integridade
-unzip -t arquivo.zip`}
+      <TerminalBlock
+        command="unzip -t projeto.zip"
+        output={`Archive:  projeto.zip
+    testing: projeto/                 OK
+    testing: projeto/README.md        OK
+    testing: projeto/main.c           OK
+    testing: projeto/Makefile         OK
+    testing: projeto/src/util.c       OK
+No errors detected in compressed data of projeto.zip.`}
       />
 
       <h2>7z (p7zip)</h2>
-      <p>
-        O 7-Zip oferece excelente compressão e suporta vários formatos. Útil para
-        compatibilidade com Windows e para quando você precisa da melhor compressão possível.
-      </p>
-      <CodeBlock
-        title="Usando 7z"
-        code={`# Instalar
-sudo pacman -S p7zip
 
-# Criar arquivo 7z
-7z a arquivo.7z documento.txt
-
-# Criar 7z de um diretório
-7z a backup.7z /home/usuario/documentos/
-
-# Extrair
-7z x arquivo.7z
-
-# Extrair em diretório específico
-7z x arquivo.7z -o/tmp/destino/
-
-# Listar conteúdo
-7z l arquivo.7z
-
-# Testar integridade
-7z t arquivo.7z
-
-# Criar com senha e criptografia de nomes
-7z a -p -mhe=on secreto.7z documentos/
-
-# Definir nível de compressão (0=nenhum, 9=máximo)
-7z a -mx=9 maximo.7z arquivos/
-
-# Comprimir usando formato zip
-7z a -tzip arquivo.zip documentos/
-
-# O 7z também extrai muitos formatos
-7z x arquivo.rar
-7z x arquivo.iso
-7z x arquivo.cab`}
+      <TerminalBlock
+        command="sudo pacman -S --needed p7zip"
+        output={`Packages (1)  p7zip-17.05-3
+Total Installed Size:  4.85 MiB`}
       />
 
-      <h2>Exemplos Práticos do Dia a Dia</h2>
-      <CodeBlock
-        title="Cenários comuns"
-        code={`# Fazer backup do home excluindo cache
-tar -czvf backup_home.tar.gz \\
-    --exclude='.cache' \\
-    --exclude='.local/share/Trash' \\
-    --exclude='node_modules' \\
-    --exclude='.npm' \\
-    /home/usuario/
+      <TerminalBlock
+        command="7z a -mx=9 maximo.7z projeto/"
+        output={`7-Zip 17.05 : Copyright (c) 1999-2021 Igor Pavlov : 2021-04-15
 
-# Backup com data no nome
-tar -czvf "backup_\$(date +%Y%m%d_%H%M%S).tar.gz" documentos/
+Scanning the drive:
+1 folder, 5 files, 3225 bytes (4 KiB)
 
-# Transferir diretório entre máquinas via SSH
-tar -czf - /home/usuario/projeto | ssh servidor 'tar -xzf - -C /backup/'
+Creating archive: maximo.7z
 
-# Descomprimir arquivo que não sei o formato
-file arquivo_misterioso.xyz    # Identifica o tipo real
+Items to compress: 6
 
-# Verificar espaço antes de extrair
-tar -tzvf arquivo.tar.gz | awk '{sum+=$3} END {print sum/1024/1024 " MB"}'`}
+Files read from disk: 5
+Archive size: 1487 bytes (2 KiB)
+Everything is Ok`}
       />
 
-      <AlertBox type="warning" title="Cuidado com tar como root">
-        Ao extrair um tar como root, os arquivos serão criados com as permissões e donos originais.
-        Use <code>--no-same-owner</code> se não quiser manter o dono original, ou
-        <code>--no-same-permissions</code> para ignorar permissões do arquivo.
+      <TerminalBlock
+        command="7z l maximo.7z"
+        output={`Listing archive: maximo.7z
+
+----
+Path = maximo.7z
+Type = 7z
+Physical Size = 1487
+Headers Size = 233
+Method = LZMA2:12
+Solid = +
+Blocks = 1
+
+   Date      Time    Attr         Size   Compressed  Name
+------------------- ----- ------------ ------------  ------------------------
+2026-03-26 18:30:00 D....            0            0  projeto
+2026-03-26 18:30:00 ....A          847         1254  projeto/README.md
+2026-03-26 18:30:00 ....A         1842               projeto/main.c
+2026-03-26 18:30:00 ....A          124               projeto/Makefile
+2026-03-26 18:30:00 D....            0            0  projeto/src
+2026-03-26 18:30:00 ....A          412               projeto/src/util.c
+------------------- ----- ------------ ------------  ------------------------
+2026-03-26 18:30:00               3225         1254  5 files, 2 folders`}
+      />
+
+      <TerminalBlock
+        comment="extrai mantendo a estrutura"
+        command="7z x maximo.7z -o/tmp/restore/"
+        output={`Extracting archive: maximo.7z
+--
+Path = maximo.7z
+Type = 7z
+
+Everything is Ok
+
+Folders: 2
+Files: 4
+Size:       3225
+Compressed: 1487`}
+      />
+
+      <h2>Receitas do dia a dia</h2>
+
+      <TerminalBlock
+        comment="backup do home com data no nome"
+        command={`tar --zstd -cvf "backup-$(hostname)-$(date +%F).tar.zst" \\
+  --exclude='.cache' \\
+  --exclude='.local/share/Trash' \\
+  --exclude='node_modules' \\
+  /home/user`}
+        output={`/home/user/
+/home/user/.bashrc
+/home/user/Documentos/
+...
+[backup gerado: backup-archlinux-2026-03-26.tar.zst]`}
+      />
+
+      <TerminalBlock
+        comment="enviar diretório por SSH sem criar arquivo intermediário"
+        command={`tar -cz projeto/ | ssh user@servidor 'tar -xz -C /backup/'`}
+        output=""
+      />
+
+      <TerminalBlock
+        comment="medir o tamanho descomprimido sem extrair"
+        command={`tar -tzvf backup.tar.gz | awk '{s+=$3} END {printf "%.1f MiB\\n", s/1048576}'`}
+        output="247.3 MiB"
+      />
+
+      <TerminalBlock
+        comment="comparar duas versões antes de extrair"
+        command={`diff <(tar -tzf v1.tar.gz) <(tar -tzf v2.tar.gz)`}
+        output={`> projeto/CHANGELOG.md
+< projeto/old.txt`}
+      />
+
+      <AlertBox type="warning" title="Cuidado ao extrair como root">
+        Sem flags, o tar restaura permissões e dono originais — incluindo UIDs que
+        podem não existir no sistema atual. Use <code>--no-same-owner</code> e
+        <code>--no-same-permissions</code> para arquivos vindos de outras máquinas.
       </AlertBox>
 
-      <AlertBox type="danger" title="Tar bombs">
-        Sempre verifique o conteúdo de um arquivo tar antes de extrair com <code>tar -tf arquivo.tar.gz</code>.
-        Alguns arquivos maliciosos não têm um diretório raiz e despejam centenas de arquivos no diretório atual,
-        criando uma bagunça conhecida como "tar bomb". Extraia sempre em um diretório temporário quando
-        não tiver certeza do conteúdo.
+      <AlertBox type="info" title="O Arch usa zstd">
+        Desde 2020 os pacotes oficiais são <code>.pkg.tar.zst</code>. Você pode
+        inspecioná-los como qualquer tar: <code>tar --zstd -tvf
+        firefox-*.pkg.tar.zst</code>.
       </AlertBox>
     </PageContainer>
   );

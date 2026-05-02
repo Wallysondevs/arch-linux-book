@@ -1,727 +1,812 @@
 import { PageContainer } from "@/components/layout/PageContainer";
 import { CodeBlock } from "@/components/ui/CodeBlock";
 import { AlertBox } from "@/components/ui/AlertBox";
+import { TerminalBlock } from "@/components/ui/TerminalBlock";
+import { OutputBlock } from "@/components/ui/OutputBlock";
+import { CommandFlagList } from "@/components/ui/CommandFlag";
 
 export default function Disco() {
   return (
     <PageContainer
       title="Discos, Partições e Sistemas de Arquivos"
-      subtitle="Gerencie discos, crie partições, formate, monte e monitore o espaço de armazenamento do seu sistema."
+      subtitle="Do lsblk ao cryptsetup, com a saída exata de cada comando — e os erros mais comuns explicados."
       difficulty="intermediario"
-      timeToRead="25 min"
+      timeToRead="35 min"
     >
       <p>
-        O gerenciamento de discos é uma das tarefas mais importantes (e perigosas) na administração Linux.
-        Entender como o sistema organiza discos, partições e pontos de montagem é fundamental para
-        instalar o sistema, adicionar armazenamento e manter backups.
+        No Linux, cada disco é um arquivo dentro de <code>/dev/</code>. Cada partição também. O kernel expõe
+        atributos pelos subsistemas <code>block</code>, <code>scsi</code> e <code>nvme</code>; ferramentas como
+        <code>lsblk</code> e <code>blkid</code> consultam essas mesmas APIs do udev. Errar de dispositivo aqui
+        apaga dados — então TODO comando começa com <code>lsblk</code> para confirmar o alvo.
       </p>
 
-      <h2>1. Visualizando Discos e Partições</h2>
+      <h2>1. Visualizando — lsblk, blkid, fdisk -l, findmnt</h2>
 
-      <h3>lsblk - Listar Block Devices</h3>
-      <CodeBlock code={`# Listar todos os discos e partições
-lsblk
+      <h3>lsblk — a primeira pergunta</h3>
+      <TerminalBlock
+        command="lsblk"
+        output={`NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
+sda           8:0    0 465.8G  0 disk
+├─sda1        8:1    0   512M  0 part /boot
+├─sda2        8:2    0 449.3G  0 part /
+└─sda3        8:3    0    16G  0 part [SWAP]
+sdb           8:16   1  29.8G  0 disk
+└─sdb1        8:17   1  29.8G  0 part /run/media/user/PENDRIVE
+nvme0n1     259:0    0 953.9G  0 disk
+├─nvme0n1p1 259:1    0   512M  0 part /efi
+└─nvme0n1p2 259:2    0 953.4G  0 part /home
+sr0          11:0    1  1024M  0 rom`}
+      />
+      <OutputBlock
+        title="anatomia da saída do lsblk"
+        output={`NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
+sda           8:0    0 465.8G  0 disk
+├─sda1        8:1    0   512M  0 part /boot
+sdb           8:16   1  29.8G  0 disk
+nvme0n1     259:0    0 953.9G  0 disk`}
+        annotations={[
+          { line: 1, note: "RM=0 → fixo · disk inteiro" },
+          { line: 2, note: "└─ partições do sda" },
+          { line: 3, note: "RM=1 → removível (USB)" },
+          { line: 4, note: "NVMe: namespace (n1), partições serão p1/p2" },
+        ]}
+        caption="MAJ:MIN é o par usado pelo kernel para identificar o dispositivo. 8 = SCSI/SATA · 259 = NVMe · 11 = ROM."
+      />
 
-# Saída típica:
-# NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
-# sda      8:0    0 500.0G  0 disk
-# ├─sda1   8:1    0   512M  0 part /boot
-# ├─sda2   8:2    0 450.0G  0 part /
-# └─sda3   8:3    0  49.5G  0 part [SWAP]
-# sdb      8:16   1  32.0G  0 disk
-# └─sdb1   8:17   1  32.0G  0 part /mnt/usb
-# nvme0n1  259:0  0   1.0T  0 disk
-# ├─nvme0n1p1 ...
+      <TerminalBlock
+        comment="-f mostra FSTYPE, LABEL, UUID — o mais útil"
+        command="lsblk -f"
+        output={`NAME        FSTYPE FSVER LABEL    UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+sda
+├─sda1      vfat   FAT32 EFI      2A3B-4C5D                             436.2M    14% /boot
+├─sda2      ext4   1.0   ROOT     d4c8e7f1-1234-4567-89ab-cdef01234567  287.4G    36% /
+└─sda3      swap   1     SWAP     a1b2c3d4-e5f6-7890-abcd-ef0123456789                [SWAP]
+sdb
+└─sdb1      vfat   FAT32 PENDRIVE 1234-5678                              28.1G     5% /run/media/user/PENDRIVE
+nvme0n1
+├─nvme0n1p1 vfat   FAT32 EFI      AABB-CCDD                             420.1M    18% /efi
+└─nvme0n1p2 btrfs        DATA     fedcba98-7654-3210-fedc-ba9876543210  812.4G    14% /home`}
+      />
 
-# Mostrar com sistema de arquivos e UUID
-lsblk -f
+      <CommandFlagList
+        command="lsblk"
+        items={[
+          { flag: "-f", description: "Inclui FSTYPE, LABEL e UUID — o jeito mais rápido de inspecionar discos." },
+          { flag: "-d", description: "Só discos (sem partições). Útil em listagens curtas.", example: "lsblk -d" },
+          { flag: "-b", description: "Tamanho em bytes em vez de unidade legível." },
+          { flag: "-p", description: "Mostra o caminho completo (/dev/sda1)." },
+          { flag: "-S", description: "Apenas dispositivos SCSI." },
+          { flag: "-m", description: "Mostra dono, modo e grupo (permissões dos /dev/sd*)." },
+          { flag: "-o", description: "Colunas customizadas. Lista TODAS com -h.", example: "lsblk -o NAME,SIZE,MODEL,TRAN" },
+          { flag: "-t", description: "Topologia (alinhamento, IO, sector size)." },
+        ]}
+      />
 
-# Mostrar tamanho em bytes
-lsblk -b
+      <TerminalBlock
+        command="lsblk -o NAME,SIZE,MODEL,TRAN,SERIAL"
+        output={`NAME          SIZE MODEL                    TRAN   SERIAL
+sda         465.8G Samsung SSD 870 EVO 500G sata   S5SXNG0NA12345Z
+sdb          29.8G SanDisk Cruzer Blade     usb    4C530001230412116220
+nvme0n1     953.9G WD_BLACK SN850 1TB       nvme   210345678901
+sr0        1024M  HL-DT-ST DVDRAM GH24NSD5 sata`}
+      />
 
-# Mostrar apenas discos (sem partições)
-lsblk -d
-
-# Mostrar com mais informações
-lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,UUID`} />
-
-      <p>Nomenclatura dos dispositivos:</p>
+      <h3>Nomenclatura dos /dev</h3>
       <ul>
-        <li><strong>sda, sdb, sdc...</strong> - Discos SATA/USB (sd = SCSI disk)</li>
-        <li><strong>nvme0n1, nvme1n1...</strong> - Discos NVMe</li>
-        <li><strong>sda1, sda2...</strong> - Partições do disco sda</li>
-        <li><strong>nvme0n1p1, nvme0n1p2...</strong> - Partições do disco NVMe</li>
-        <li><strong>sr0</strong> - Drive de CD/DVD</li>
-        <li><strong>loop0, loop1...</strong> - Dispositivos de loop (snaps, ISOs montadas)</li>
+        <li><strong>sda, sdb, sdc…</strong> — Discos SATA, SAS, USB (driver <em>sd</em> = SCSI disk).</li>
+        <li><strong>nvme0n1, nvme0n2…</strong> — Disco NVMe N, namespace M.</li>
+        <li><strong>nvme0n1p1, sda1</strong> — Partição. NVMe usa <code>p</code> antes do número.</li>
+        <li><strong>vda, vdb</strong> — Discos virtio (KVM/QEMU).</li>
+        <li><strong>mmcblk0, mmcblk0p1</strong> — Cartões SD/eMMC.</li>
+        <li><strong>sr0</strong> — CD/DVD óptico.</li>
+        <li><strong>loop0…</strong> — Loop devices (montar arquivos como block, snaps, ISOs).</li>
+        <li><strong>dm-0…</strong> — Device Mapper (LVM, LUKS).</li>
       </ul>
 
-      <h3>fdisk -l - Informações Detalhadas</h3>
-      <CodeBlock code={`# Listar todos os discos com detalhes (precisa de root)
-sudo fdisk -l
+      <h3>blkid — UUIDs e tipos</h3>
+      <TerminalBlock
+        command="sudo blkid"
+        output={`/dev/sda1: LABEL_FATBOOT="EFI" LABEL="EFI" UUID="2A3B-4C5D" BLOCK_SIZE="512" TYPE="vfat" PARTUUID="00112233-01"
+/dev/sda2: LABEL="ROOT" UUID="d4c8e7f1-1234-4567-89ab-cdef01234567" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="00112233-02"
+/dev/sda3: LABEL="SWAP" UUID="a1b2c3d4-e5f6-7890-abcd-ef0123456789" TYPE="swap" PARTUUID="00112233-03"
+/dev/nvme0n1p1: LABEL_FATBOOT="EFI" UUID="AABB-CCDD" TYPE="vfat" PARTUUID="ddeeff00-01"
+/dev/nvme0n1p2: LABEL="DATA" UUID="fedcba98-7654-3210-fedc-ba9876543210" TYPE="btrfs" PARTUUID="ddeeff00-02"`}
+      />
 
-# Listar informações de um disco específico
-sudo fdisk -l /dev/sda`} />
+      <h3>fdisk -l — esquema da tabela de partições</h3>
+      <TerminalBlock
+        command="sudo fdisk -l /dev/sda"
+        output={`Disk /dev/sda: 465.76 GiB, 500107862016 bytes, 976773168 sectors
+Disk model: Samsung SSD 870
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 4096 bytes
+Disklabel type: gpt
+Disk identifier: 00112233-4455-6677-8899-AABBCCDDEEFF
 
-      <h3>blkid - UUIDs e Tipos</h3>
-      <CodeBlock code={`# Mostrar UUID e tipo de sistema de arquivos de todas as partições
-sudo blkid
+Device       Start       End   Sectors   Size Type
+/dev/sda1     2048   1050623   1048576   512M EFI System
+/dev/sda2  1050624 943194111 942143488 449.3G Linux filesystem
+/dev/sda3 943194112 976773134  33579023    16G Linux swap`}
+      />
 
-# Saída:
-# /dev/sda1: UUID="XXXX-XXXX" TYPE="vfat" PARTUUID="..."
-# /dev/sda2: UUID="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" TYPE="ext4" PARTUUID="..."
+      <h3>findmnt — leitura amigável de mounts</h3>
+      <TerminalBlock
+        command="findmnt --real"
+        output={`TARGET                                SOURCE        FSTYPE  OPTIONS
+/                                     /dev/sda2     ext4    rw,noatime
+├─/boot                               /dev/sda1     vfat    rw,noatime,fmask=0022
+├─/home                               /dev/nvme0n1p2 btrfs  rw,noatime,compress=zstd:3
+├─/efi                                /dev/nvme0n1p1 vfat   rw,noatime
+└─/run/media/user/PENDRIVE            /dev/sdb1     vfat    rw,nosuid,nodev,relatime`}
+      />
 
-# Mostrar informações de uma partição específica
-sudo blkid /dev/sda1`} />
+      <h2>2. Particionamento — fdisk, cfdisk, parted</h2>
 
-      <h2>2. Particionamento de Discos</h2>
-
-      <AlertBox type="danger" title="CUIDADO EXTREMO!">
-        Particionar o disco errado pode destruir TODOS os seus dados. Sempre confirme o dispositivo
-        correto com <code>lsblk</code> antes de qualquer operação. Nunca particione o disco que contém
-        seu sistema operacional em execução (a menos que saiba exatamente o que está fazendo).
+      <AlertBox type="danger" title="Confirme o disco. SEMPRE.">
+        Qualquer comando de particionamento no disco errado destrói dados. Faça <code>lsblk</code> ANTES e confirme:
+        tamanho bate? RM=1 se for o pendrive? Está montado onde você espera?
       </AlertBox>
 
-      <h3>fdisk - Particionamento Interativo</h3>
-      <CodeBlock code={`# Abrir o fdisk para um disco (CUIDADO: escolha o disco certo!)
-sudo fdisk /dev/sdb
+      <h3>fdisk — interativo, suporta GPT e MBR</h3>
+      <TerminalBlock
+        command="sudo fdisk /dev/sdb"
+        output={`Welcome to fdisk (util-linux 2.40.2).
+Changes will remain in memory only, until you decide to write them.
+Be careful before using the write command.
 
-# Comandos dentro do fdisk:
-# m     - Mostrar ajuda (menu)
-# p     - Mostrar tabela de partições atual
-# n     - Criar nova partição
-# d     - Deletar uma partição
-# t     - Mudar o tipo da partição
-# l     - Listar tipos de partição disponíveis
-# w     - Gravar mudanças e sair (IRREVERSÍVEL)
-# q     - Sair SEM salvar mudanças
+Command (m for help): {dim}m{/}
 
-# Exemplo: criar partição EFI + root em disco GPT
-# 1. sudo fdisk /dev/sdb
-# 2. g (criar nova tabela GPT)
-# 3. n (nova partição - EFI, +512M)
-# 4. t (tipo 1 = EFI System)
-# 5. n (nova partição - root, usar todo espaço restante)
-# 6. w (gravar)`} />
+Help:
 
-      <h3>cfdisk - Particionamento com Interface Visual</h3>
-      <CodeBlock code={`# Abrir interface visual de particionamento (muito mais fácil que fdisk)
-sudo cfdisk /dev/sdb
+  GPT
+   M   enter protective/hybrid MBR
 
-# Use as setas para navegar
-# Selecione "New" para criar partição
-# Selecione "Type" para mudar o tipo
-# Selecione "Write" para salvar (digite "yes" para confirmar)
-# Selecione "Quit" para sair`} />
+  Generic
+   d   delete a partition
+   F   list free unpartitioned space
+   l   list known partition types
+   n   add a new partition
+   p   print the partition table
+   t   change a partition type
+   v   verify the partition table
 
-      <AlertBox type="success" title="Recomendação para iniciantes">
-        Use <code>cfdisk</code> em vez de <code>fdisk</code> quando possível. A interface visual
-        torna muito mais difícil cometer erros e é mais intuitiva.
-      </AlertBox>
+  Misc
+   m   print this menu
+   x   extra functionality (experts only)
 
-      <h3>parted - Particionamento Avançado</h3>
-      <CodeBlock code={`# Abrir parted para um disco
-sudo parted /dev/sdb
+  Save & Exit
+   w   write table to disk and exit
+   q   quit without saving changes`}
+      />
 
-# Comandos dentro do parted:
-# print           - Mostrar partições
-# mklabel gpt     - Criar tabela de partições GPT
-# mklabel msdos   - Criar tabela de partições MBR
-# mkpart primary ext4 1MiB 100GiB   - Criar partição
-# rm 1            - Remover partição 1
-# resizepart 1 200GiB               - Redimensionar partição
-# quit            - Sair
+      <CodeBlock title="Sequência típica: criar GPT + 1 partição usando todo o espaço" code={`g    → cria nova tabela GPT
+n    → nova partição
+1    → número da partição
+Enter → primeiro setor (default)
+Enter → último setor (default = todo o disco)
+t    → tipo
+20   → "Linux filesystem" (lista com 'L')
+p    → revisa
+w    → grava (IRREVERSÍVEL)`} />
 
-# Usar parted em modo não interativo
-sudo parted /dev/sdb --script mklabel gpt
-sudo parted /dev/sdb --script mkpart primary ext4 1MiB 100%`} />
+      <h3>cfdisk — visual, recomendado</h3>
+      <TerminalBlock
+        command="sudo cfdisk /dev/sdb"
+        output={`                                  Disk: /dev/sdb
+                Size: 29.8 GiB, 31999197184 bytes, 62498432 sectors
+                                Label: gpt, identifier: ...
 
-      <h2>3. Sistemas de Arquivos - mkfs</h2>
+    Device              Start          End      Sectors     Size Type
+>>  Free space           2048     62498398     62496351    29.8G
 
-      <CodeBlock code={`# Formatar como ext4 (o mais comum no Linux)
-sudo mkfs.ext4 /dev/sdb1
+   ┌─────────────────────────────────────────────────────────────────┐
+   │ [   New   ]  [ Quit ]  [ Help ]  [ Write ]  [ Dump ]            │
+   └─────────────────────────────────────────────────────────────────┘
+                Create new partition from free space`}
+      />
 
-# Formatar com label (nome)
-sudo mkfs.ext4 -L "MeuDisco" /dev/sdb1
+      <h3>parted — não interativo (scripts)</h3>
+      <TerminalBlock
+        command="sudo parted /dev/sdb --script mklabel gpt mkpart primary ext4 1MiB 100%"
+        output=""
+      />
+      <TerminalBlock
+        command="sudo parted /dev/sdb --script print"
+        output={`Model: SanDisk Cruzer Blade (scsi)
+Disk /dev/sdb: 32.0GB
+Sector size (logical/physical): 512B/512B
+Partition Table: gpt
+Disk Flags:
 
-# Formatar como FAT32 (para EFI, pendrives)
-sudo mkfs.fat -F 32 /dev/sdb1
+Number  Start   End     Size    File system  Name     Flags
+ 1      1049kB  32.0GB  32.0GB               primary`}
+      />
 
-# Formatar como Btrfs (sistema moderno com snapshots)
-sudo mkfs.btrfs /dev/sdb1
+      <h2>3. Formatando — mkfs.*</h2>
 
-# Formatar com label em Btrfs
-sudo mkfs.btrfs -L "BtrfsDisco" /dev/sdb1
+      <TerminalBlock
+        command="sudo mkfs.ext4 -L DADOS /dev/sdb1"
+        output={`mke2fs 1.47.0 (5-Feb-2023)
+Creating filesystem with 7812032 4k blocks and 1953504 inodes
+Filesystem UUID: 8e7d6c5b-4321-aaaa-bbbb-ccccddddeeee
+Superblock backups stored on blocks:
+        32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208,
+        4096000
 
-# Formatar como XFS
-sudo mkfs.xfs /dev/sdb1
+Allocating group tables: done
+Writing inode tables: done
+Creating journal (32768 blocks): done
+Writing superblocks and filesystem accounting information: done`}
+      />
 
-# Formatar como NTFS (para compatibilidade com Windows)
-sudo mkfs.ntfs /dev/sdb1
+      <TerminalBlock
+        command="sudo mkfs.fat -F32 -n EFI /dev/sdb1"
+        output={`mkfs.fat 4.2 (2021-01-31)`}
+      />
 
-# Formatar como exFAT (para pendrives grandes, compatível com todos os SO)
-sudo mkfs.exfat /dev/sdb1`} />
+      <TerminalBlock
+        command="sudo mkfs.btrfs -L DADOS /dev/sdb1"
+        output={`btrfs-progs v6.7
+See http://btrfs.wiki.kernel.org for more information.
 
-      <AlertBox type="warning" title="Formatar apaga tudo!">
-        O <code>mkfs</code> destrói todos os dados da partição. Não há como desfazer.
-        Sempre faça backup antes e confirme que está formatando a partição correta.
-      </AlertBox>
+NOTE: several default settings have changed in version 5.15.
 
-      <p>Comparação de sistemas de arquivos:</p>
+Label:              DADOS
+UUID:               c1e2d3f4-aaaa-4444-9999-fedcba987654
+Node size:          16384
+Sector size:        4096
+Filesystem size:    29.80GiB
+Block group profiles:
+  Data:             single            8.00MiB
+  Metadata:         DUP             256.00MiB
+  System:           DUP               8.00MiB
+SSD detected:       yes
+Zoned device:       no
+Incompat features:  extref, skinny-metadata, no-holes
+Runtime features:   free-space-tree
+Checksum:           crc32c
+Number of devices:  1
+Devices:
+   ID        SIZE  PATH
+    1    29.80GiB  /dev/sdb1`}
+      />
+
+      <TerminalBlock
+        command="sudo mkfs.exfat -L PENDRIVE /dev/sdb1"
+        output={`exfatprogs version : 1.2.2
+Creating exFAT filesystem(/dev/sdb1, cluster size=131072)
+
+Writing volume boot record: done
+Writing backup volume boot record: done
+Fat table creation: done
+Allocation bitmap creation: done
+Upcase table creation: done
+Writing root directory entry: done
+Synchronizing...
+
+exFAT format complete!`}
+      />
+
+      <p>Comparativo rápido:</p>
       <ul>
-        <li><strong>ext4</strong> - Confiável, maduro, desempenho excelente. O padrão para maioria dos casos.</li>
-        <li><strong>Btrfs</strong> - Moderno, suporta snapshots, compressão, subvolumes. Bom para quem quer funcionalidades avançadas.</li>
-        <li><strong>XFS</strong> - Excelente para arquivos grandes e servidores. Usado por padrão no RHEL.</li>
-        <li><strong>FAT32</strong> - Obrigatório para partição EFI. Limite de 4GB por arquivo.</li>
-        <li><strong>exFAT</strong> - Sem limite de 4GB, boa compatibilidade. Ideal para pendrives.</li>
-        <li><strong>NTFS</strong> - Sistema de arquivos do Windows. Suporte no Linux via ntfs-3g.</li>
+        <li><strong>ext4</strong> — Padrão, maduro, rápido. Use no <code>/</code> e <code>/home</code> em desktops.</li>
+        <li><strong>btrfs</strong> — Snapshots, subvolumes, compressão zstd. Padrão dos rolling distros modernos.</li>
+        <li><strong>xfs</strong> — Excelente para arquivos grandes, servidores. Não encolhe.</li>
+        <li><strong>vfat (FAT32)</strong> — OBRIGATÓRIO para a partição EFI. Limite de 4 GB por arquivo.</li>
+        <li><strong>exfat</strong> — Sem limite de 4 GB; lê em Windows/Mac/Linux. Ideal para HD externo.</li>
+        <li><strong>ntfs</strong> — Compatibilidade total com Windows. No Linux via <code>ntfs-3g</code> (FUSE).</li>
+        <li><strong>swap</strong> — Não é "filesystem", é área de swap.</li>
       </ul>
 
-      <h2>4. Montagem e Desmontagem</h2>
+      <h2>4. Montagem — mount, umount e /etc/fstab</h2>
 
-      <h3>mount</h3>
-      <CodeBlock code={`# Montar uma partição
-sudo mount /dev/sdb1 /mnt
+      <TerminalBlock
+        comment="montar sdb1 em /mnt"
+        command="sudo mount /dev/sdb1 /mnt"
+        output=""
+      />
+      <TerminalBlock command="findmnt /mnt" output={`TARGET SOURCE    FSTYPE OPTIONS
+/mnt   /dev/sdb1 ext4   rw,relatime`} />
 
-# Montar com tipo específico de sistema de arquivos
-sudo mount -t ntfs-3g /dev/sdb1 /mnt/windows
+      <TerminalBlock
+        comment="montar com opções customizadas"
+        command="sudo mount -o ro,noexec,nodev /dev/sdb1 /mnt"
+        output=""
+      />
+      <TerminalBlock
+        comment="ISO via loop"
+        command="sudo mount -o loop archlinux-2025.01.01-x86_64.iso /mnt/iso"
+        output=""
+      />
 
-# Montar como somente leitura
-sudo mount -o ro /dev/sdb1 /mnt
+      <CommandFlagList
+        command="mount"
+        items={[
+          { flag: "-t TYPE", description: "Força o tipo de FS (auto-detecção é o default).", example: "sudo mount -t ntfs-3g /dev/sdb1 /mnt" },
+          { flag: "-o OPTS", description: "Opções: ro, rw, noatime, nosuid, nodev, noexec, loop, bind, remount." },
+          { flag: "-a", description: "Monta tudo do /etc/fstab que não está montado.", example: "sudo mount -a" },
+          { flag: "-r", description: "Atalho para -o ro." },
+          { flag: "-B", long: "--bind", description: "Bind mount: faz um diretório aparecer em outro lugar.", example: "sudo mount --bind /var/data /srv/exposto" },
+          { flag: "-o remount,XXX", description: "Reaplica opções sem desmontar.", example: "sudo mount -o remount,rw /" },
+        ]}
+      />
 
-# Montar com opções específicas
-sudo mount -o rw,noatime,compress=zstd /dev/sdb1 /mnt
-
-# Montar ISO
-sudo mount -o loop arquivo.iso /mnt/iso
-
-# Ver todos os sistemas montados
-mount | column -t
-
-# Montar tudo que está no fstab
-sudo mount -a`} />
+      <TerminalBlock
+        comment="ver TUDO que está montado, em colunas"
+        command="mount | column -t | head"
+        output={`proc          on  /proc                       type  proc        (rw,nosuid,nodev,noexec,relatime)
+sys           on  /sys                        type  sysfs       (rw,nosuid,nodev,noexec,relatime)
+dev           on  /dev                        type  devtmpfs    (rw,nosuid,relatime,size=8112764k,nr_inodes=2028191)
+run           on  /run                        type  tmpfs       (rw,nosuid,nodev,relatime,size=1622648k)
+/dev/sda2     on  /                           type  ext4        (rw,noatime)
+/dev/sda1     on  /boot                       type  vfat        (rw,noatime,fmask=0022,dmask=0022)
+/dev/sdb1     on  /mnt                        type  ext4        (rw,relatime)`}
+      />
 
       <h3>umount</h3>
-      <CodeBlock code={`# Desmontar uma partição
-sudo umount /mnt
+      <TerminalBlock command="sudo umount /mnt" output="" />
+      <TerminalBlock
+        comment="o erro mais comum"
+        command="sudo umount /mnt"
+        output="umount: /mnt: target is busy."
+        exitCode={32}
+      />
+      <TerminalBlock
+        comment="quem está usando?"
+        command="sudo lsof +D /mnt"
+        output={`COMMAND   PID USER   FD   TYPE DEVICE SIZE/OFF  NODE NAME
+bash     5012 user  cwd    DIR   8,17     4096     2 /mnt
+vim      5421 user    4u   REG   8,17    18432    13 /mnt/notes.txt`}
+      />
+      <TerminalBlock
+        comment="lazy: desmonta quando ninguém mais usar"
+        command="sudo umount -l /mnt"
+        output=""
+      />
 
-# Desmontar pelo dispositivo
-sudo umount /dev/sdb1
+      <h3>/etc/fstab — montagem persistente</h3>
+      <CodeBlock title="/etc/fstab típico" code={`# <file system>                            <dir>      <type>  <options>                              <dump> <pass>
+UUID=2A3B-4C5D                              /boot      vfat    rw,noatime,fmask=0022,dmask=0022,utf8  0      2
+UUID=d4c8e7f1-1234-4567-89ab-cdef01234567   /          ext4    rw,noatime                              0      1
+UUID=a1b2c3d4-e5f6-7890-abcd-ef0123456789   none       swap    defaults                                0      0
+UUID=fedcba98-7654-3210-fedc-ba9876543210   /home      btrfs   rw,noatime,compress=zstd:3,subvol=@home 0      0
 
-# Forçar desmontagem (se estiver ocupada)
-sudo umount -f /mnt
+# Disco externo — nofail é OBRIGATÓRIO para não travar o boot
+UUID=8e7d6c5b-4321-aaaa-bbbb-ccccddddeeee   /mnt/dados ext4    defaults,nofail,noatime                 0      2
 
-# Desmontar de forma lazy (desmontar quando não estiver mais em uso)
-sudo umount -l /mnt`} />
+# Bind mount
+/srv/data                                   /var/www   none    bind                                    0      0`} />
 
-      <AlertBox type="warning" title="device is busy">
-        Se aparecer esse erro, significa que algum processo está usando arquivos na partição.
-        Use <code>lsof /mnt</code> ou <code>fuser -m /mnt</code> para descobrir qual processo.
-        Feche os programas ou mude de diretório antes de desmontar.
+      <TerminalBlock
+        comment="testar o fstab SEM reiniciar (essencial!)"
+        command="sudo mount -a"
+        output=""
+      />
+      <TerminalBlock
+        comment="erro de digitação no fstab — aborta sem montar"
+        command="sudo mount -a"
+        output={`mount: /mnt/dados: can't find UUID=8e7d6c5b-4321-XXXX-bbbb-ccccddddeeee.
+       dmesg(1) may have more information after failed mount system call.`}
+        exitCode={32}
+      />
+
+      <AlertBox type="danger" title="nofail salva o boot">
+        Sem <code>nofail</code> em discos removíveis, se o disco não estiver conectado o systemd entra em
+        emergency mode. Sempre teste com <code>sudo mount -a</code> antes de reiniciar.
       </AlertBox>
 
-      <h3>/etc/fstab - Montagem Automática</h3>
+      <h3>Pegar UUID rapidinho (para colar no fstab)</h3>
+      <TerminalBlock
+        command="lsblk -no UUID /dev/sdb1"
+        output="8e7d6c5b-4321-aaaa-bbbb-ccccddddeeee"
+      />
+
+      <h2>5. Espaço em disco — df, du, ncdu</h2>
+
+      <h3>df — quanto sobra em cada FS montado</h3>
+      <TerminalBlock
+        command="df -hT"
+        output={`Filesystem     Type      Size  Used Avail Use% Mounted on
+dev            devtmpfs  7.8G     0  7.8G   0% /dev
+run            tmpfs     1.6G  1.4M  1.6G   1% /run
+/dev/sda2      ext4      442G  149G  271G  36% /
+tmpfs          tmpfs     7.8G   45M  7.8G   1% /dev/shm
+tmpfs          tmpfs     1.6G  108K  1.6G   1% /run/user/1000
+/dev/sda1      vfat      511M   76M  436M  15% /boot
+/dev/nvme0n1p2 btrfs     953G  141G  812G  15% /home`}
+      />
+      <OutputBlock
+        title="por que dois números 'usados' diferem em btrfs?"
+        output={`/dev/nvme0n1p2 btrfs     953G  141G  812G  15% /home`}
+        annotations={[
+          { line: 0, note: "df mostra dados COMPRIMIDOS no caso do btrfs" },
+        ]}
+        caption="Em btrfs e zfs, df pode mentir por subvolumes/snapshots. Use 'btrfs filesystem usage /home' para a verdade."
+      />
+
+      <h3>du — quanto cada coisa pesa</h3>
+      <TerminalBlock
+        command="du -sh /home/user"
+        output="48G     /home/user"
+      />
+      <TerminalBlock
+        command="du -h --max-depth=1 /home/user 2>/dev/null | sort -h"
+        output={`24K    /home/user/.ssh
+2.1M    /home/user/.cache/fontconfig
+4.8M    /home/user/.config
+112M    /home/user/Documents
+3.4G    /home/user/.cache
+8.7G    /home/user/Videos
+12.5G   /home/user/Downloads
+21.0G   /home/user/.local
+48G     /home/user`}
+      />
+      <TerminalBlock
+        comment="top 10 maiores em /var"
+        command="sudo du -h --max-depth=1 /var 2>/dev/null | sort -rh | head"
+        output={`14G    /var
+9.2G    /var/cache
+3.8G    /var/log
+512M    /var/lib
+98M     /var/tmp
+24M     /var/spool
+8.0K    /var/local
+4.0K    /var/opt
+4.0K    /var/games
+4.0K    /var/empty`}
+      />
+
+      <h3>ncdu — interativo, navegável</h3>
+      <TerminalBlock command="sudo pacman -S ncdu" output="..." />
+      <TerminalBlock
+        command="ncdu /home/user"
+        output={`ncdu 2.3 ~ Use the arrow keys to navigate, press ? for help
+
+--- /home/user ----------------------------------------------------------------
+   21.0 GiB [##########] /.local
+   12.5 GiB [#####     ] /Downloads
+    8.7 GiB [####      ] /Videos
+    3.4 GiB [#         ] /.cache
+  112.0 MiB [          ] /Documents
+    4.8 MiB [          ] /.config
+    2.1 MiB [          ] /.cache/fontconfig
+   24.0 KiB [          ] /.ssh
+
+ Total disk usage:  48.0 GiB  Apparent size:  46.2 GiB  Items: 215438`}
+      />
+
+      <h2>6. Receita: formatar um pendrive do zero</h2>
+
+      <AlertBox type="warning" title="Apaga TUDO">
+        Salve antes o que estiver no pendrive. Após formatar, recuperar é caro e nem sempre funciona.
+      </AlertBox>
+
+      <h3>Passo 1 — identificar o dispositivo</h3>
+      <TerminalBlock
+        comment="ANTES de plugar"
+        command="lsblk -d -o NAME,SIZE,RM,MODEL"
+        output={`NAME      SIZE RM MODEL
+sda     465.8G  0 Samsung SSD 870
+nvme0n1 953.9G  0 WD_BLACK SN850 1TB`}
+      />
+      <TerminalBlock
+        comment="DEPOIS de plugar"
+        command="lsblk -d -o NAME,SIZE,RM,MODEL"
+        output={`NAME      SIZE RM MODEL
+sda     465.8G  0 Samsung SSD 870
+sdb      29.8G  1 Cruzer Blade
+nvme0n1 953.9G  0 WD_BLACK SN850 1TB`}
+      />
+      <p>O dispositivo novo é <code>/dev/sdb</code> (RM=1, tamanho compatível).</p>
+
+      <h3>Passo 2 — desmontar</h3>
+      <TerminalBlock command="lsblk /dev/sdb" output={`NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+sdb      8:16   1 29.8G  0 disk
+└─sdb1   8:17   1 29.8G  0 part /run/media/user/PENDRIVE`} />
+      <TerminalBlock command="sudo umount /dev/sdb1" output="" />
+
+      <h3>Passo 3 — recriar tabela de partições</h3>
+      <TerminalBlock
+        command="sudo wipefs -a /dev/sdb"
+        output={`/dev/sdb: 8 bytes were erased at offset 0x00000200 (gpt): 45 46 49 20 50 41 52 54
+/dev/sdb: 8 bytes were erased at offset 0x76b39be00 (gpt): 45 46 49 20 50 41 52 54
+/dev/sdb: 2 bytes were erased at offset 0x000001fe (PMBR): 55 aa
+/dev/sdb: calling ioctl to re-read partition table: Success`}
+      />
+      <TerminalBlock
+        command="sudo parted /dev/sdb --script mklabel gpt mkpart pendrive fat32 1MiB 100%"
+        output=""
+      />
+
+      <h3>Passo 4 — formatar e nomear</h3>
+      <TerminalBlock
+        command="sudo mkfs.exfat -L MEUUSB /dev/sdb1"
+        output={`exfatprogs version : 1.2.2
+Creating exFAT filesystem(/dev/sdb1, cluster size=131072)
+Writing volume boot record: done
+Writing backup volume boot record: done
+Fat table creation: done
+Allocation bitmap creation: done
+Upcase table creation: done
+Writing root directory entry: done
+Synchronizing...
+exFAT format complete!`}
+      />
+
+      <h3>Passo 5 — confirmar</h3>
+      <TerminalBlock
+        command="lsblk -f /dev/sdb"
+        output={`NAME   FSTYPE FSVER LABEL   UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+sdb
+└─sdb1 exfat  1.0   MEUUSB 1234-ABCD`}
+      />
+
+      <h3>Erros frequentes</h3>
+      <TerminalBlock
+        command="sudo umount /dev/sdb1"
+        output="umount: /run/media/user/PENDRIVE: target is busy."
+        exitCode={32}
+      />
+      <TerminalBlock
+        comment="quem segura?"
+        command="sudo fuser -vm /dev/sdb1"
+        output={`                     USER        PID ACCESS COMMAND
+/dev/sdb1:           user       4812 ..c.. nautilus
+                     user       5012 ..c.. bash`}
+      />
+      <TerminalBlock command="sudo fuser -km /dev/sdb1" output="/dev/sdb1: 4812c 5012c" />
+
+      <TerminalBlock
+        comment='pendrive "read-only" no kernel'
+        command="dmesg | tail -3"
+        output={`[ 4521.834] usb 2-1: new high-speed USB device number 7 using xhci_hcd
+[ 4521.972] sd 7:0:0:0: [sdb] Write Protect is on
+[ 4521.973] sd 7:0:0:0: [sdb] Mode Sense: 23 00 80 00`}
+      />
+      <p>"Write Protect is on" → trava física no pendrive (slider). Não é problema do Linux.</p>
+
+      <h2>7. Pendrive bootável — dd</h2>
       <p>
-        O arquivo <code>/etc/fstab</code> define quais partições devem ser montadas automaticamente
-        durante o boot.
-      </p>
-      <CodeBlock code={`# Formato de cada linha:
-# <dispositivo>    <ponto_montagem>  <tipo>  <opções>      <dump> <pass>
-
-# Exemplo de fstab típico no Arch:
-UUID=xxxx-xxxx                        /boot    vfat    defaults,noatime          0 2
-UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx /        ext4    defaults,noatime          0 1
-UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx none     swap    defaults                  0 0
-UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx /home    ext4    defaults,noatime          0 2
-
-# Montar disco externo automaticamente
-UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx /mnt/backup ext4 defaults,nofail,noatime  0 2`} title="/etc/fstab" />
-
-      <p>Explicação dos campos:</p>
-      <ul>
-        <li><strong>dispositivo</strong> - UUID (recomendado) ou caminho do dispositivo</li>
-        <li><strong>ponto de montagem</strong> - Diretório onde será montado</li>
-        <li><strong>tipo</strong> - Sistema de arquivos (ext4, vfat, btrfs, swap)</li>
-        <li><strong>opções</strong> - defaults, noatime, ro, nofail, etc.</li>
-        <li><strong>dump</strong> - Backup (0 = não, 1 = sim). Geralmente 0.</li>
-        <li><strong>pass</strong> - Ordem de verificação no boot (0 = não verificar, 1 = raiz, 2 = outros)</li>
-      </ul>
-
-      <AlertBox type="danger" title="Erro no fstab pode impedir o boot!">
-        Sempre use <code>nofail</code> para discos externos/removíveis. Sem isso, se o disco não estiver
-        conectado durante o boot, o sistema pode entrar em modo de emergência. Após editar o fstab,
-        teste com <code>sudo mount -a</code> antes de reiniciar.
-      </AlertBox>
-
-      <h2>5. Monitoramento de Espaço em Disco</h2>
-
-      <h3>df - Disk Free</h3>
-      <CodeBlock code={`# Ver espaço livre em todas as partições montadas
-df -h
-
-# Saída típica:
-# Filesystem      Size  Used Avail Use% Mounted on
-# /dev/sda2       450G  120G  307G  29% /
-# /dev/sda1       512M   64M  448M  13% /boot
-# tmpfs           7.8G  1.2G  6.6G  16% /tmp
-
-# Mostrar tipo de sistema de arquivos
-df -Th
-
-# Mostrar informações de um diretório específico
-df -h /home
-
-# Mostrar apenas sistemas de arquivos locais (sem tmpfs, etc)
-df -h -x tmpfs -x devtmpfs`} />
-
-      <h3>du - Disk Usage</h3>
-      <CodeBlock code={`# Ver tamanho de um diretório
-du -sh /home/joao
-
-# Ver tamanho de cada subdiretório
-du -h --max-depth=1 /home/joao
-
-# Ver os 10 maiores diretórios
-du -h --max-depth=1 / 2>/dev/null | sort -rh | head -10
-
-# Ver tamanho de cada arquivo em um diretório
-du -ah /var/log | sort -rh | head -20
-
-# Excluir certos padrões
-du -sh --exclude='*.log' /var`} />
-
-      <h3>ncdu - NCurses Disk Usage</h3>
-      <CodeBlock code={`# Instalar
-sudo pacman -S ncdu
-
-# Analisar diretório atual
-ncdu
-
-# Analisar diretório específico
-ncdu /home
-
-# Analisar o sistema inteiro
-sudo ncdu /
-
-# Atalhos dentro do ncdu:
-# d     - Deletar arquivo/diretório selecionado
-# n     - Ordenar por nome
-# s     - Ordenar por tamanho
-# q     - Sair
-# Enter - Entrar no diretório`} />
-
-      <h2>6. Formatando um Pendrive pelo Terminal (Passo a Passo)</h2>
-      <p>
-        Na interface gráfica (Nautilus/Files, Dolphin, Thunar), quando você clica com o botão direito
-        no pendrive e escolhe "Formatar", muitas vezes aparece um erro e não consegue formatar. Isso
-        é extremamente comum — a interface gráfica não é 100% confiável para operações de disco.
-        Pelo terminal, funciona sempre.
+        O <code>dd</code> copia bloco-a-bloco. ISOs híbridas modernas (Arch, Ubuntu, Fedora) gravadas com
+        <code>dd</code> ficam bootáveis em UEFI e BIOS legado.
       </p>
 
-      <AlertBox type="warning" title="Formatar apaga TUDO do pendrive!">
-        <p>Antes de formatar, copie tudo que precisa do pendrive para outro lugar.
-        Depois de formatar, não tem como recuperar.</p>
+      <AlertBox type="danger" title='dd grava no DISCO inteiro'>
+        Use <code>/dev/sdb</code>, NÃO <code>/dev/sdb1</code>. A ISO já carrega sua própria tabela de partições.
+        E confirme <strong>10 vezes</strong> que é o pendrive — no disco do sistema isso é fatal.
       </AlertBox>
 
-      <h3>Passo 1: Identificar o pendrive</h3>
-      <CodeBlock
-        title="Descobrir qual dispositivo é o pendrive"
-        code={`# ANTES de plugar o pendrive, veja os discos:
-lsblk
-
-# Agora plugue o pendrive e rode novamente:
-lsblk
-
-# O dispositivo NOVO que apareceu é o pendrive. Exemplo:
-# NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
-# sda      8:0    0 500.0G  0 disk              ← Disco principal (NÃO MEXER)
-# ├─sda1   8:1    0   512M  0 part /boot
-# └─sda2   8:2    0 499.5G  0 part /
-# sdb      8:16   1  14.5G  0 disk              ← PENDRIVE! (RM=1 = removível)
-# └─sdb1   8:17   1  14.5G  0 part /run/media/joao/MEUUSB
-
-# DICAS para identificar o pendrive:
-# - RM = 1 (removível)
-# - Tamanho bate com o pendrive (8G, 16G, 32G, 64G...)
-# - Montado em /run/media/ (montagem automática)
-
-# Confirmar com mais detalhes:
-lsblk -f /dev/sdb
-# NAME FSTYPE LABEL  UUID                                 MOUNTPOINTS
-# sdb
-# └sdb1 vfat  MEUUSB XXXX-XXXX                            /run/media/joao/MEUUSB
-
-# Ou verificar o fabricante:
-sudo fdisk -l /dev/sdb
-# Disk /dev/sdb: 14.5 GiB, 15502147584 bytes
-# Disk model: Kingston DT 101 G2`}
+      <TerminalBlock
+        command="sudo dd if=archlinux-2025.01.01-x86_64.iso of=/dev/sdb bs=4M status=progress oflag=sync"
+        output={`1145044992 bytes (1.1 GB, 1.1 GiB) copied, 38 s, 30.1 MB/s
+275+1 records in
+275+1 records out
+1153433600 bytes (1.2 GB, 1.1 GiB) copied, 41.8923 s, 27.5 MB/s`}
       />
+      <TerminalBlock command="sync" output="" comment="garante que tudo foi pro disco" />
+      <TerminalBlock command="sudo eject /dev/sdb" output="" />
 
-      <AlertBox type="danger" title="NUNCA confunda o disco!">
-        <p>Se você formatar <code>/dev/sda</code> pensando que é o pendrive, vai apagar o sistema
-        operacional inteiro. SEMPRE confirme olhando o tamanho (SIZE), se é removível (RM=1),
-        e o ponto de montagem. Na dúvida, plugue e desplugue o pendrive para ver qual dispositivo
-        aparece e desaparece.</p>
+      <h2>8. Verificação e reparo — fsck</h2>
+
+      <AlertBox type="danger" title="fsck só em FS desmontado">
+        Rodar <code>fsck</code> num filesystem montado em rw pode corromper dados. Para o root:
+        rebote em modo recovery ou de um live-USB.
       </AlertBox>
 
-      <h3>Passo 2: Desmontar o pendrive</h3>
-      <CodeBlock
-        title="Desmontar antes de formatar"
-        code={`# O pendrive geralmente é montado automaticamente. Você PRECISA desmontar antes de formatar.
-
-# Desmontar a partição (NÃO o disco inteiro):
-sudo umount /dev/sdb1
-
-# Se tiver mais de uma partição:
-sudo umount /dev/sdb1
-sudo umount /dev/sdb2
-
-# Se der erro "target is busy" (algum programa está usando o pendrive):
-# 1. Feche qualquer gerenciador de arquivos que esteja mostrando o pendrive
-# 2. Saia de qualquer terminal que esteja dentro do pendrive (cd ~)
-# 3. Tente novamente:
-sudo umount /dev/sdb1
-
-# Se ainda não funcionar, force:
-sudo umount -f /dev/sdb1
-
-# Verificar se desmontou:
-lsblk /dev/sdb
-# sdb      8:16   1  14.5G  0 disk
-# └─sdb1   8:17   1  14.5G  0 part    ← Sem MOUNTPOINTS = desmontado ✓`}
+      <TerminalBlock
+        comment="checagem segura (read-only) sem reparar"
+        command="sudo fsck -n /dev/sdb1"
+        output={`fsck from util-linux 2.40.2
+e2fsck 1.47.0 (5-Feb-2023)
+Warning!  /dev/sdb1 is mounted.
+Warning: skipping journal recovery because doing a read-only filesystem check.
+Pass 1: Checking inodes, blocks, and sizes
+Pass 2: Checking directory structure
+Pass 3: Checking directory connectivity
+Pass 4: Checking reference counts
+Pass 5: Checking group summary information
+DADOS: 14/1953504 files (0.0% non-contiguous), 132045/7812032 blocks`}
       />
-
-      <h3>Passo 3: Criar nova tabela de partições</h3>
-      <CodeBlock
-        title="Recriar a tabela de partições (opcional mas recomendado)"
-        code={`# Se quer apenas formatar a partição existente, pule para o Passo 4.
-# Se quer recriar do zero (como se fosse um pendrive novo):
-
-# Abrir o cfdisk (interface visual, mais fácil):
-sudo cfdisk /dev/sdb
-
-# O cfdisk mostra:
-# ┌─────────────────────────────────────────────────────────┐
-# │                    Disk: /dev/sdb                        │
-# │              Size: 14.5 GiB, 15502147584 bytes          │
-# │     Label: dos, identifier: 0x00000000                  │
-# │                                                         │
-# │ Device    Boot   Start      End   Sectors  Size Id Type │
-# │ /dev/sdb1         2048 30277631  30275584 14.5G  c W95  │
-# │                                                         │
-# │ [ Delete ] [ Resize ] [  Quit  ] [  Type  ] [ Help ]   │
-# │ [  Write  ] [ Dump  ]  [  New  ]                       │
-# └─────────────────────────────────────────────────────────┘
-
-# Para recriar do zero:
-# 1. Selecione a partição existente e escolha [ Delete ]
-# 2. Agora o espaço aparece como "Free space"
-# 3. Selecione o espaço livre e escolha [ New ]
-# 4. Aceite o tamanho padrão (usa todo o espaço) → Enter
-# 5. Escolha "primary"
-# 6. Se for para usar em Windows também, vá em [ Type ]:
-#    - "0c" para FAT32 (W95 FAT32 LBA)
-#    - "07" para NTFS
-#    - "83" para Linux (ext4)
-# 7. Escolha [ Write ] e digite "yes" para confirmar
-# 8. Escolha [ Quit ]
-
-# === ALTERNATIVA: pelo fdisk (sem interface visual) ===
-sudo fdisk /dev/sdb
-# Dentro do fdisk:
-# o     → Criar nova tabela MBR (apaga tudo)
-# n     → Nova partição
-# p     → Primária
-# 1     → Número 1
-# Enter → Primeiro setor (padrão)
-# Enter → Último setor (padrão, usa todo o espaço)
-# t     → Mudar tipo
-# c     → FAT32 (ou 83 para Linux)
-# w     → Gravar e sair`}
+      <TerminalBlock
+        comment="reparo automático (depois de desmontar)"
+        command="sudo fsck -y /dev/sdb1"
+        output={`e2fsck 1.47.0 (5-Feb-2023)
+DADOS: clean, 14/1953504 files, 132045/7812032 blocks`}
       />
-
-      <h3>Passo 4: Formatar a partição</h3>
-      <CodeBlock
-        title="Formatar o pendrive"
-        code={`# === FAT32 (compatível com TUDO: Windows, Mac, Linux, TV, carro, videogame) ===
-# Limitação: arquivos de no máximo 4 GB
-sudo mkfs.fat -F 32 -n "MEUUSB" /dev/sdb1
-
-# Explicação:
-# -F 32    → FAT32 (e não FAT12 ou FAT16)
-# -n "MEUUSB" → Nome/label do pendrive (aparece no gerenciador de arquivos)
-# /dev/sdb1   → A PARTIÇÃO (sdb1), não o disco (sdb)
-
-# === exFAT (melhor opção para pendrives modernos) ===
-# Compatível com Windows, Mac, Linux. Sem limite de 4 GB por arquivo.
-sudo mkfs.exfat -n "MEUUSB" /dev/sdb1
-
-# === NTFS (sistema de arquivos do Windows) ===
-# Útil se vai usar muito no Windows
-sudo mkfs.ntfs -f -L "MEUUSB" /dev/sdb1
-# -f = formatação rápida (sem ele demora MUITO)
-
-# === ext4 (Linux nativo) ===
-# Melhor desempenho no Linux, mas Windows não lê sem software extra
-sudo mkfs.ext4 -L "MEUUSB" /dev/sdb1`}
-      />
-
-      <h3>Passo 5: Verificar e montar</h3>
-      <CodeBlock
-        title="Verificar se formatou e montar"
-        code={`# Verificar:
-lsblk -f /dev/sdb
-# NAME FSTYPE LABEL  UUID                 MOUNTPOINTS
-# sdb
-# └sdb1 vfat  MEUUSB XXXX-XXXX
-
-# Montar manualmente:
-sudo mount /dev/sdb1 /mnt
-ls /mnt    # Deve estar vazio (pendrive formatado)
-
-# Desmontar:
-sudo umount /mnt
-
-# Ou simplesmente: remova e plugue o pendrive novamente
-# O sistema vai montar automaticamente em /run/media/seu_usuario/MEUUSB`}
-      />
-
-      <AlertBox type="success" title="Qual formato escolher?">
-        <ul>
-          <li><strong>FAT32</strong> — Funciona em TUDO (Windows, Mac, Linux, TV, carro, PS4/PS5, impressora). Limite de 4GB por arquivo.</li>
-          <li><strong>exFAT</strong> — A melhor opção geral. Sem limite de 4GB, funciona em Windows, Mac e Linux modernos.</li>
-          <li><strong>NTFS</strong> — Se vai usar principalmente no Windows e precisa de arquivos maiores que 4GB.</li>
-          <li><strong>ext4</strong> — Se vai usar SOMENTE no Linux. Melhor desempenho e suporte a permissões.</li>
-        </ul>
-      </AlertBox>
-
-      <h3>Resolvendo erros comuns</h3>
-      <CodeBlock
-        title="Erros frequentes ao formatar pendrive"
-        code={`# ERRO: "device is busy" ou "target is busy"
-# Causa: O pendrive ainda está sendo usado
-# Solução:
-sudo umount /dev/sdb1           # Desmontar primeiro
-# Se não funcionar:
-sudo fuser -km /dev/sdb1        # Mata processos usando o pendrive
-sudo umount -f /dev/sdb1        # Força desmontagem
-
-# ERRO: "Permission denied"
-# Causa: Faltou o sudo
-# Solução: Adicione sudo antes do comando
-sudo mkfs.fat -F 32 /dev/sdb1
-
-# ERRO: "No such file or directory: /dev/sdb1"
-# Causa: O pendrive não tem partição (ou foi removido)
-# Solução: Verifique com lsblk. Se não aparece, o pendrive foi desconectado.
-# Se aparece /dev/sdb sem sdb1, precisa criar partição (Passo 3)
-
-# ERRO: Pendrive aparece como somente leitura (read-only)
-# Causa: Alguns pendrives têm trava física de proteção contra gravação
-# Solução 1: Verificar se tem uma chave física no pendrive (slider)
-# Solução 2: Remover atributo de somente leitura:
-sudo hdparm -r0 /dev/sdb
-
-# ERRO: O pendrive não aparece no lsblk
-# Possíveis causas:
-# 1. Porta USB com defeito — tente outra porta
-# 2. Pendrive com defeito
-# 3. Módulo USB não carregado (raro)
-# Verificar logs para ver se o sistema detectou o pendrive:
-dmesg | tail -20
-# Deve aparecer algo como:
-# [12345.678] usb 2-1: new high-speed USB device number 3 using xhci_hcd
-# [12345.789] sd 3:0:0:0: [sdb] 30277632 512-byte logical blocks`}
-      />
-
-      <h3>Ejetar o pendrive com segurança</h3>
-      <CodeBlock
-        title="Remover pendrive com segurança"
-        code={`# IMPORTANTE: Sempre desmonte antes de remover fisicamente!
-# Se puxar o pendrive sem desmontar, pode corromper os dados.
-
-# Desmontar:
-sudo umount /dev/sdb1
-
-# Ejetar (desliga a energia do dispositivo USB em alguns sistemas):
-sudo eject /dev/sdb
-
-# Agora pode remover o pendrive fisicamente com segurança.
-
-# Ou pelo udisksctl (ferramenta de desktop):
-udisksctl unmount -b /dev/sdb1
-udisksctl power-off -b /dev/sdb`}
-      />
-
-      <h2>7. Criar Pendrive Bootável (ISO)</h2>
-      <p>
-        Para instalar Linux ou outro sistema operacional, você precisa gravar a ISO em um pendrive.
-        No Windows, usaria o Rufus ou Etcher. No Linux, o <code>dd</code> faz isso direto pelo terminal.
-      </p>
-      <CodeBlock
-        title="Gravar ISO em pendrive bootável"
-        code={`# 1. Baixe a ISO (exemplo: Arch Linux)
-# https://archlinux.org/download/
-
-# 2. Identifique o pendrive (lsblk)
-lsblk
-# sdb      8:16   1  14.5G  0 disk   ← Este é o pendrive
-
-# 3. Desmonte TODAS as partições do pendrive
-sudo umount /dev/sdb1
-
-# 4. Grave a ISO diretamente no DISCO (sdb, NÃO sdb1!)
-sudo dd if=archlinux-2026.03.01-x86_64.iso of=/dev/sdb bs=4M status=progress oflag=sync
-
-# Explicação:
-# if=       → Input File (arquivo de entrada = a ISO)
-# of=       → Output File (saída = o pendrive, o DISCO /dev/sdb, sem número!)
-# bs=4M     → Block Size (grava 4 MB por vez, mais rápido)
-# status=progress → Mostra o progresso
-# oflag=sync     → Garante que os dados foram gravados antes de terminar
-
-# 5. Espere terminar (pode demorar alguns minutos)
-# 30277632+0 records in
-# 30277632+0 records out
-# 858783744 bytes (859 MB, 819 MiB) copied, 45.123 s, 19.0 MB/s
-
-# 6. Sincronizar (garantir que tudo foi escrito)
-sync
-
-# 7. Agora pode reiniciar e dar boot pelo pendrive
-# (Configure o BIOS/UEFI para bootar pelo USB)`}
-      />
-
-      <AlertBox type="danger" title="dd grava no DISCO, não na partição!">
-        <p>Para ISOs bootáveis, use <code>/dev/sdb</code> (o disco inteiro), NÃO <code>/dev/sdb1</code>
-        (a partição). A ISO já contém sua própria tabela de partições. E NUNCA confunda com <code>/dev/sda</code>
-        — ou vai apagar seu sistema operacional!</p>
-      </AlertBox>
-
-      <h2>8. dd - Cópia de Baixo Nível (Outros Usos)</h2>
-
-      <AlertBox type="danger" title="dd é apelidado de 'disk destroyer'">
-        O <code>dd</code> grava dados diretamente no dispositivo sem perguntar. Se você trocar
-        <code> of=</code> (saída) pelo dispositivo errado, pode sobrescrever seu disco principal.
-        Sempre confira 3 vezes antes de executar.
-      </AlertBox>
-
-      <CodeBlock code={`# Criar pendrive bootável a partir de uma ISO
-sudo dd if=archlinux.iso of=/dev/sdb bs=4M status=progress oflag=sync
-
-# Explicação:
-# if=    arquivo de entrada (input file)
-# of=    dispositivo de saída (output file)
-# bs=    tamanho do bloco (4 megabytes)
-# status=progress    mostra progresso
-# oflag=sync         força gravação síncrona
-
-# Criar backup de uma partição inteira
-sudo dd if=/dev/sda1 of=backup_sda1.img bs=4M status=progress
-
-# Restaurar backup
-sudo dd if=backup_sda1.img of=/dev/sda1 bs=4M status=progress
-
-# Zerar um disco completamente (DESTRÓI TUDO)
-sudo dd if=/dev/zero of=/dev/sdb bs=4M status=progress
-
-# Gerar arquivo de teste de 1GB
-dd if=/dev/zero of=teste_1gb.bin bs=1M count=1024 status=progress`} />
 
       <h2>9. Swap</h2>
-      <p>
-        O swap é um espaço em disco usado como extensão da RAM. Quando a memória RAM está cheia,
-        o sistema move dados menos usados para o swap.
-      </p>
 
-      <h3>Swap como partição</h3>
-      <CodeBlock code={`# Criar partição swap (após particionar com fdisk/cfdisk)
-sudo mkswap /dev/sda3
+      <h3>Status</h3>
+      <TerminalBlock
+        command="swapon --show"
+        output={`NAME      TYPE      SIZE USED PRIO
+/dev/sda3 partition  16G   0B   -2`}
+      />
+      <TerminalBlock command="free -h | grep Swap" output="Swap:          16Gi          0B        16Gi" />
 
-# Ativar swap
-sudo swapon /dev/sda3
+      <h3>Criar swap em arquivo (sem reparticionar)</h3>
+      <TerminalBlock
+        command="sudo fallocate -l 4G /swapfile"
+        output=""
+      />
+      <TerminalBlock command="sudo chmod 600 /swapfile" output="" />
+      <TerminalBlock
+        command="sudo mkswap /swapfile"
+        output={`Setting up swapspace version 1, size = 4 GiB (4294967296 bytes)
+no label, UUID=11223344-5566-7788-99aa-bbccddeeff00`}
+      />
+      <TerminalBlock
+        command="sudo swapon /swapfile"
+        output=""
+      />
+      <TerminalBlock
+        command="swapon --show"
+        output={`NAME       TYPE       SIZE USED PRIO
+/dev/sda3  partition   16G   0B   -2
+/swapfile  file        4G    0B   -3`}
+      />
+      <p>Para tornar persistente, adicione no <code>/etc/fstab</code>:</p>
+      <CodeBlock code={`/swapfile  none  swap  defaults  0 0`} />
 
-# Adicionar ao fstab para montagem automática
-# UUID=xxxx  none  swap  defaults  0  0
+      <h2>10. LUKS — disco criptografado</h2>
 
-# Ver swap ativo
-swapon --show
+      <TerminalBlock
+        command="sudo cryptsetup luksFormat /dev/sdb1"
+        output={`WARNING!
+========
+This will overwrite data on /dev/sdb1 irrevocably.
 
-# Desativar swap
-sudo swapoff /dev/sda3`} />
+Are you sure? (Type 'yes' in capital letters): YES
+Enter passphrase for /dev/sdb1: {dim}(invisível){/}
+Verify passphrase: {dim}(invisível){/}
+Key slot 0 created.
+Command successful.`}
+      />
+      <TerminalBlock
+        command="sudo cryptsetup open /dev/sdb1 cofre"
+        output={`Enter passphrase for /dev/sdb1: {dim}(invisível){/}`}
+      />
+      <TerminalBlock
+        command="ls /dev/mapper/"
+        output={`control  cofre`}
+      />
+      <TerminalBlock command="sudo mkfs.ext4 /dev/mapper/cofre" output="..." />
+      <TerminalBlock command="sudo mount /dev/mapper/cofre /mnt" output="" />
+      <TerminalBlock
+        comment="ver status"
+        command="sudo cryptsetup status cofre"
+        output={`/dev/mapper/cofre is active and is in use.
+  type:    LUKS2
+  cipher:  aes-xts-plain64
+  keysize: 512 bits
+  key location: keyring
+  device:  /dev/sdb1
+  sector size:  512
+  offset:  32768 sectors
+  size:    62465664 sectors
+  mode:    read/write`}
+      />
+      <TerminalBlock command="sudo umount /mnt && sudo cryptsetup close cofre" output="" />
 
-      <h3>Swap como arquivo (alternativa)</h3>
-      <CodeBlock code={`# Criar arquivo de swap de 4GB
-sudo dd if=/dev/zero of=/swapfile bs=1M count=4096 status=progress
+      <h2>11. LVM — Logical Volume Manager</h2>
 
-# Definir permissões corretas
-sudo chmod 600 /swapfile
+      <TerminalBlock
+        comment="criar PV (physical volume) num disco"
+        command="sudo pvcreate /dev/sdc"
+        output='  Physical volume "/dev/sdc" successfully created.'
+      />
+      <TerminalBlock
+        comment="criar VG (volume group)"
+        command="sudo vgcreate dados /dev/sdc"
+        output='  Volume group "dados" successfully created'
+      />
+      <TerminalBlock
+        comment="criar LV de 50G dentro do VG"
+        command="sudo lvcreate -L 50G -n midia dados"
+        output='  Logical volume "midia" created.'
+      />
+      <TerminalBlock
+        command="sudo lvdisplay dados/midia"
+        output={`  --- Logical volume ---
+  LV Path                /dev/dados/midia
+  LV Name                midia
+  VG Name                dados
+  LV UUID                AbCdEf-1234-5678-9ABC-DEF012345678
+  LV Write Access        read/write
+  LV Status              available
+  # open                 0
+  LV Size                50.00 GiB
+  Current LE             12800
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           254:0`}
+      />
+      <TerminalBlock command="sudo mkfs.ext4 /dev/dados/midia" output="..." />
+      <TerminalBlock
+        comment="aumentar online em +20G"
+        command="sudo lvextend -L +20G -r dados/midia"
+        output={`  Size of logical volume dados/midia changed from 50.00 GiB (12800 extents) to 70.00 GiB (17920 extents).
+  Logical volume dados/midia successfully resized.
+resize2fs 1.47.0 (5-Feb-2023)
+The filesystem on /dev/dados/midia is now 18350080 (4k) blocks long.`}
+      />
 
-# Formatar como swap
-sudo mkswap /swapfile
+      <h2>12. SMART — saúde do disco</h2>
+      <TerminalBlock command="sudo pacman -S smartmontools" output="..." />
+      <TerminalBlock
+        command="sudo smartctl -H /dev/sda"
+        output={`smartctl 7.4 2023-08-01 r5530 [x86_64-linux-6.7.4-arch1-1] (local build)
+Copyright (C) 2002-23, Bruce Allen, Christian Franke, www.smartmontools.org
 
-# Ativar
-sudo swapon /swapfile
+=== START OF READ SMART DATA SECTION ===
+SMART overall-health self-assessment test result: PASSED`}
+      />
+      <TerminalBlock
+        command="sudo smartctl -a /dev/sda | head -30"
+        output={`smartctl 7.4 2023-08-01 r5530 [x86_64-linux-6.7.4-arch1-1] (local build)
 
-# Adicionar ao fstab
-# /swapfile  none  swap  defaults  0  0
+=== START OF INFORMATION SECTION ===
+Model Family:     Samsung based SSDs
+Device Model:     Samsung SSD 870 EVO 500GB
+Serial Number:    S5SXNG0NA12345Z
+Firmware Version: SVT02B6Q
+User Capacity:    500,107,862,016 bytes [500 GB]
+Sector Size:      512 bytes logical/physical
+Rotation Rate:    Solid State Device
+Form Factor:      2.5 inches
+TRIM Command:     Available, Deterministic, Zeroed
+Device is:        In smartctl database
+ATA Version is:   ACS-4 T13/BSR INCITS 529 revision 5
+SATA Version is:  SATA 3.3, 6.0 Gb/s (current: 6.0 Gb/s)
+Local Time is:    Wed Jan 15 12:48:32 2025 -03
 
-# Verificar
-free -h
-swapon --show`} />
+=== START OF READ SMART DATA SECTION ===
+SMART overall-health self-assessment test result: PASSED
 
-      <h3>Swappiness</h3>
-      <CodeBlock code={`# Ver valor atual de swappiness (0-100, padrão: 60)
-cat /proc/sys/vm/swappiness
+ID# ATTRIBUTE_NAME          FLAG     VALUE WORST THRESH TYPE      UPDATED  WHEN_FAILED RAW_VALUE
+  5 Reallocated_Sector_Ct   0x0033   100   100   010    Pre-fail  Always       -       0
+  9 Power_On_Hours          0x0032   098   098   000    Old_age   Always       -       8421
+ 12 Power_Cycle_Count       0x0032   099   099   000    Old_age   Always       -       412
+177 Wear_Leveling_Count     0x0013   099   099   000    Pre-fail  Always       -       1
+241 Total_LBAs_Written      0x0032   099   099   000    Old_age   Always       -       18234560`}
+      />
 
-# Mudar temporariamente (volta ao padrão após reiniciar)
-sudo sysctl vm.swappiness=10
+      <h2>13. dd — outros usos</h2>
 
-# Mudar permanentemente
-echo "vm.swappiness=10" | sudo tee /etc/sysctl.d/99-swappiness.conf
-
-# Valores recomendados:
-# 10-20  para desktops com bastante RAM
-# 60     padrão (bom equilíbrio)
-# 100    usa swap agressivamente`} />
-
-      <h2>10. Verificação de Sistemas de Arquivos</h2>
-      <CodeBlock code={`# Verificar sistema de arquivos ext4 (a partição NÃO pode estar montada)
-sudo fsck.ext4 /dev/sda2
-
-# Verificar e corrigir automaticamente
-sudo fsck.ext4 -y /dev/sda2
-
-# Verificar Btrfs (pode ser feito com a partição montada)
-sudo btrfs check /dev/sda2
-
-# Ver informações do sistema de arquivos ext4
-sudo tune2fs -l /dev/sda2`} />
-
-      <AlertBox type="danger" title="Nunca rode fsck em partição montada!">
-        Executar <code>fsck</code> em uma partição montada pode causar corrupção de dados.
-        Desmonte a partição primeiro ou faça a verificação a partir de um live USB.
+      <AlertBox type="danger" title='dd = "disk destroyer" se errar o of='>
+        Sempre confirme com <code>lsblk</code> antes de rodar. Um <code>of=/dev/sda</code> errado apaga o sistema.
       </AlertBox>
 
-      <h2>11. O que NÃO fazer</h2>
-      <AlertBox type="danger" title="Erros fatais com discos">
-        <ul>
-          <li><code>dd of=/dev/sda</code> quando queria <code>/dev/sdb</code> — sobrescreve o sistema inteiro</li>
-          <li>Formatar a partição errada — sempre confirme com <code>lsblk</code></li>
-          <li>Editar o fstab com UUID errado — sistema não inicia</li>
-          <li>Rodar <code>fsck</code> em partição montada — corrupção de dados</li>
-          <li>Não usar <code>nofail</code> no fstab para discos externos</li>
-          <li>Criar swap sem <code>chmod 600</code> — risco de segurança</li>
-        </ul>
-      </AlertBox>
-
-      <h2>12. Referências</h2>
-      <ul>
-        <li><a href="https://wiki.archlinux.org/title/File_systems" target="_blank" rel="noopener noreferrer">ArchWiki - File Systems</a></li>
-        <li><a href="https://wiki.archlinux.org/title/Partitioning" target="_blank" rel="noopener noreferrer">ArchWiki - Partitioning</a></li>
-        <li><a href="https://wiki.archlinux.org/title/Fstab" target="_blank" rel="noopener noreferrer">ArchWiki - fstab</a></li>
-        <li><a href="https://wiki.archlinux.org/title/Swap" target="_blank" rel="noopener noreferrer">ArchWiki - Swap</a></li>
-        <li><code>man lsblk</code>, <code>man fdisk</code>, <code>man mount</code>, <code>man fstab</code></li>
-      </ul>
+      <TerminalBlock
+        comment="backup completo de uma partição"
+        command="sudo dd if=/dev/sdb1 of=backup-sdb1.img bs=4M status=progress"
+        output={`30276452864 bytes (30 GB, 28 GiB) copied, 142 s, 213 MB/s
+7411+1 records in
+7411+1 records out
+31086149632 bytes (31 GB, 29 GiB) copied, 145.7 s, 213 MB/s`}
+      />
+      <TerminalBlock
+        comment="restaurar"
+        command="sudo dd if=backup-sdb1.img of=/dev/sdb1 bs=4M status=progress"
+        output="..."
+      />
+      <TerminalBlock
+        comment="zerar primeiros 4MB (apaga MBR/GPT/superbloco — dispositivo vira 'novo')"
+        command="sudo dd if=/dev/zero of=/dev/sdb bs=1M count=4"
+        output={`4+0 records in
+4+0 records out
+4194304 bytes (4.2 MB, 4.0 MiB) copied, 0.034 s, 123 MB/s`}
+      />
+      <TerminalBlock
+        comment="gerar arquivo de 1G de zeros (testes)"
+        command="dd if=/dev/zero of=teste.bin bs=1M count=1024 status=progress"
+        output={`1073741824 bytes (1.1 GB, 1.0 GiB) copied, 1 s, 1.1 GB/s
+1024+0 records in
+1024+0 records out`}
+      />
 
     </PageContainer>
   );

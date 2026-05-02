@@ -1,104 +1,628 @@
 import { PageContainer } from "@/components/layout/PageContainer";
+import { TerminalBlock } from "@/components/ui/TerminalBlock";
+import { OutputBlock } from "@/components/ui/OutputBlock";
+import { CommandFlagList } from "@/components/ui/CommandFlag";
 import { CodeBlock } from "@/components/ui/CodeBlock";
 import { AlertBox } from "@/components/ui/AlertBox";
 
 export default function Avancado() {
   return (
-    <PageContainer 
-      title="Comandos Avançados: O Poder do Terminal" 
-      subtitle="Filtros, regex, processamento de texto e automação com grep, awk, sed, find e xargs."
+    <PageContainer
+      title="Comandos Avançados"
+      subtitle="find, xargs, awk, sed, agendamento e padrões reais de scripting. A filosofia UNIX em ação: pequenos programas combinados em pipelines poderosos."
       difficulty="avancado"
-      timeToRead="25 min"
+      timeToRead="35 min"
+      category="Shell Avançado"
     >
-      <p>
-        A verdadeira mágica do Linux acontece quando você combina pequenos programas que fazem uma 
-        única coisa bem feita (filosofia UNIX). Bem-vindo ao mundo do processamento de dados via terminal.
-      </p>
+      <h2>find — busca em tempo real no sistema de arquivos</h2>
 
-      <h2>1. Busca com GREP</h2>
-      <p>O <code>grep</code> procura padrões e expressões regulares dentro de textos ou saídas de outros comandos.</p>
-      
-      <CodeBlock code={`# Buscar a palavra "error" (case-insensitive) num arquivo
-grep -i "error" /var/log/syslog
+      <CommandFlagList
+        command="find"
+        items={[
+          { flag: "-name PAT", description: "Casa pelo nome (suporta globs *, ?, [..]). Sensível a maiúsculas.", example: "find . -name '*.log'" },
+          { flag: "-iname PAT", description: "Como -name, mas case-insensitive.", example: "find . -iname '*.JPG'" },
+          { flag: "-type T", description: "f=arquivo regular, d=diretório, l=link, s=socket, b=bloco, c=char.", example: "find /etc -type d" },
+          { flag: "-size N", description: "Tamanho. +1G = maior que 1G, -100k = menor que 100K, =1M.", example: "find / -size +1G" },
+          { flag: "-mtime N", description: "Modificado N*24h. -7 = últimos 7 dias, +30 = mais antigo que 30 dias." },
+          { flag: "-mmin N", description: "Modificado N minutos atrás (mais granular)." },
+          { flag: "-user U", description: "Pertence ao usuário U.", example: "find /tmp -user joao" },
+          { flag: "-perm MODE", description: "Permissão exata (0644), com -mode (todos esses bits), /mode (qualquer).", example: "find / -perm -4000" },
+          { flag: "-empty", description: "Arquivos ou diretórios vazios." },
+          { flag: "-maxdepth N", description: "Limita a profundidade da busca (rápido)." },
+          { flag: "-exec cmd {} \\;", description: "Roda cmd para CADA arquivo (\\; encerra). Lento.", example: "find . -name '*.bak' -exec rm {} \\;" },
+          { flag: "-exec cmd {} +", description: "Acumula vários args por execução (rápido, como xargs)." },
+          { flag: "-print0", description: "Separa resultados com NUL — combina com xargs -0 para nomes com espaço." },
+          { flag: "-prune", description: "Não desce no diretório (skip). Combine com -path." },
+          { flag: "-not", description: "Nega o próximo teste." },
+        ]}
+      />
 
-# Buscar recursivamente (-r) mostrando a linha do arquivo (-n)
-grep -rn "TODO:" /home/dev/projeto/
+      <TerminalBlock
+        command="find /etc -maxdepth 1 -type d | head -5"
+        output={`/etc
+/etc/X11
+/etc/alsa
+/etc/audit
+/etc/avahi`}
+      />
 
-# Inverter a busca (mostrar linhas que NÃO contêm a palavra)
-grep -v "success" logs.txt
+      <TerminalBlock
+        comment="arquivos .conf modificados nos últimos 7 dias"
+        command="find /etc -name '*.conf' -mtime -7"
+        output={`/etc/pacman.conf
+/etc/mkinitcpio.conf`}
+      />
 
-# Mostrar o contexto: 3 linhas antes (-B) e 3 depois (-A) do match
-grep -A 3 -B 3 "Exception" app.log
+      <TerminalBlock
+        comment="caçando arquivos enormes (lentidão de disco)"
+        command="find / -xdev -type f -size +500M 2>/dev/null"
+        output={`/var/cache/pacman/pkg/linux-6.12.1-1-x86_64.pkg.tar.zst
+/home/user/iso/archlinux-2026.03.01-x86_64.iso
+/home/user/.local/share/Steam/steamapps/common/...`}
+      />
 
-# Usar Regex Estendido (-E)
-grep -E "[0-9]{3}-[0-9]{3}-[0-9]{4}" contatos.txt`} />
+      <TerminalBlock
+        comment="binários SUID — auditoria básica de segurança"
+        command="find / -xdev -perm -4000 -type f 2>/dev/null | head -5"
+        output={`/usr/bin/su
+/usr/bin/sudo
+/usr/bin/passwd
+/usr/bin/mount
+/usr/bin/newgrp`}
+      />
 
-      <h2>2. O canivete suíço: FIND</h2>
-      <p>Diferente do <code>locate</code>, o <code>find</code> varre o disco em tempo real baseado em diversos critérios.</p>
-      
-      <CodeBlock code={`# Buscar arquivos pelo nome na pasta atual e subpastas
-find . -name "*.jpg"
+      <TerminalBlock
+        comment="arquivos vazios para limpar"
+        command="find ~/Downloads -type f -empty"
+        output={`/home/user/Downloads/.placeholder
+/home/user/Downloads/notas.txt`}
+      />
 
-# Buscar apenas diretórios (-type d) ou arquivos (-type f)
-find /etc -type d -name "nginx"
+      <h3>-exec vs xargs</h3>
 
-# Buscar arquivos modificados nos últimos 7 dias
-find /home -mtime -7
+      <TerminalBlock
+        comment="lento: 1 fork por arquivo"
+        command={`find . -name '*.tmp' -exec rm -v {} \\;`}
+        output={`removed './a.tmp'
+removed './b.tmp'
+removed './c.tmp'`}
+      />
 
-# Buscar arquivos maiores que 1GB
-find / -size +1G
+      <TerminalBlock
+        comment="rápido: agrupa em um único rm"
+        command={`find . -name '*.tmp' -exec rm -v {} +`}
+        output={`removed './a.tmp' removed './b.tmp' removed './c.tmp'`}
+      />
 
-# O PODER DO -exec: Encontrar e deletar arquivos .tmp
-find . -name "*.tmp" -exec rm -f {} +`} />
+      <TerminalBlock
+        comment="seguro com nomes contendo espaços"
+        command={`find . -name '*.jpg' -print0 | xargs -0 -I {} cp {} /backup/`}
+        output=""
+      />
 
-      <h2>3. Automação pesada com XARGS</h2>
-      <p>O <code>xargs</code> pega a saída padrão e a transforma em argumentos para outro comando. 
-      É mais eficiente que o <code>-exec</code> do find.</p>
-      
-      <CodeBlock code={`# Encontra imagens antigas e passa para o rm deletar de uma vez só
-find . -name "*.png" -mtime +30 | xargs rm -f
-
-# Executar comandos em PARALELO (-P 4 usa 4 threads) para converter arquivos
-ls *.mp4 | xargs -n 1 -P 4 -I {} ffmpeg -i {} {}.mp3`} />
-
-      <h2>4. Manipulação com SED (Stream Editor)</h2>
-      <p>O <code>sed</code> é perfeito para localizar e substituir textos em massa sem abrir o arquivo.</p>
-
-      <CodeBlock code={`# Substituir a primeira ocorrência de "foo" por "bar" por linha
-sed 's/foo/bar/' arquivo.txt
-
-# Substituir TODAS as ocorrências na linha (g = global)
-sed 's/foo/bar/g' arquivo.txt
-
-# Editar o arquivo IN-PLACE (-i) alterando ele de verdade e criando backup
-sed -i.bak 's/localhost/127.0.0.1/g' config.yml
-
-# Deletar da linha 5 até a 10
-sed '5,10d' texto.txt`} />
-
-      <h2>5. A linguagem AWK</h2>
-      <p><code>awk</code> é uma linguagem de programação completa disfarçada de comando, focada em manipulação de colunas e dados tabulares.</p>
-
-      <CodeBlock code={`# Imprimir apenas a primeira ($1) e terceira ($3) coluna de um arquivo
-awk '{print $1, $3}' dados.txt
-
-# Separador customizado (Ex: CSV). Onde a vírgula é o separador (-F',')
-awk -F',' '{print $2}' clientes.csv
-
-# Imprimir as linhas onde a terceira coluna é maior que 100
-awk '$3 > 100' saldos.txt
-
-# Somar todos os valores da primeira coluna e imprimir o total no final
-awk '{soma += $1} END {print "Total:", soma}' compras.txt`} />
-
-      <AlertBox type="success" title="Juntando tudo com PIPES (|)">
-        <p>O verdadeiro poder vem de canalizar a saída de um programa para outro:</p>
-        <p className="font-mono text-sm mt-2 bg-black/30 p-2 rounded">
-          {`cat access.log | grep "404" | awk '{print $1}' | sort | uniq -c | sort -nr | head -n 5`}
-        </p>
-        <p className="text-sm mt-1">Isso pega um log web, filtra erros 404, pega os IPs, ordena, conta as ocorrências, ordena numericamente do maior pro menor, e mostra os 5 IPs que mais geraram erro 404.</p>
+      <AlertBox type="warning" title="Cuidado com -delete">
+        <code>find . -name '*.log' -delete</code> é atômico, mas combinado com
+        argumentos errados pode varrer o sistema. <strong>Sempre rode primeiro sem
+        -delete</strong> para conferir o que casaria.
       </AlertBox>
 
+      <h2>xargs — transformando stdin em argumentos</h2>
+
+      <CommandFlagList
+        command="xargs"
+        items={[
+          { flag: "-n N", description: "Máx N argumentos por execução do comando." },
+          { flag: "-I {}", description: "Substitui {} pelo argumento (uma execução por arg).", example: "ls *.png | xargs -I {} mv {} ./old/" },
+          { flag: "-P N", description: "N processos em paralelo. -P 0 = quantos couberem.", example: "xargs -P 8 -n 1 curl < urls.txt" },
+          { flag: "-0", description: "Argumentos separados por NUL (combina com find -print0)." },
+          { flag: "-r", long: "--no-run-if-empty", description: "Se stdin vazio, NÃO executa nada (GNU)." },
+          { flag: "-t", description: "Imprime cada comando antes de executá-lo (debug)." },
+          { flag: "-a ARQ", description: "Lê argumentos de um arquivo em vez de stdin." },
+        ]}
+      />
+
+      <TerminalBlock
+        command={`echo "1 2 3 4 5" | xargs -n 2 echo PAR:`}
+        output={`PAR: 1 2
+PAR: 3 4
+PAR: 5`}
+      />
+
+      <TerminalBlock
+        comment="paralelismo: 4 conversões simultâneas"
+        command={`ls *.wav | xargs -n 1 -P 4 -I {} ffmpeg -loglevel error -i {} {}.mp3 -y`}
+        output={`(processa 4 arquivos por vez, sem saída se -loglevel error)`}
+      />
+
+      <TerminalBlock
+        comment="-t mostra exatamente o que foi executado"
+        command={`echo 'a b c' | xargs -t -n 1 echo`}
+        output={`echo a
+a
+echo b
+b
+echo c
+c`}
+      />
+
+      <h2>grep + regex</h2>
+
+      <CommandFlagList
+        command="grep"
+        items={[
+          { flag: "-E", description: "Regex estendida (POSIX ERE). Equivale a egrep.", example: "grep -E '[0-9]{3}-[0-9]{4}'" },
+          { flag: "-P", description: "Regex Perl (PCRE) — lookahead, \\d, \\w.", example: "grep -P '(?<=user=)\\w+'" },
+          { flag: "-w", description: "Casa palavra inteira (não substring)." },
+          { flag: "-l", description: "Mostra só os nomes dos arquivos que casaram." },
+          { flag: "-L", description: "Mostra os arquivos que NÃO casaram (inverso de -l)." },
+          { flag: "--include / --exclude", description: "Filtra por padrão de nome ao usar -r.", example: "grep -r 'TODO' --include='*.py' ." },
+          { flag: "--color=auto", description: "Destaca os matches (já é default na maioria das distros)." },
+        ]}
+      />
+
+      <TerminalBlock
+        command={`echo 'meu telefone: 11-9876-5432' | grep -oE '[0-9]{2}-[0-9]{4}-[0-9]{4}'`}
+        output="11-9876-5432"
+      />
+
+      <TerminalBlock
+        command={`grep -rn --include='*.ts' 'TODO' src/ | head -3`}
+        output={`src/components/Header.ts:42:// TODO: dark mode toggle
+src/lib/utils.ts:11:// TODO: handle BigInt
+src/pages/Home.ts:88:// TODO: lazy load`}
+      />
+
+      <TerminalBlock
+        comment="-P com lookbehind: extrai só o valor após user="
+        command={`echo 'login user=joao session=42' | grep -oP '(?<=user=)\\w+'`}
+        output="joao"
+      />
+
+      <h2>sed — edição em fluxo</h2>
+
+      <CommandFlagList
+        command="sed"
+        items={[
+          { flag: "-i[SUFIXO]", description: "Edita o arquivo no lugar. Com sufixo cria backup.bak.", example: "sed -i.bak 's/foo/bar/g' arq" },
+          { flag: "-n", description: "Suprime saída automática (use com p para imprimir explicitamente)." },
+          { flag: "-E", description: "Regex estendida (sem precisar escapar (), {}, +, ?)." },
+          { flag: "-e SCRIPT", description: "Aplica múltiplos scripts em sequência.", example: "sed -e 's/a/A/' -e 's/b/B/'" },
+          { flag: "-f FILE", description: "Lê o script de um arquivo." },
+        ]}
+      />
+
+      <h3>Comandos do sed</h3>
+
+      <OutputBlock
+        title="comandos mais usados"
+        output={`s/PAT/REPL/FLAGS    substituição (g=global, i=case-i, N=N-ésima)
+d                   apaga a linha
+p                   imprime (use com -n)
+N                   anexa próxima linha ao espaço de padrões
+y/abc/ABC/          transliteração (como tr)
+a\\ TEXTO            adiciona TEXTO depois da linha
+i\\ TEXTO            insere TEXTO antes da linha
+c\\ TEXTO            substitui a linha por TEXTO
+=                   imprime o número da linha`}
+      />
+
+      <TerminalBlock
+        command={`echo 'foo foo foo' | sed 's/foo/X/'`}
+        output="X foo foo"
+      />
+
+      <TerminalBlock
+        command={`echo 'foo foo foo' | sed 's/foo/X/g'`}
+        output="X X X"
+      />
+
+      <TerminalBlock
+        comment="só a 2ª ocorrência"
+        command={`echo 'foo foo foo' | sed 's/foo/X/2'`}
+        output="foo X foo"
+      />
+
+      <TerminalBlock
+        comment="apaga linhas em branco"
+        command={`printf 'a\\n\\nb\\n\\nc\\n' | sed '/^$/d'`}
+        output={`a
+b
+c`}
+      />
+
+      <TerminalBlock
+        comment="extrai apenas linhas entre marcadores BEGIN..END"
+        command={`printf 'BEGIN\\nx\\ny\\nEND\\nz\\n' | sed -n '/BEGIN/,/END/p'`}
+        output={`BEGIN
+x
+y
+END`}
+      />
+
+      <TerminalBlock
+        comment="numera as linhas (-n + =)"
+        command={`printf 'a\\nb\\nc\\n' | sed = | sed 'N;s/\\n/\\t/'`}
+        output={`1\ta
+2\tb
+3\tc`}
+      />
+
+      <TerminalBlock
+        comment="in-place com backup, em todos os .conf"
+        command={`sudo sed -i.bak -E 's/^#?(MaxJobs)=.*/\\1=8/' /etc/systemd/system.conf`}
+        output=""
+      />
+
+      <h2>awk — uma linguagem de processamento de colunas</h2>
+
+      <p>
+        O awk lê linha por linha, divide em campos (<code>$1</code>, <code>$2</code>, ...),
+        e executa blocos para cada padrão. Tem variáveis numéricas, arrays
+        associativos, funções e blocos especiais <code>BEGIN</code> / <code>END</code>.
+      </p>
+
+      <OutputBlock
+        title="anatomia de um programa awk"
+        output={`awk 'BEGIN{...}  /padrao/{ acao }  END{...}' arquivo
+       ↑                ↑                ↑
+       roda 1x          roda por linha   roda 1x
+       antes            que casar        no fim`}
+      />
+
+      <h3>Variáveis embutidas</h3>
+
+      <OutputBlock
+        title="variáveis automáticas"
+        output={`$0    linha inteira
+$1..  campos individuais (separados por FS)
+NF    número de campos da linha atual
+NR    número da linha atual (Number of Records)
+FS    field separator de entrada (default: espaço/tab)
+OFS   field separator de SAÍDA (default: " ")
+RS    record separator (default: \\n)
+FILENAME  nome do arquivo sendo processado`}
+      />
+
+      <TerminalBlock
+        command="cat /etc/passwd | head -3"
+        output={`root:x:0:0::/root:/usr/bin/bash
+bin:x:1:1::/:/usr/bin/nologin
+daemon:x:2:2::/:/usr/bin/nologin`}
+      />
+
+      <TerminalBlock
+        comment="usuário e shell, separador :"
+        command={`awk -F: '{print $1, "->", $7}' /etc/passwd | head -3`}
+        output={`root -> /usr/bin/bash
+bin -> /usr/bin/nologin
+daemon -> /usr/bin/nologin`}
+      />
+
+      <TerminalBlock
+        comment="só usuários com bash como shell"
+        command={`awk -F: '$7 ~ /bash$/ {print $1}' /etc/passwd`}
+        output={`root
+user`}
+      />
+
+      <TerminalBlock
+        comment="acumulador: soma de tamanhos por extensão"
+        command={`ls -l | awk 'NR>1 {ext=$NF; sub(/.*\\./,"",ext); soma[ext]+=$5}
+                     END {for (e in soma) printf "%-6s %d\\n", e, soma[e]}'`}
+        output={`txt    18420
+log    1842934
+md     6712
+sh     1024`}
+      />
+
+      <TerminalBlock
+        comment="ps aux: top 5 processos por uso de RAM (%MEM)"
+        command={`ps aux | awk 'NR>1 {print $4, $11}' | sort -rn | head -5`}
+        output={`12.4 /usr/lib/firefox/firefox
+8.7 /usr/bin/gnome-shell
+4.2 /usr/bin/Xwayland
+3.1 /usr/lib/firefox/firefox
+2.8 /usr/bin/code`}
+      />
+
+      <TerminalBlock
+        comment="contador com BEGIN/END"
+        command={`awk 'BEGIN{print "início"} /sshd/{c++} END{print "ssh:", c}' /var/log/auth.log`}
+        output={`início
+ssh: 187`}
+      />
+
+      <CodeBlock
+        title="programa awk multilinha — relatório de logs HTTP"
+        code={`#!/usr/bin/awk -f
+BEGIN {
+    FS = " "
+    print "IP                 Hits   Bytes"
+    print "-----------------  ----   --------"
+}
+{
+    hits[$1]++
+    bytes[$1] += $10
+}
+END {
+    for (ip in hits)
+        printf "%-17s  %4d   %8d\\n", ip, hits[ip], bytes[ip]
+}`}
+      />
+
+      <TerminalBlock
+        command="awk -f relatorio.awk access.log | sort -k2 -rn | head -3"
+        output={`192.168.1.42       1832   18472913
+10.0.0.7            942    8472113
+192.168.1.10        318    1937284`}
+      />
+
+      <h2>Pipelines de verdade</h2>
+
+      <TerminalBlock
+        comment="top 5 IPs gerando 404 num log de acesso"
+        command={`grep ' 404 ' access.log | awk '{print $1}' | sort | uniq -c | sort -rn | head -5`}
+        output={`    412 192.168.1.42
+    187 10.0.0.99
+     93 203.0.113.5
+     58 198.51.100.10
+     12 192.168.1.7`}
+      />
+
+      <TerminalBlock
+        comment="conexões em ESTABLISHED por porta"
+        command={`ss -tan | awk 'NR>1 && $1=="ESTAB" {split($4,a,":"); print a[length(a)]}' | sort | uniq -c`}
+        output={`     12 22
+      4 443
+      2 5432
+      1 6379`}
+      />
+
+      <h2>Agendamento — cron e systemd timers</h2>
+
+      <h3>cron</h3>
+
+      <TerminalBlock
+        command="sudo pacman -S --needed cronie"
+        output={`Packages (1)  cronie-1.7.4-1
+Total Installed Size:  0.50 MiB`}
+      />
+
+      <TerminalBlock
+        command={`sudo systemctl enable --now cronie.service`}
+        output={`Created symlink /etc/systemd/system/multi-user.target.wants/cronie.service → /usr/lib/systemd/system/cronie.service.`}
+      />
+
+      <OutputBlock
+        title="formato do crontab"
+        output={`# m  h  dom mon dow  comando
+# │  │   │   │   │
+# │  │   │   │   └── dia da semana (0-7, 0 e 7 = domingo)
+# │  │   │   └────── mês (1-12)
+# │  │   └────────── dia do mês (1-31)
+# │  └────────────── hora (0-23)
+# └───────────────── minuto (0-59)`}
+      />
+
+      <TerminalBlock
+        command="crontab -l"
+        output={`0 3 * * *    /home/user/scripts/backup.sh >> /var/log/backup.log 2>&1
+*/5 * * * *  /home/user/scripts/check-vpn.sh
+0 4 * * 0    paccache -r
+@reboot      /home/user/scripts/start-tunnel.sh`}
+      />
+
+      <TerminalBlock
+        comment="ver os jobs de root"
+        command="sudo crontab -l -u root"
+        output={`# Edit this file to introduce tasks to be run by cron.
+# m h  dom mon dow   command
+30 2 * * 1  apt-mirror &> /dev/null
+0 5 * * *   /usr/bin/logrotate /etc/logrotate.conf`}
+      />
+
+      <h3>systemd timers — alternativa moderna</h3>
+
+      <CodeBlock
+        title="/etc/systemd/system/backup.service"
+        code={`[Unit]
+Description=Backup do home
+
+[Service]
+Type=oneshot
+ExecStart=/home/user/scripts/backup.sh`}
+      />
+
+      <CodeBlock
+        title="/etc/systemd/system/backup.timer"
+        code={`[Unit]
+Description=Backup diário 03:00
+
+[Timer]
+OnCalendar=*-*-* 03:00:00
+Persistent=true
+RandomizedDelaySec=15min
+
+[Install]
+WantedBy=timers.target`}
+      />
+
+      <TerminalBlock
+        command="sudo systemctl daemon-reload && sudo systemctl enable --now backup.timer"
+        output={`Created symlink /etc/systemd/system/timers.target.wants/backup.timer → /etc/systemd/system/backup.timer.`}
+      />
+
+      <TerminalBlock
+        command="systemctl list-timers --all"
+        output={`NEXT                          LEFT       LAST                          PASSED       UNIT             ACTIVATES
+Wed 2026-03-26 03:00:00 -03   8h left    Tue 2026-03-25 03:00:14 -03   15h ago      backup.timer     backup.service
+Wed 2026-03-26 19:01:00 -03   28min      Wed 2026-03-26 18:01:14 -03   31min ago    logrotate.timer  logrotate.service
+Thu 2026-03-27 00:00:00 -03   5h left    Wed 2026-03-26 00:00:00 -03   18h ago      man-db.timer     man-db.service
+
+3 timers listed.`}
+      />
+
+      <TerminalBlock
+        command="systemctl status backup.timer"
+        output={`● backup.timer - Backup diário 03:00
+     Loaded: loaded (/etc/systemd/system/backup.timer; enabled; preset: disabled)
+     Active: {g}active (waiting){/} since Tue 2026-03-25 18:42:11 -03; 23h ago
+    Trigger: Wed 2026-03-26 03:00:00 -03; 8h left
+   Triggers: ● backup.service`}
+      />
+
+      <h3>at — agendamento único</h3>
+
+      <TerminalBlock
+        command="sudo pacman -S --needed at && sudo systemctl enable --now atd"
+        output={`Packages (1)  at-3.2.5-3
+Total Installed Size:  0.21 MiB`}
+      />
+
+      <TerminalBlock
+        command={`echo "shutdown -h now" | at 23:30`}
+        output={`warning: commands will be executed using /bin/sh
+job 4 at Wed Mar 26 23:30:00 2026`}
+      />
+
+      <TerminalBlock
+        command="atq"
+        output="4	Wed Mar 26 23:30:00 2026 a user"
+      />
+
+      <TerminalBlock
+        comment="cancelar"
+        command="atrm 4"
+        output=""
+      />
+
+      <h2>Padrões de scripting de produção</h2>
+
+      <CodeBlock
+        title="boilerplate seguro — strict mode + trap"
+        code={`#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\\n\\t'
+
+# -e  : sai ao primeiro erro
+# -u  : variável não definida = erro
+# -o pipefail : pipe falha se QUALQUER etapa falhar
+# IFS : evita word-splitting bobo
+
+readonly SCRIPT_DIR="$(cd "$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+readonly LOG="/var/log/$(basename "$0").log"
+
+log()  { printf '[%s] %s\\n' "$(date +%FT%T)" "$*" | tee -a "$LOG" >&2; }
+fail() { log "FAIL: $*"; exit 1; }
+
+cleanup() {
+    local rc=$?
+    log "encerrando (rc=$rc)"
+    rm -rf "\${TMP:-}"
+}
+trap cleanup EXIT INT TERM
+
+TMP=$(mktemp -d)
+log "iniciando"
+
+main() {
+    [[ $# -ge 1 ]] || fail "uso: $0 <alvo>"
+    local alvo="$1"
+    log "processando $alvo"
+    # ... lógica aqui ...
+}
+
+main "$@"`}
+      />
+
+      <CodeBlock
+        title="processando opções com getopts"
+        code={`#!/usr/bin/env bash
+set -euo pipefail
+
+verbose=0
+out=""
+
+while getopts ":vo:h" opt; do
+    case $opt in
+        v) verbose=1 ;;
+        o) out=$OPTARG ;;
+        h) echo "uso: $0 [-v] [-o ARQ] arquivos..."; exit 0 ;;
+        \\?) echo "opção inválida: -$OPTARG" >&2; exit 2 ;;
+        :)  echo "-$OPTARG requer argumento" >&2; exit 2 ;;
+    esac
+done
+shift $((OPTIND - 1))
+
+(( verbose )) && echo "verbose: on; saída: \${out:-stdout}; argumentos: $#"`}
+      />
+
+      <TerminalBlock
+        command="./script.sh -v -o /tmp/out.txt a.txt b.txt"
+        output="verbose: on; saída: /tmp/out.txt; argumentos: 2"
+      />
+
+      <CodeBlock
+        title="paralelismo controlado com xargs"
+        code={`#!/usr/bin/env bash
+set -euo pipefail
+
+# baixar 1000 URLs com no máximo 16 conexões simultâneas
+xargs -a urls.txt -n 1 -P 16 -I {} \\
+    curl -sSfL --retry 3 -o "downloads/$(basename {})" {}`}
+      />
+
+      <h2>Debug e introspecção</h2>
+
+      <TerminalBlock
+        comment="executar mostrando cada comando antes de rodar"
+        command="bash -x meu_script.sh"
+        output={`+ readonly LOG=/tmp/x.log
++ TMP=/tmp/tmp.AbC123
++ mkdir -p /tmp/dest
++ cp arquivo.txt /tmp/dest/
++ echo done
+done`}
+      />
+
+      <TerminalBlock
+        comment="só a sintaxe (sem executar)"
+        command="bash -n script.sh"
+        output=""
+      />
+
+      <TerminalBlock
+        command="shellcheck script.sh"
+        output={`In script.sh line 12:
+if [ $var = "x" ]; then
+   ^----^ {y}SC2086{/}: Double quote to prevent globbing and word splitting.
+
+Did you mean:
+if [ "$var" = "x" ]; then`}
+      />
+
+      <AlertBox type="success" title="Receita do iniciado">
+        <strong>Sempre que escrever bash sério:</strong> rode no <code>shellcheck</code>{" "}
+        (instale com <code>sudo pacman -S shellcheck</code>) e use{" "}
+        <code>set -euo pipefail</code> no topo. Isso elimina ~80% dos bugs típicos.
+      </AlertBox>
+
+      <h2>Cola visual</h2>
+
+      <OutputBlock
+        title="quando usar o quê"
+        output={`tarefa                        ferramenta
+----------------------------  -------------------
+buscar arquivos               find
+buscar texto                  grep
+extrair colunas               cut, awk
+ordenar / contar únicos       sort | uniq -c
+substituir texto              sed -i
+processar linha-a-linha       awk
+paralelizar                   xargs -P
+agendar uma vez               at
+agendar recorrente            systemd timer (preferido), cron`}
+      />
     </PageContainer>
   );
 }

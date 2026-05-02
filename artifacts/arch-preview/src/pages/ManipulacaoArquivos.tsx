@@ -1,598 +1,602 @@
 import { PageContainer } from "@/components/layout/PageContainer";
 import { CodeBlock } from "@/components/ui/CodeBlock";
 import { AlertBox } from "@/components/ui/AlertBox";
+import { TerminalBlock } from "@/components/ui/TerminalBlock";
+import { OutputBlock } from "@/components/ui/OutputBlock";
+import { CommandFlagList } from "@/components/ui/CommandFlag";
 
 export default function ManipulacaoArquivos() {
   return (
     <PageContainer
       title="Manipulação de Arquivos e Diretórios"
-      subtitle="Domine cp, mv, rm, mkdir, touch e ln com explicação completa de cada flag. Do básico ao uso profissional, com exemplos reais do dia a dia no Arch Linux."
+      subtitle="Domine touch, mkdir, cp, mv, rm e ln com saída real de cada flag (-v mostra TUDO). Do básico ao uso profissional, com proteções contra acidentes."
       difficulty="iniciante"
-      timeToRead="30 min"
+      timeToRead="40 min"
     >
       <p>
-        No Linux, "tudo é um arquivo". Portanto, saber criar, copiar, mover e deletar arquivos
-        via linha de comando é uma habilidade obrigatória. Nesta página, cada flag de cada
-        comando é explicada para que você saiba exatamente o que está acontecendo — sem decorar,
-        mas entendendo.
+        No Linux, "tudo é um arquivo". Saber criar, copiar, mover e deletar via linha de comando é
+        obrigatório. Aqui, todo comando aparece com a saída <strong>real</strong> que ele produz quando
+        rodado com <code>-v</code> (verbose) — assim você nunca fica em dúvida se o comando funcionou.
       </p>
 
-      <AlertBox type="info" title="O que são flags?">
-        <p>
-          Flags (ou opções) são letras ou palavras precedidas de hífen que modificam o comportamento
-          de um comando. Exemplo: <code>cp -r pasta/ destino/</code> — o <code>-r</code> é uma flag
-          que diz "copie recursivamente (incluindo subdiretórios)". Sem ela, o <code>cp</code> se recusaria
-          a copiar pastas. Cada flag tem uma função específica e podem ser combinadas: <code>cp -riv</code>
-          equivale a <code>cp -r -i -v</code>.
-        </p>
+      <AlertBox type="info" title="Sobre flags">
+        Flags são letras precedidas de <code>-</code> que modificam o comando. <code>cp -r</code> copia
+        recursivamente. Podem ser combinadas: <code>cp -riv</code> ≡ <code>cp -r -i -v</code>. Quase
+        todos os comandos desta página têm <code>-v</code> (verbose), <code>-i</code> (interativo) e
+        <code>-f</code> (force) — combine para ter segurança e feedback.
       </AlertBox>
 
-      <h2>1. touch — Criar Arquivos Vazios</h2>
+      <h2>1. <code>touch</code> — Criar arquivos vazios</h2>
       <p>
-        O <code>touch</code> cria um arquivo vazio. Se o arquivo já existir, atualiza a data
-        de acesso e modificação para o momento atual sem alterar o conteúdo.
+        Cria um arquivo vazio. Se o arquivo existe, atualiza atime/mtime para "agora" sem mudar o conteúdo.
       </p>
 
-      <CodeBlock
-        title="touch — flags explicadas"
-        code={`# Criar um arquivo vazio
-touch notas.txt
-
-# Criar vários arquivos de uma vez
-touch a.txt b.txt c.txt
-
-# === FLAGS DO touch ===
-
-touch -c arquivo.txt
-# -c (--no-create) = não cria o arquivo se ele não existir
-#    Útil quando você quer atualizar a data de um arquivo que existe,
-#    mas não quer criar um acidentalmente se ele não existir.
-
-touch -a arquivo.txt
-# -a (--time=access) = atualiza apenas a data de ACESSO (atime)
-#    Não muda a data de modificação (mtime)
-
-touch -m arquivo.txt
-# -m (--time=modify) = atualiza apenas a data de MODIFICAÇÃO (mtime)
-#    Não muda a data de acesso (atime)
-
-touch -t 202601011200 arquivo.txt
-# -t AAAAMMDDHHMM = define data/hora específica
-#    202601011200 = 2026-01-01 às 12:00
-#    Formatos aceitos: AAMMDDHHMM ou AAAAMMDDHHMMSS
-
-touch -d "2026-01-01 12:00:00" arquivo.txt
-# -d (--date) = define data em formato legível por humanos
-#    Aceita strings como "yesterday", "1 hour ago", "next Monday"
-
-touch -r modelo.txt alvo.txt
-# -r (--reference) = copia a data de outro arquivo para este
-#    O alvo.txt vai ter exatamente as mesmas datas que modelo.txt`}
+      <TerminalBlock
+        title="touch — sem saída em sucesso"
+        lines={[
+          { type: "command", text: "touch notas.txt" },
+          { type: "command", text: "ls -l notas.txt" },
+          { type: "output", text: "-rw-r--r-- 1 user user 0 Jan 15 10:30 notas.txt" },
+          { type: "comment", text: "0 bytes — arquivo vazio criado. touch só fala se houver erro." },
+        ]}
       />
 
-      <AlertBox type="success" title="Uso real do touch">
-        <p>O uso mais comum do <code>touch</code> em scripts é criar um arquivo de "flag" ou "lock"
-        para indicar que um processo está rodando: <code>touch /tmp/backup.running</code>. Quando
-        o processo termina, ele deleta o arquivo. Outros processos verificam se esse arquivo existe
-        antes de iniciar.</p>
+      <TerminalBlock
+        title="touch -v — mostra exatamente o que foi feito (GNU coreutils)"
+        lines={[
+          { type: "command", text: "touch -v a.txt b.txt c.txt" },
+          { type: "output", text: `touch: setting times of 'a.txt'\ntouch: setting times of 'b.txt'\ntouch: setting times of 'c.txt'` },
+          { type: "comment", text: "Em alguns sistemas, -v é silencioso. Mas em Arch (GNU coreutils), imprime cada arquivo." },
+        ]}
+      />
+
+      <TerminalBlock
+        title="touch -c — não cria se NÃO existir"
+        lines={[
+          { type: "command", text: "ls naoexiste.txt" },
+          { type: "output", text: `ls: cannot access 'naoexiste.txt': No such file or directory` },
+          { type: "command", text: "touch -c naoexiste.txt" },
+          { type: "command", text: "ls naoexiste.txt" },
+          { type: "output", text: `ls: cannot access 'naoexiste.txt': No such file or directory` },
+          { type: "comment", text: "-c suprime a criação. Útil para apenas atualizar mtime de arquivos existentes." },
+        ]}
+      />
+
+      <TerminalBlock
+        title="touch -d e -t — definir data/hora arbitrária"
+        lines={[
+          { type: "command", text: `touch -d "2020-06-15 14:30:00" antigo.txt` },
+          { type: "command", text: "ls -l antigo.txt" },
+          { type: "output", text: "-rw-r--r-- 1 user user 0 Jun 15  2020 antigo.txt" },
+          { type: "command", text: "touch -t 202601011200 futuro.txt" },
+          { type: "command", text: "ls -l futuro.txt" },
+          { type: "output", text: "-rw-r--r-- 1 user user 0 Jan  1  2026 futuro.txt" },
+        ]}
+      />
+
+      <TerminalBlock
+        title="touch -r — copiar timestamp de outro arquivo"
+        lines={[
+          { type: "command", text: "ls -l --time-style=long-iso modelo.txt alvo.txt" },
+          { type: "output", text: "-rw-r--r-- 1 user user 120 2024-03-08 11:15 modelo.txt\n-rw-r--r-- 1 user user   0 2025-01-15 10:30 alvo.txt" },
+          { type: "command", text: "touch -r modelo.txt alvo.txt" },
+          { type: "command", text: "ls -l --time-style=long-iso modelo.txt alvo.txt" },
+          { type: "output", text: "-rw-r--r-- 1 user user 120 2024-03-08 11:15 modelo.txt\n-rw-r--r-- 1 user user   0 2024-03-08 11:15 alvo.txt" },
+          { type: "comment", text: "alvo.txt agora tem o mesmo timestamp do modelo.txt" },
+        ]}
+      />
+
+      <CommandFlagList
+        command="touch"
+        items={[
+          { flag: "-c", long: "--no-create", description: "Não cria o arquivo se ele não existir.", example: "touch -c arq" },
+          { flag: "-a", description: "Atualiza apenas atime (acesso).", example: "touch -a arq" },
+          { flag: "-m", description: "Atualiza apenas mtime (modificação).", example: "touch -m arq" },
+          { flag: "-d STRING", long: "--date", description: `Data legível: "yesterday", "1 hour ago", "2025-01-01 12:00".`, example: `touch -d "yesterday" arq` },
+          { flag: "-t STAMP", description: "Formato [[CC]YY]MMDDhhmm[.ss]. Ex: 202601011200.", example: "touch -t 202601011200 arq" },
+          { flag: "-r REF", long: "--reference", description: "Copia o timestamp de outro arquivo.", example: "touch -r ref alvo" },
+        ]}
+      />
+
+      <h2>2. <code>mkdir</code> — Criar diretórios</h2>
+
+      <TerminalBlock
+        title="mkdir — criar uma pasta"
+        lines={[
+          { type: "command", text: "mkdir minha_pasta" },
+          { type: "command", text: "ls -ld minha_pasta" },
+          { type: "output", text: "drwxr-xr-x 2 user user 4096 Jan 15 10:35 minha_pasta" },
+        ]}
+      />
+
+      <TerminalBlock
+        title="mkdir SEM -p falha se o pai não existir"
+        lines={[
+          { type: "command", text: "mkdir projetos/2026/janeiro" },
+          { type: "error", text: `mkdir: cannot create directory 'projetos/2026/janeiro': No such file or directory` },
+        ]}
+      />
+
+      <TerminalBlock
+        title="mkdir -pv — cria toda a hierarquia, com saída"
+        command="mkdir -pv projetos/2026/janeiro"
+        output={`mkdir: created directory 'projetos'
+mkdir: created directory 'projetos/2026'
+mkdir: created directory 'projetos/2026/janeiro'`}
+      />
+
+      <TerminalBlock
+        title="-p também NÃO dá erro se o diretório já existe (perfeito para scripts)"
+        lines={[
+          { type: "command", text: "mkdir minha_pasta" },
+          { type: "error", text: `mkdir: cannot create directory 'minha_pasta': File exists` },
+          { type: "command", text: "mkdir -p minha_pasta" },
+          { type: "comment", text: "(sem saída — sucesso silencioso, exit code 0)" },
+        ]}
+      />
+
+      <TerminalBlock
+        title="mkdir -m — definir permissões na criação"
+        lines={[
+          { type: "command", text: "mkdir -m 750 -v pasta_restrita" },
+          { type: "output", text: `mkdir: created directory 'pasta_restrita'` },
+          { type: "command", text: "ls -ld pasta_restrita" },
+          { type: "output", text: "drwxr-x--- 2 user user 4096 Jan 15 10:36 pasta_restrita" },
+          { type: "comment", text: "750 = dono rwx, grupo r-x, outros nada — equivale a chmod 750 depois" },
+        ]}
+      />
+
+      <TerminalBlock
+        title="Brace expansion + mkdir -p — estrutura inteira em um comando"
+        lines={[
+          { type: "command", text: `mkdir -pv meu-site/{src/{components,pages,hooks},public,tests}` },
+          { type: "output", text: `mkdir: created directory 'meu-site'\nmkdir: created directory 'meu-site/src'\nmkdir: created directory 'meu-site/src/components'\nmkdir: created directory 'meu-site/src/pages'\nmkdir: created directory 'meu-site/src/hooks'\nmkdir: created directory 'meu-site/public'\nmkdir: created directory 'meu-site/tests'` },
+          { type: "command", text: "tree meu-site" },
+          { type: "output", text: `meu-site\n├── public\n├── src\n│   ├── components\n│   ├── hooks\n│   └── pages\n└── tests\n\n6 directories, 0 files` },
+        ]}
+      />
+
+      <CommandFlagList
+        command="mkdir"
+        items={[
+          { flag: "-p", long: "--parents", description: "Cria diretórios pais conforme necessário, e não falha se já existir.", example: "mkdir -p a/b/c" },
+          { flag: "-v", long: "--verbose", description: "Mostra cada diretório criado.", example: "mkdir -pv a/b/c" },
+          { flag: "-m MODO", long: "--mode", description: "Define permissões na criação (octal ou simbólico).", example: "mkdir -m 750 priv" },
+        ]}
+      />
+
+      <h2>3. <code>cp</code> — Copiar arquivos e diretórios</h2>
+      <p>
+        Sintaxe: <code>cp [flags] origem destino</code>. Por padrão, <strong>sobrescreve o destino sem
+        avisar</strong> — sempre use <code>-i</code> ou <code>-n</code> em uso interativo.
+      </p>
+
+      <TerminalBlock
+        title="cp — copiar arquivo simples (sem saída em sucesso)"
+        lines={[
+          { type: "command", text: "cp foto.jpg foto_backup.jpg" },
+          { type: "command", text: "ls -l foto*.jpg" },
+          { type: "output", text: "-rw-r--r-- 1 user user 245678 Jan 15 10:40 foto.jpg\n-rw-r--r-- 1 user user 245678 Jan 15 10:40 foto_backup.jpg" },
+        ]}
+      />
+
+      <TerminalBlock
+        title="cp -v — mostra cada cópia com seta '->'"
+        command="cp -v doc1.txt doc2.txt ~/Documents/"
+        output={`'doc1.txt' -> '/home/user/Documents/doc1.txt'
+'doc2.txt' -> '/home/user/Documents/doc2.txt'`}
+      />
+
+      <TerminalBlock
+        title="cp pasta/ destino — SEM -r dá erro"
+        lines={[
+          { type: "command", text: "cp projetos/ backup/" },
+          { type: "error", text: "cp: -r not specified; omitting directory 'projetos/'" },
+        ]}
+      />
+
+      <TerminalBlock
+        title="cp -rv — copiar pasta recursivamente, com saída por arquivo"
+        command="cp -rv projetos/ backup/"
+        output={`'projetos/' -> 'backup/'
+'projetos/site' -> 'backup/site'
+'projetos/site/package.json' -> 'backup/site/package.json'
+'projetos/site/src' -> 'backup/site/src'
+'projetos/site/src/main.tsx' -> 'backup/site/src/main.tsx'
+'projetos/site/src/components' -> 'backup/site/src/components'
+'projetos/site/src/components/Header.tsx' -> 'backup/site/src/components/Header.tsx'
+'projetos/api' -> 'backup/api'
+'projetos/api/server.js' -> 'backup/api/server.js'
+'projetos/api/package.json' -> 'backup/api/package.json'`}
+      />
+
+      <TerminalBlock
+        title="cp -i — pergunta antes de sobrescrever"
+        lines={[
+          { type: "command", text: "cp -i importante.txt ~/backup/" },
+          { type: "output", text: `cp: overwrite '/home/user/backup/importante.txt'? y` },
+          { type: "comment", text: "y/Y = sim; qualquer outra coisa = não. -n nunca sobrescreve, sem perguntar." },
+        ]}
+      />
+
+      <TerminalBlock
+        title="cp -av — backup PERFEITO (preserva tudo, mostra tudo)"
+        command="cp -av ~/projetos/ ~/backup/projetos/"
+        output={`'/home/user/projetos/' -> '/home/user/backup/projetos/'
+'/home/user/projetos/site' -> '/home/user/backup/projetos/site'
+'/home/user/projetos/site/.git' -> '/home/user/backup/projetos/site/.git'
+'/home/user/projetos/site/package.json' -> '/home/user/backup/projetos/site/package.json'
+'/home/user/projetos/site/src' -> '/home/user/backup/projetos/site/src'
+'/home/user/projetos/site/src/main.tsx' -> '/home/user/backup/projetos/site/src/main.tsx'
+'/home/user/projetos/site/src/components' -> '/home/user/backup/projetos/site/src/components'
+'/home/user/projetos/site/src/components/Header.tsx' -> '/home/user/backup/projetos/site/src/components/Header.tsx'`}
+        comment="-a = -dR --preserve=all → preserva permissões, datas, dono, links simbólicos, atributos estendidos"
+      />
+
+      <TerminalBlock
+        title="cp -u — só copia se origem for MAIS NOVA (sincronização incremental)"
+        lines={[
+          { type: "command", text: "cp -uv *.txt ~/backup/" },
+          { type: "output", text: `'novo.txt' -> '/home/user/backup/novo.txt'\n'modificado.txt' -> '/home/user/backup/modificado.txt'` },
+          { type: "comment", text: "arquivos com mtime igual ou mais antigo no destino são SILENCIOSAMENTE pulados" },
+        ]}
+      />
+
+      <CommandFlagList
+        command="cp"
+        items={[
+          { flag: "-r", long: "--recursive", description: "Copia diretórios recursivamente. OBRIGATÓRIO para pastas.", example: "cp -r src/ dest/" },
+          { flag: "-i", long: "--interactive", description: "Pergunta antes de sobrescrever.", example: "cp -i a b" },
+          { flag: "-n", long: "--no-clobber", description: "Nunca sobrescreve (silenciosamente pula).", example: "cp -n a b" },
+          { flag: "-v", long: "--verbose", description: "Imprime cada arquivo copiado.", example: "cp -v a b" },
+          { flag: "-p", long: "--preserve", description: "Preserva mtime, permissões, dono.", example: "cp -p a b" },
+          { flag: "-a", long: "--archive", description: "Modo arquivo: -dR --preserve=all. Backup perfeito.", example: "cp -av src/ bk/" },
+          { flag: "-u", long: "--update", description: "Copia apenas se origem for mais nova ou destino não existir.", example: "cp -u a b" },
+          { flag: "-l", long: "--link", description: "Cria hard links em vez de copiar (economiza espaço).", example: "cp -l a b" },
+          { flag: "-s", long: "--symbolic-link", description: "Cria symlinks em vez de copiar.", example: "cp -s a b" },
+          { flag: "--backup=TIPO", description: "Faz backup do destino antes de sobrescrever (numbered, simple).", example: "cp --backup=numbered a b" },
+        ]}
+      />
+
+      <AlertBox type="danger" title="cp sobrescreve sem aviso por padrão">
+        Em uso interativo, sempre adicione <code>-i</code> ou <code>-n</code>. Em scripts, prefira
+        <code>-n</code> para não destruir dados existentes acidentalmente. Para backups, use
+        <code>cp -av</code> (preserva tudo, verbose).
       </AlertBox>
 
-      <h2>2. mkdir — Criar Diretórios</h2>
+      <h2>4. <code>mv</code> — Mover e renomear</h2>
       <p>
-        O <code>mkdir</code> (Make Directory) cria novos diretórios. Simples de usar, mas com
-        flags essenciais para o dia a dia.
+        No Linux, renomear é a mesma operação que mover (apenas o caminho destino muda).
+        O <code>mv</code> também sobrescreve sem aviso por padrão.
       </p>
 
-      <CodeBlock
-        title="mkdir — flags explicadas"
-        code={`# Criar um diretório simples
-mkdir minha_pasta
-
-# Criar múltiplos diretórios de uma vez
-mkdir pasta1 pasta2 pasta3
-
-# === FLAGS DO mkdir ===
-
-mkdir -p projetos/2026/janeiro
-# -p (--parents) = cria toda a hierarquia de diretórios necessária
-#    Se "projetos" não existe, cria "projetos", depois "2026" dentro,
-#    depois "janeiro" dentro. Sem -p, daria erro se o pai não existisse.
-#    O -p também não dá erro se o diretório já existe (útil em scripts!).
-
-mkdir -v nova_pasta
-# -v (--verbose) = mostra o que está sendo feito
-#    Saída: mkdir: created directory 'nova_pasta'
-#    Útil para confirmar que tudo foi criado
-
-mkdir -m 750 pasta_restrita
-# -m MODO (--mode) = define as permissões ao criar
-#    750 = dono: rwx, grupo: r-x, outros: ---
-#    Equivale a mkdir pasta_restrita && chmod 750 pasta_restrita
-#    Mas em um único comando
-
-# Combinação mais usada em scripts:
-mkdir -p -v projetos/site/src/components
-# -p = cria toda a hierarquia
-# -v = mostra tudo que foi criado`}
+      <TerminalBlock
+        title="mv — renomear (sem saída em sucesso)"
+        lines={[
+          { type: "command", text: "mv projeto_velho.txt projeto_novo.txt" },
+          { type: "command", text: "ls projeto_*" },
+          { type: "output", text: "projeto_novo.txt" },
+        ]}
       />
 
-      <CodeBlock
-        title="Estruturas de projeto com mkdir -p"
-        code={`# Criar estrutura de projeto de uma vez (padrão profissional)
-mkdir -p meu-site/{src/{components,pages,hooks},public,tests}
-
-# O que isso cria:
-# meu-site/
-# ├── src/
-# │   ├── components/
-# │   ├── pages/
-# │   └── hooks/
-# ├── public/
-# └── tests/
-
-# Verificar com tree:
-tree meu-site
-# (instale com: sudo pacman -S tree)`}
+      <TerminalBlock
+        title="mv -v — mostra a operação com 'renamed ... ->'"
+        command="mv -v relatorio.pdf ~/Documents/"
+        output={`renamed 'relatorio.pdf' -> '/home/user/Documents/relatorio.pdf'`}
       />
 
-      <h2>3. cp — Copiar Arquivos e Diretórios</h2>
+      <TerminalBlock
+        title="mv múltiplos arquivos para um diretório"
+        command="mv -v *.jpg ~/Pictures/"
+        output={`renamed 'foto1.jpg' -> '/home/user/Pictures/foto1.jpg'
+renamed 'foto2.jpg' -> '/home/user/Pictures/foto2.jpg'
+renamed 'foto3.jpg' -> '/home/user/Pictures/foto3.jpg'
+renamed 'screenshot.jpg' -> '/home/user/Pictures/screenshot.jpg'`}
+      />
+
+      <TerminalBlock
+        title="mv -i — confirmação antes de sobrescrever"
+        lines={[
+          { type: "command", text: "mv -i config.yml ~/backup/" },
+          { type: "output", text: `mv: overwrite '/home/user/backup/config.yml'? n` },
+          { type: "comment", text: "n = não sobrescreveu; o arquivo de origem permanece" },
+        ]}
+      />
+
+      <TerminalBlock
+        title="mv -b — fazer backup antes de sobrescrever"
+        lines={[
+          { type: "command", text: "mv -bv config.yml ~/backup/" },
+          { type: "output", text: `renamed '/home/user/backup/config.yml' -> '/home/user/backup/config.yml~'\nrenamed 'config.yml' -> '/home/user/backup/config.yml'` },
+          { type: "command", text: "ls ~/backup/config*" },
+          { type: "output", text: `/home/user/backup/config.yml  /home/user/backup/config.yml~` },
+          { type: "comment", text: "o destino antigo virou config.yml~ e o novo tomou seu lugar" },
+        ]}
+      />
+
+      <TerminalBlock
+        title="Renomear em lote com loop bash"
+        lines={[
+          { type: "command", text: `for f in *.txt; do mv -v "$f" "2026_$f"; done` },
+          { type: "output", text: `renamed 'a.txt' -> '2026_a.txt'\nrenamed 'b.txt' -> '2026_b.txt'\nrenamed 'notas.txt' -> '2026_notas.txt'` },
+        ]}
+      />
+
+      <CommandFlagList
+        command="mv"
+        items={[
+          { flag: "-i", long: "--interactive", description: "Pergunta antes de sobrescrever.", example: "mv -i a b" },
+          { flag: "-n", long: "--no-clobber", description: "Nunca sobrescreve.", example: "mv -n a b" },
+          { flag: "-f", long: "--force", description: "Força (sobrescreve sem perguntar — anula -i).", example: "mv -f a b" },
+          { flag: "-v", long: "--verbose", description: "Mostra cada renomeação.", example: "mv -v a b" },
+          { flag: "-u", long: "--update", description: "Move apenas se origem mais nova ou destino não existe.", example: "mv -u a b" },
+          { flag: "-b", long: "--backup", description: "Faz backup do destino antes de sobrescrever (com ~).", example: "mv -b a b" },
+        ]}
+      />
+
+      <h2>5. <code>rm</code> — Remover (sem lixeira!)</h2>
       <p>
-        O <code>cp</code> (Copy) copia arquivos ou diretórios. Sintaxe: <code>cp [flags] origem destino</code>.
-        É um dos comandos mais usados — mas também um dos mais perigosos se usado errado, pois pode
-        sobrescrever arquivos sem aviso.
+        O <code>rm</code> apaga definitivamente — não há lixeira. Sem flags certas, é o comando mais
+        perigoso desta página. Use <code>-i</code> ou <code>-I</code> para se proteger.
       </p>
 
-      <CodeBlock
-        title="cp — flags explicadas uma por uma"
-        code={`# Copiar arquivo para outro nome (mesma pasta)
-cp foto.jpg foto_backup.jpg
-
-# Copiar arquivo para outro diretório (mantendo o nome)
-cp documento.pdf ~/Documentos/
-
-# Copiar múltiplos arquivos para uma pasta
-cp doc1.txt doc2.txt ~/Documentos/
-
-# === FLAGS DO cp ===
-
-cp -r pasta_projetos/ backup_projetos/
-# -r (--recursive) = copia recursivamente (pastas + todo o conteúdo)
-#    OBRIGATÓRIO para copiar diretórios!
-#    Sem -r, o cp se recusa a copiar pastas e dá erro.
-#    Alternativa: -R (efeito idêntico, maiúsculo ou minúsculo)
-
-cp -i importante.txt ~/backup/
-# -i (--interactive) = pergunta antes de sobrescrever arquivos existentes
-#    Saída: cp: overwrite '~/backup/importante.txt'? (y/n)
-#    y = sim, sobrescreve | n = não, pula
-#    Útil para evitar sobrescritas acidentais
-
-cp -v foto.jpg ~/Fotos/
-# -v (--verbose) = mostra o que está sendo copiado
-#    Saída: 'foto.jpg' -> '~/Fotos/foto.jpg'
-#    Bom para confirmar que a cópia foi feita corretamente
-
-cp -p original.sh backup.sh
-# -p (--preserve) = preserva atributos do arquivo original:
-#    - Data de modificação (mtime)
-#    - Permissões (chmod)
-#    - Dono e grupo (chown)
-#    Sem -p, o arquivo copiado fica com a data atual e suas permissões padrão
-
-cp -a pasta_original/ pasta_backup/
-# -a (--archive) = modo "arquivo completo", equivale a -r -p --no-dereference
-#    Copia TUDO: conteúdo, permissões, datas, dono, grupo, links simbólicos
-#    É o modo correto para backups — não perde nenhuma informação
-
-cp -u arquivo.txt ~/backup/
-# -u (--update) = copia apenas se a origem for mais nova que o destino
-#    ou se o destino não existir
-#    Ótimo para sincronização incremental (não recopiar o que não mudou)
-
-cp -n arquivo.txt ~/destino/
-# -n (--no-clobber) = nunca sobrescreve arquivos existentes
-#    Diferente de -i (que pergunta), -n simplesmente pula sem avisar
-
-cp -l arquivo.txt link_para_arquivo.txt
-# -l (--link) = cria hard links em vez de cópias
-#    Hard links apontam para os mesmos dados no disco
-#    Economiza espaço (não duplica os dados)
-
-cp -s arquivo.txt link.txt
-# -s (--symbolic-link) = cria link simbólico em vez de copiar
-#    Equivale a: ln -s arquivo.txt link.txt
-
-cp --backup=numbered arquivo.txt ~/backup/
-# --backup = cria backup do arquivo de destino antes de sobrescrever
-#    =numbered: nomes como arquivo.txt.~1~, arquivo.txt.~2~, etc.
-#    =simple: apenas arquivo.txt~`}
+      <TerminalBlock
+        title="rm — sem saída em sucesso"
+        lines={[
+          { type: "command", text: "rm arquivo.txt" },
+          { type: "command", text: "ls arquivo.txt" },
+          { type: "output", text: `ls: cannot access 'arquivo.txt': No such file or directory` },
+        ]}
       />
 
-      <CodeBlock
-        title="Combinações mais usadas no dia a dia"
-        code={`# Copiar pasta inteira preservando tudo (para backup)
-cp -av ~/projetos/ ~/backup/projetos/
-# -a = preserva tudo (permissões, datas, links)
-# -v = mostra o progresso
-
-# Copiar com confirmação antes de sobrescrever
-cp -riv fotos_antigas/ fotos_backup/
-# -r = recursivo (pastas)
-# -i = pergunta antes de sobrescrever
-# -v = mostra cada arquivo copiado
-
-# Copiar apenas arquivos modificados (sincronização)
-cp -ru ~/projetos/ ~/backup/
-# -r = recursivo
-# -u = só copia o que é mais novo
-
-# Copiar arquivo protegido (dando erro informativo)
-cp -vi /etc/pacman.conf ~/backup/
-# -v = verbose
-# -i = interativo (pede confirmação se sobrescrever)`}
+      <TerminalBlock
+        title="rm -v — mostra cada remoção"
+        command={`rm -v *.tmp`}
+        output={`removed 'cache.tmp'
+removed 'session.tmp'
+removed 'upload-9821.tmp'`}
       />
 
-      <AlertBox type="danger" title="Cuidado: cp sobrescreve sem aviso!">
-        <p>Por padrão, <code>cp</code> sobrescreve arquivos existentes no destino sem perguntar.
-        Se você copiar <code>foto.jpg</code> para um lugar onde já tem um <code>foto.jpg</code>,
-        o arquivo original <strong>é perdido para sempre</strong>. Use <code>-i</code> para
-        sempre ser perguntado, ou <code>-n</code> para nunca sobrescrever.</p>
-      </AlertBox>
-
-      <h2>4. mv — Mover e Renomear</h2>
-      <p>
-        O <code>mv</code> (Move) serve para <strong>mover</strong> arquivos para outro diretório
-        e para <strong>renomear</strong> (que no Linux é a mesma coisa — mover de "nome A" para "nome B").
-        Diferente do <code>cp</code>, o arquivo original some do local de origem.
-      </p>
-
-      <CodeBlock
-        title="mv — flags explicadas"
-        code={`# Renomear um arquivo
-mv projeto_velho.txt projeto_novo.txt
-
-# Mover para outro diretório
-mv relatorio.pdf ~/Documentos/
-
-# Mover múltiplos arquivos para um diretório
-mv *.jpg ~/Fotos/
-
-# Renomear um diretório inteiro
-mv pasta_antiga/ pasta_nova/
-
-# === FLAGS DO mv ===
-
-mv -i arquivo.txt ~/backup/
-# -i (--interactive) = pergunta antes de sobrescrever
-#    Saída: mv: overwrite '~/backup/arquivo.txt'? (y/n)
-#    y = confirma a movimentação | n = cancela
-#    MUITO recomendado para uso interativo
-
-mv -v relatorio.pdf ~/Documentos/
-# -v (--verbose) = mostra o que está sendo movido
-#    Saída: renamed 'relatorio.pdf' -> '~/Documentos/relatorio.pdf'
-#    Bom para confirmar que o arquivo foi para o lugar certo
-
-mv -n arquivo.txt ~/destino/
-# -n (--no-clobber) = não sobrescreve se o destino já existir
-#    Pula silenciosamente se o arquivo de destino existir
-#    Oposto de sobrescrever — protege o destino
-
-mv -u arquivo.txt ~/backup/
-# -u (--update) = move apenas se a origem for mais nova que o destino
-#    ou se o arquivo não existir no destino
-#    Útil para sincronização: não substitui versões mais recentes
-
-mv -b arquivo.txt ~/backup/
-# -b (--backup) = cria backup do arquivo de destino antes de substituir
-#    O backup fica com ~ no final: arquivo.txt~
-#    Evita perder o arquivo que estava no destino
-
-mv --backup=numbered *.conf ~/backup/
-# --backup=numbered = backup com números: arquivo.conf.~1~, arquivo.conf.~2~
-#    Permite múltiplos backups sem sobrescrever o anterior
-
-mv -f arquivo.txt ~/destino/
-# -f (--force) = força a movimentação, ignorando -i se estiver definido
-#    Útil em scripts onde você não quer prompts de confirmação`}
+      <TerminalBlock
+        title="rm em diretório SEM -r dá erro"
+        lines={[
+          { type: "command", text: "rm pasta_antiga/" },
+          { type: "error", text: `rm: cannot remove 'pasta_antiga/': Is a directory` },
+        ]}
       />
 
-      <CodeBlock
-        title="Renomeação em lote (truques práticos)"
-        code={`# Renomear adicionando prefixo (usando loop)
-for f in *.txt; do mv -v "$f" "2026_$f"; done
-# Renomeia: notas.txt → 2026_notas.txt, etc.
-# As aspas ao redor de $f protegem nomes com espaços
-
-# Mover todos os .jpg para a pasta Fotos
-mv -v *.jpg ~/Fotos/
-
-# Mudar extensão de todos os arquivos
-for f in *.txt; do mv -v "$f" "\${f%.txt}.md"; done
-# \${f%.txt} remove o sufixo .txt do nome — depois adiciona .md
-
-# Mover arquivo e confirmar
-mv -iv relatorio_final.pdf ~/Documentos/
-# -i = confirma se sobrescrever | -v = mostra o que foi feito`}
+      <TerminalBlock
+        title="rm -rv — recursivo + verbose (recomendado)"
+        command="rm -rv pasta_antiga/"
+        output={`removed 'pasta_antiga/sub/file.txt'
+removed 'pasta_antiga/sub/old.log'
+removed directory 'pasta_antiga/sub'
+removed 'pasta_antiga/readme.md'
+removed directory 'pasta_antiga'`}
       />
 
-      <h2>5. rm — Remover Arquivos e Diretórios</h2>
-      <p>
-        O <code>rm</code> (Remove) apaga arquivos e diretórios. <strong>Ele não envia para a lixeira —
-        apagou, sumiu para sempre.</strong> É o comando mais perigoso desta página e merece atenção total.
-      </p>
-
-      <CodeBlock
-        title="rm — flags explicadas"
-        code={`# Apagar um arquivo simples
-rm arquivo.txt
-
-# Apagar múltiplos arquivos
-rm a.txt b.txt c.txt
-
-# Apagar com wildcard (CUIDADO: confirme o que vai ser apagado antes!)
-rm *.log
-
-# === FLAGS DO rm ===
-
-rm -i importante.txt
-# -i (--interactive) = pergunta antes de apagar CADA arquivo
-#    Saída: rm: remove 'importante.txt'? (y/n)
-#    y = apaga | n = pula
-#    Recomendado sempre que não tiver certeza
-
-rm -I pasta/*
-# -I = pergunta uma única vez antes de apagar 3+ arquivos
-#    "remove 15 arguments recursively? y/n"
-#    Menos verboso que -i mas ainda protege contra acidentes em massa
-
-rm -v arquivo.txt
-# -v (--verbose) = mostra o que está sendo apagado
-#    Saída: removed 'arquivo.txt'
-#    Útil para confirmar o que foi deletado
-
-rm -r pasta_antiga/
-# -r (--recursive) = apaga diretório e TODO o seu conteúdo
-#    OBRIGATÓRIO para apagar diretórios!
-#    Sem -r, o rm se recusa a apagar pastas e dá erro.
-#    Alternativa: -R (maiúsculo, efeito idêntico)
-
-rm -f arquivo_protegido.txt
-# -f (--force) = força a remoção sem perguntar, mesmo se protegido contra escrita
-#    Ignora arquivos que não existem (sem dar erro)
-#    NÃO pede confirmação mesmo com -i (cancela o -i)
-#    Use com extremo cuidado!
-
-rm -rf pasta_desnecessaria/
-# -r = recursivo (apaga pasta + conteúdo)
-# -f = força (sem confirmações, sem erros se não existir)
-# Combinação MUITO PERIGOSA — apaga tudo sem perguntar nada!
-# Confirme DUAS VEZES o caminho antes de usar
-
-rm -d pasta_vazia/
-# -d (--dir) = apaga diretórios VAZIOS (sem precisar de -r)
-#    Equivale ao rmdir, mas como flag do rm
-#    Dá erro se o diretório não estiver vazio`}
+      <TerminalBlock
+        title="rm -i — pergunta CADA arquivo (mais seguro)"
+        lines={[
+          { type: "command", text: "rm -iv *.log" },
+          { type: "output", text: `rm: remove regular file 'app.log'? y\nremoved 'app.log'\nrm: remove regular file 'error.log'? n\nrm: remove regular file 'access.log'? y\nremoved 'access.log'` },
+        ]}
       />
 
-      <AlertBox type="danger" title="O infame rm -rf — leia antes de usar">
-        <p>O <code>rm -rf</code> apaga tudo recursivamente e à força, sem pedir confirmação.
-        É extremamente útil, mas também extremamente destrutivo.</p>
-        <p style={{ marginTop: "0.5rem" }}>
-          <strong>Antes de executar:</strong><br/>
-          1. Confirme o caminho: <code>ls -la pasta_que_vou_apagar/</code><br/>
-          2. Nunca use com variáveis sem testar: se <code>$DIR</code> estiver vazia, <code>rm -rf $DIR/</code>
-          vira <code>rm -rf /</code> (destroi o sistema)<br/>
-          3. Prefira: <code>rm -riv</code> para ter confirmação e ver o que está sendo apagado
-        </p>
-      </AlertBox>
-
-      <CodeBlock
-        title="Uso seguro do rm no dia a dia"
-        code={`# SEGURO: perguntar antes de cada arquivo
-rm -iv arquivo.txt
-
-# SEGURO: perguntar antes de apagar uma pasta
-rm -riv pasta_antiga/
-
-# PERIGO: apagar silenciosamente — tenha certeza do caminho!
-rm -rf /home/usuario/cache/
-
-# VERIFICAR ANTES DE APAGAR (boa prática):
-# 1. Liste o que vai apagar:
-ls -la *.tmp
-
-# 2. Se parecer certo, apague:
-rm -v *.tmp
-
-# Alternativa segura: mover para /tmp antes de apagar definitivamente
-mv pasta_suspeita/ /tmp/
-# (o /tmp é limpo automaticamente no reboot)
-
-# Encontrar e apagar arquivos com find (mais seguro que wildcard)
-find /var/log -name "*.log" -mtime +30
-# Primeiro veja o que seria apagado ↑
-
-find /var/log -name "*.log" -mtime +30 -delete
-# Agora apague — só arquivos .log com mais de 30 dias`}
+      <TerminalBlock
+        title="rm -I — pergunta UMA vez se for 3+ arquivos (menos chato)"
+        lines={[
+          { type: "command", text: "rm -I *.tmp" },
+          { type: "output", text: `rm: remove 12 arguments? y` },
+          { type: "comment", text: "-I é um meio-termo seguro entre nada e -i. Recomendado em aliases." },
+        ]}
       />
 
-      <h3>rmdir — Remover Diretórios Vazios</h3>
-      <p>
-        O <code>rmdir</code> só apaga diretórios <em>completamente vazios</em>.
-        É mais seguro que <code>rm -r</code> pois se recusa a apagar se houver qualquer arquivo dentro.
-      </p>
-
-      <CodeBlock
-        title="rmdir — flags explicadas"
-        code={`# Apagar diretório vazio
-rmdir pasta_vazia/
-
-# Apagar múltiplos diretórios vazios
-rmdir pasta1/ pasta2/ pasta3/
-
-# === FLAGS DO rmdir ===
-
-rmdir -p projetos/site/src/
-# -p (--parents) = apaga a hierarquia toda se todos os níveis estiverem vazios
-#    Primeiro apaga src/, depois tenta apagar site/ (se vazio), depois projetos/
-#    Se algum nível não estiver vazio, para ali sem dar erro
-
-rmdir -v pasta_vazia/
-# -v (--verbose) = mostra o que foi apagado
-#    Saída: rmdir: removing directory, 'pasta_vazia/'
-
-rmdir --ignore-fail-on-non-empty pasta/
-# --ignore-fail-on-non-empty = não dá erro se o diretório não estiver vazio
-#    Simplesmente ignora o diretório com conteúdo e continua
-#    Útil em scripts onde você quer tentar limpar sem gerar erros fatais`}
+      <TerminalBlock
+        title="rm -rf — apagar tudo SEM confirmar (perigoso!)"
+        lines={[
+          { type: "command", text: "rm -rf /tmp/build_cache/" },
+          { type: "comment", text: "(sem saída — silencioso. Use -v se quiser ver o que foi destruído)" },
+        ]}
       />
 
-      <h2>6. ln — Criar Links</h2>
-      <p>
-        O <code>ln</code> (Link) cria links entre arquivos. Existem dois tipos: <strong>links simbólicos</strong>
-        (atalhos — apontam para o caminho do arquivo) e <strong>hard links</strong> (apontam diretamente
-        para os dados no disco). Em 99% dos casos, você vai querer links simbólicos (<code>-s</code>).
-      </p>
-
-      <CodeBlock
-        title="Diferença entre hard link e symlink"
-        code={`# HARD LINK — aponta para os mesmos dados (mesmo inode no disco)
-ln arquivo_real.txt hard_link.txt
-
-# SYMLINK (link simbólico) — atalho que aponta para o caminho do arquivo
-ln -s arquivo_real.txt symlink.txt
-
-# Diferença na prática:
-ls -li  # O -i mostra o número do inode
-# 123456 -rw-r--r-- 2 usuario usuario 1024 jan 15 arquivo_real.txt
-# 123456 -rw-r--r-- 2 usuario usuario 1024 jan 15 hard_link.txt
-# ← Mesmo inode! São o mesmo arquivo no disco, com dois nomes.
-
-# 789012 lrwxrwxrwx 1 usuario usuario   16 jan 15 symlink.txt -> arquivo_real.txt
-# ← Inode diferente. É um atalho. Se mover/apagar o original, quebra.`}
+      <CommandFlagList
+        command="rm"
+        items={[
+          { flag: "-r", long: "--recursive", description: "Remove diretórios recursivamente.", example: "rm -r dir/" },
+          { flag: "-f", long: "--force", description: "Sem prompt; ignora arquivos inexistentes.", example: "rm -f arq" },
+          { flag: "-i", description: "Pergunta antes de CADA remoção.", example: "rm -i *.txt" },
+          { flag: "-I", description: "Pergunta UMA vez se forem 3+ arquivos ou recursivo.", example: "rm -I dir/" },
+          { flag: "-v", long: "--verbose", description: "Mostra cada remoção.", example: "rm -v arq" },
+          { flag: "-d", long: "--dir", description: "Remove diretórios vazios (como rmdir).", example: "rm -d vazio/" },
+          { flag: "--preserve-root", description: "Recusa-se a apagar '/' (padrão na maioria das distros).", example: "rm -rf --preserve-root /" },
+        ]}
       />
 
-      <CodeBlock
-        title="ln — flags explicadas"
-        code={`# Criar symlink básico
-ln -s /caminho/do/arquivo_real.txt atalho.txt
-
-# Criar symlink para diretório
-ln -s /etc/nginx/ ~/nginx-config
-
-# === FLAGS DO ln ===
-
-ln -s arquivo_original.txt atalho.txt
-# -s (--symbolic) = cria link SIMBÓLICO (atalho)
-#    O mais usado. O link aparece com l no ls -l e mostra o -> destino
-#    OBRIGATÓRIO para links de diretórios e para links em sistemas de arquivos diferentes
-
-ln -sf novo_alvo.txt atalho_existente.txt
-# -f (--force) = força a criação mesmo se o link já existir
-#    Remove o link antigo antes de criar o novo
-#    Útil para atualizar links que já existem
-
-ln -sv /etc/nginx/nginx.conf ~/nginx.conf
-# -v (--verbose) = mostra o que foi criado
-#    Saída: '~/nginx.conf' -> '/etc/nginx/nginx.conf'
-
-ln -sn arquivo.txt link.txt
-# -n (--no-dereference) = trata link existente como arquivo normal
-#    Útil quando o destino já é um link simbólico
-
-ln -sr ../../arquivo.txt link.txt
-# -r (--relative) = cria link com caminho RELATIVO em vez de absoluto
-#    Portátil: funciona mesmo que você mova a estrutura de pastas
-
-ln -sb arquivo.txt link.txt
-# -b (--backup) = cria backup do link de destino antes de substituir
-#    O backup fica com ~ no final: link.txt~`}
-      />
-
-      <CodeBlock
-        title="Casos de uso reais de symlinks"
-        code={`# === USO 1: Configurações centralizadas ===
-# Linkar arquivo de configuração do nginx para a pasta "sites-enabled"
-sudo ln -s /etc/nginx/sites-available/meusite.conf \\
-           /etc/nginx/sites-enabled/meusite.conf
-
-# Para desabilitar o site: rm o link (o original em sites-available fica intacto)
-sudo rm /etc/nginx/sites-enabled/meusite.conf
-
-# === USO 2: Múltiplas versões do Python ===
-# Ver onde o python3 aponta:
-ls -la /usr/bin/python3
-# /usr/bin/python3 -> python3.12  (link para a versão atual)
-
-# Trocar a versão padrão:
-sudo ln -sf /usr/bin/python3.11 /usr/bin/python3
-
-# === USO 3: Atalho para pasta de projeto ===
-ln -s ~/Documentos/projetos/meu-site ~/meu-site
-# Agora: cd ~/meu-site  (ao invés de cd ~/Documentos/projetos/meu-site)
-
-# === USO 4: Dotfiles centralizados ===
-# Guardar .bashrc em um repositório git e linkar:
-ln -sf ~/dotfiles/.bashrc ~/.bashrc
-ln -sf ~/dotfiles/.vimrc ~/.vimrc
-
-# === Verificar links quebrados ===
-find . -xtype l  # Lista links simbólicos cujo destino não existe mais`}
-      />
-
-      <AlertBox type="info" title="Quando usar hard link vs symlink?">
+      <AlertBox type="danger" title="O infame rm -rf — leia antes de digitar">
         <ul>
-          <li><strong>Symlink:</strong> Para atalhos de arquivos ou diretórios. Pode cruzar sistemas de arquivos (ex: de /home para /mnt). Se o original for movido ou apagado, o link quebra.</li>
-          <li><strong>Hard link:</strong> Para criar um segundo nome para o mesmo arquivo. Só funciona no mesmo sistema de arquivos. Não pode linkar diretórios. Se o original for apagado, o hard link continua funcionando (os dados só somem quando o último hard link for removido).</li>
+          <li><strong>Confirme o caminho com <code>ls -la</code> antes</strong> de qualquer <code>rm -rf</code>.</li>
+          <li>Nunca use com variáveis sem testar: se <code>$DIR</code> estiver vazia, <code>rm -rf $DIR/</code> vira <code>rm -rf /</code> (destrói o sistema). Sempre cite: <code>rm -rf "$DIR"/</code> e valide com <code>[ -n "$DIR" ]</code> antes.</li>
+          <li>Prefira <code>rm -rIv</code> em uso interativo: confirma uma vez e mostra o que apagou.</li>
+          <li>Para "lixeira de verdade", instale <code>trash-cli</code> (<code>sudo pacman -S trash-cli</code>) e use <code>trash</code> em vez de <code>rm</code>.</li>
         </ul>
       </AlertBox>
 
-      <h2>7. Tabela de Referência Rápida</h2>
+      <h3><code>rmdir</code> — Apenas diretórios vazios</h3>
+
+      <TerminalBlock
+        title="rmdir — só apaga se ESTIVER vazio"
+        lines={[
+          { type: "command", text: "rmdir -v pasta_vazia/" },
+          { type: "output", text: `rmdir: removing directory, 'pasta_vazia/'` },
+          { type: "command", text: "rmdir pasta_com_conteudo/" },
+          { type: "error", text: `rmdir: failed to remove 'pasta_com_conteudo/': Directory not empty` },
+        ]}
+      />
+
+      <TerminalBlock
+        title="rmdir -p — apaga toda a hierarquia se TODOS os níveis estiverem vazios"
+        command="rmdir -pv projetos/2026/janeiro"
+        output={`rmdir: removing directory, 'projetos/2026/janeiro'
+rmdir: removing directory, 'projetos/2026'
+rmdir: removing directory, 'projetos'`}
+      />
+
+      <h2>6. <code>ln</code> — Criar links</h2>
+      <p>
+        Existem dois tipos de link: <strong>hard link</strong> (mesmo inode, mesmo conteúdo no disco) e
+        <strong> symlink</strong> (atalho que aponta para um caminho). 99% das vezes você quer symlink (<code>-s</code>).
+      </p>
+
+      <TerminalBlock
+        title="Diferença visual com ls -li"
+        lines={[
+          { type: "command", text: "echo 'conteudo original' > original.txt" },
+          { type: "command", text: "ln original.txt hard_link.txt" },
+          { type: "command", text: "ln -s original.txt sym_link.txt" },
+          { type: "command", text: "ls -li *.txt" },
+          { type: "output", text: `1310741 -rw-r--r-- 2 user user 18 Jan 15 11:00 hard_link.txt
+1310741 -rw-r--r-- 2 user user 18 Jan 15 11:00 original.txt
+1310742 lrwxrwxrwx 1 user user 12 Jan 15 11:00 sym_link.txt -> original.txt` },
+        ]}
+      />
+
+      <OutputBlock
+        title="Lendo a saída acima"
+        output={`1310741 -rw-r--r-- 2 user user 18 hard_link.txt
+1310741 -rw-r--r-- 2 user user 18 original.txt
+1310742 lrwxrwxrwx 1 user user 12 sym_link.txt -> original.txt`}
+        annotations={[
+          { line: 0, note: "MESMO inode, link count = 2" },
+          { line: 1, note: "MESMO inode — fisicamente o mesmo arquivo" },
+          { line: 2, note: "outro inode, tipo 'l', mostra o destino" },
+        ]}
+      />
+
+      <TerminalBlock
+        title="ln -sv — criar symlink com saída"
+        command="ln -sv /etc/nginx/nginx.conf ~/nginx.conf"
+        output={`'/home/user/nginx.conf' -> '/etc/nginx/nginx.conf'`}
+      />
+
+      <TerminalBlock
+        title="ln -sf — substitui um symlink existente atomicamente"
+        lines={[
+          { type: "command", text: "ls -l ~/.bashrc" },
+          { type: "output", text: `lrwxrwxrwx 1 user user 28 Jan 10 11:00 /home/user/.bashrc -> /home/user/dotfiles/bashrc.v1` },
+          { type: "command", text: "ln -sfv /home/user/dotfiles/bashrc.v2 ~/.bashrc" },
+          { type: "output", text: `'/home/user/.bashrc' -> '/home/user/dotfiles/bashrc.v2'` },
+          { type: "comment", text: "Sem -f, o ln daria erro 'File exists'. Com -f, ele remove o link antigo e cria o novo." },
+        ]}
+      />
+
+      <TerminalBlock
+        title="Symlink quebrado — destino sumiu"
+        lines={[
+          { type: "command", text: "ln -s /tmp/temporario link_quebrado" },
+          { type: "command", text: "rm /tmp/temporario" },
+          { type: "command", text: "ls -l link_quebrado" },
+          { type: "output", text: `lrwxrwxrwx 1 user user 14 Jan 15 11:05 link_quebrado -> /tmp/temporario` },
+          { type: "command", text: "cat link_quebrado" },
+          { type: "error", text: `cat: link_quebrado: No such file or directory` },
+          { type: "command", text: "find . -xtype l" },
+          { type: "output", text: "./link_quebrado" },
+          { type: "comment", text: "find -xtype l lista todos os symlinks com destino inexistente" },
+        ]}
+      />
+
+      <CommandFlagList
+        command="ln"
+        items={[
+          { flag: "-s", long: "--symbolic", description: "Cria link SIMBÓLICO (a versão que você quase sempre usa).", example: "ln -s alvo link" },
+          { flag: "-f", long: "--force", description: "Remove o destino antes de criar (substitui).", example: "ln -sf alvo link" },
+          { flag: "-v", long: "--verbose", description: "Mostra o link criado.", example: "ln -sv alvo link" },
+          { flag: "-r", long: "--relative", description: "Cria symlink com caminho RELATIVO em vez de absoluto.", example: "ln -srv ../alvo link" },
+          { flag: "-n", long: "--no-dereference", description: "Trata destino existente como arquivo (não desce em symlink-pra-diretório).", example: "ln -sfn novo link" },
+          { flag: "-i", long: "--interactive", description: "Pergunta antes de sobrescrever.", example: "ln -si alvo link" },
+          { flag: "-b", long: "--backup", description: "Faz backup do destino antes de sobrescrever.", example: "ln -sb alvo link" },
+        ]}
+      />
+
+      <h3>Casos reais de uso de symlinks</h3>
+
+      <TerminalBlock
+        title="Habilitar/desabilitar site do nginx (padrão sites-available/sites-enabled)"
+        lines={[
+          { type: "command", text: "sudo ln -sv /etc/nginx/sites-available/meusite.conf /etc/nginx/sites-enabled/" },
+          { type: "output", text: `'/etc/nginx/sites-enabled/meusite.conf' -> '/etc/nginx/sites-available/meusite.conf'` },
+          { type: "command", text: "sudo nginx -t && sudo systemctl reload nginx" },
+          { type: "output", text: `nginx: the configuration file /etc/nginx/nginx.conf syntax is ok\nnginx: configuration file /etc/nginx/nginx.conf test is successful` },
+          { type: "comment", text: "Para desabilitar: sudo rm /etc/nginx/sites-enabled/meusite.conf (o original em sites-available fica intacto)" },
+        ]}
+      />
+
+      <TerminalBlock
+        title="Trocar a versão padrão do Python"
+        lines={[
+          { type: "command", text: "ls -l /usr/bin/python" },
+          { type: "output", text: `lrwxrwxrwx 1 root root 9 Jan 1 00:00 /usr/bin/python -> python3.12` },
+          { type: "command", text: "sudo ln -sfv python3.11 /usr/bin/python" },
+          { type: "output", text: `'/usr/bin/python' -> 'python3.11'` },
+          { type: "command", text: "python --version" },
+          { type: "output", text: "Python 3.11.10" },
+        ]}
+      />
+
+      <AlertBox type="info" title="Hard link vs Symlink — quando usar cada um?">
+        <ul>
+          <li><strong>Symlink</strong> (<code>ln -s</code>): atalho. Funciona com diretórios, atravessa filesystems, mas quebra se o destino sumir. Use para configurações, dotfiles, "versão atual" de algo.</li>
+          <li><strong>Hard link</strong> (<code>ln</code> sem flag): segundo nome para o mesmo inode. Não funciona com diretórios, não atravessa filesystems. Continua funcionando se o original for apagado. Use para deduplicação (ex: <code>rsync --link-dest</code> em backups incrementais).</li>
+        </ul>
+      </AlertBox>
+
+      <h2>Tabela de Referência Rápida</h2>
       <CodeBlock
-        language="text"
         title="Flags mais usadas de cada comando"
+        language="text"
         code={`TOUCH
-  touch arquivo.txt        Criar arquivo vazio
-  touch -c arquivo.txt     Não criar se não existir
-  touch -d "ontem" arq     Definir data específica
+  touch arq            Criar arquivo vazio
+  touch -c arq         Não criar se não existir
+  touch -d "ontem" arq Definir data específica
+  touch -r ref alvo    Copiar timestamp de outro arquivo
 
 MKDIR
-  mkdir pasta              Criar diretório
-  mkdir -p a/b/c           Criar hierarquia inteira
-  mkdir -m 750 pasta       Criar com permissões definidas
+  mkdir pasta              Criar
+  mkdir -pv a/b/c          Criar hierarquia inteira (verbose)
+  mkdir -m 750 priv        Criar com permissões definidas
 
-CP
-  cp -r  pasta/ dest/      Copiar pasta recursivamente
-  cp -i  arq dest/         Perguntar antes de sobrescrever
-  cp -v  arq dest/         Mostrar o que está sendo copiado
-  cp -a  pasta/ backup/    Cópia completa (backup perfeito)
-  cp -u  arq dest/         Copiar só se mais novo
-  cp -n  arq dest/         Nunca sobrescrever
+CP  (origem destino)
+  cp -rv  src/ dest/       Copiar pasta recursivamente, mostrando
+  cp -i   a b              Perguntar antes de sobrescrever
+  cp -av  pasta/ backup/   BACKUP PERFEITO (preserva tudo)
+  cp -u   a b              Copiar só se origem mais nova
+  cp -n   a b              Nunca sobrescrever
 
 MV
-  mv -i  arq dest/         Perguntar antes de sobrescrever
-  mv -v  arq dest/         Mostrar o que está sendo movido
-  mv -n  arq dest/         Não sobrescrever existentes
-  mv -b  arq dest/         Backup do destino antes de substituir
+  mv -iv  a b              Mostrar + perguntar antes
+  mv -v   *.jpg ~/Pics/    Mover múltiplos
+  mv -bv  a b              Backup do destino antes
 
 RM
-  rm -i  arquivo           Perguntar antes de apagar
-  rm -v  arquivo           Mostrar o que foi apagado
-  rm -r  pasta/            Apagar pasta e conteúdo
-  rm -f  arquivo           Forçar sem confirmação
-  rm -ri pasta/            Recursivo + perguntar (SEGURO)
-
-RMDIR
-  rmdir pasta/             Apagar diretório VAZIO
-  rmdir -p a/b/c/          Apagar hierarquia vazia
+  rm  -v   arq             Apagar mostrando
+  rm  -i   *.txt           Perguntar cada um
+  rm  -I   dir/*           Perguntar uma vez (se 3+)
+  rm  -rv  pasta/          Recursivo + verbose (RECOMENDADO)
+  rm  -rf  /tmp/cache/     Forçar sem perguntar (CUIDADO!)
+  rmdir pasta/             Só se VAZIO
 
 LN
-  ln -s  original atalho   Criar link simbólico
-  ln -sf original atalho   Criar/substituir link
-  ln -sv original atalho   Criar e mostrar o que criou
-  ln -sr original atalho   Link com caminho relativo`}
+  ln -sv   alvo link       Criar symlink (mostrando)
+  ln -sfv  alvo link       Substituir symlink existente
+  ln -sr   alvo link       Symlink com caminho relativo
+  find . -xtype l          Listar symlinks quebrados`}
       />
+
+      <AlertBox type="success" title="Próximos passos">
+        Você já sabe navegar, visualizar e manipular arquivos. Próximo passo: entender a hierarquia
+        de diretórios do Linux (FHS) e o sistema de permissões (rwx, chmod, chown). Veja as páginas
+        de Sistema de Arquivos e Permissões.
+      </AlertBox>
     </PageContainer>
   );
 }

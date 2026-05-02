@@ -94,3 +94,25 @@ Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHea
 ### `scripts` (`@workspace/scripts`)
 
 Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+
+### `artifacts/arch-preview` (`@workspace/arch-preview`)
+
+Vite + React 19 SPA — "Arch Linux: Manual Definitivo", a Portuguese learning manual styled as an authentic Arch terminal. Hash-routed via `wouter` + `useHashLocation`, mounted at `/` through the artifact preview proxy.
+
+**Design system (in `src/components/ui/` and `src/index.css`)**
+
+- `TerminalBlock` — Mac-style traffic-light terminal with `[user@archlinux ~]$` prompt, real command + verbatim stdout, copy button, ANSI-style `{g}{y}{r}{b}{c}{m}{w}{dim}{bold}` color tokens.
+- `OutputBlock` — Output-only variant for annotated stdout dumps.
+- `CommandFlag` / `CommandFlagList` — Grid documenting CLI flags.
+- `AlertBox` / `CodeBlock` — Existing helpers, kept for warnings and multi-line bash scripts/config files only.
+- Theme: Arch teal `#1793D1`, JetBrains Mono, custom WebKit + Firefox scrollbars (terminal-styled, applied to `html`/`body` and `.arch-scroll`/`.terminal-scroll`).
+
+**Sidebar order (beginner → advanced)**: 1.Introdução · 2.Instalação · 3.Terminal Básico · 4.Sistema de Arquivos · 5.Pacotes · 6.Sistema · 7.Shell Avançado · 8.Hardware · 9.Redes · 10.Desenvolvimento · 11.Extras.
+
+Every page uses `TerminalBlock` for command + real terminal output, `OutputBlock` for column-by-column annotation of `ls -l`, `stat`, `systemctl status` etc., and `CommandFlagList` for flag references. Routes are defined in `src/App.tsx`.
+
+- `pnpm --filter @workspace/arch-preview run dev` — start the dev server
+
+### `artifacts/ubuntu-preview` (`@workspace/ubuntu-preview`)
+
+Vite + React 19 SPA — Portuguese Ubuntu learning manual (companion to arch-preview, deployed as `Wallysondevs/ubuntu-book`).

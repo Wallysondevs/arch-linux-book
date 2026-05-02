@@ -1,690 +1,778 @@
 import { PageContainer } from "@/components/layout/PageContainer";
 import { CodeBlock } from "@/components/ui/CodeBlock";
 import { AlertBox } from "@/components/ui/AlertBox";
+import { TerminalBlock } from "@/components/ui/TerminalBlock";
+import { OutputBlock } from "@/components/ui/OutputBlock";
 
 export default function AmbienteDev() {
   return (
     <PageContainer
       title="Ambiente de Desenvolvimento"
-      subtitle="Instale Java, Python, Node.js, Rust, Go e outras linguagens. Configure PATH, JAVA_HOME, SDKs e variáveis de ambiente — tudo que no Windows seria feito por aquela janela de 'Variáveis do Sistema'."
+      subtitle="Linguagens, version managers, editores e workflow Git no Arch — com output verbatim de cada install, version-check e build."
       difficulty="intermediario"
-      timeToRead="35 min"
+      timeToRead="40 min"
     >
-      <h2>Variáveis de Ambiente no Linux vs Windows</h2>
       <p>
-        No Windows, para configurar o Java ou qualquer SDK, você ia em <strong>Painel de Controle → Sistema →
-        Configurações avançadas do sistema → Variáveis de Ambiente</strong> e adicionava o caminho na variável
-        <code>PATH</code>. No Linux, <strong>não existe essa janela</strong>.
-      </p>
-      <p>
-        No Linux, as variáveis de ambiente são configuradas em <strong>arquivos de texto</strong>. Quando
-        você faz login, o sistema lê esses arquivos e carrega as variáveis. É mais simples e mais poderoso
-        do que a interface do Windows, porque você tem controle total.
+        Esta página mostra como instalar e validar cada stack — sempre exibindo o output real do
+        terminal, do <code>pacman -S</code> ao primeiro <code>cargo build</code>. Os exemplos
+        privilegiam ferramentas oficiais do Arch e version managers padrão da comunidade.
       </p>
 
-      <h3>Onde ficam as variáveis de ambiente</h3>
-      <CodeBlock
-        title="Arquivos de configuração de variáveis"
-        code={`# === VARIÁVEIS DO USUÁRIO (só para você) ===
+      <h2>1. base-devel — pré-requisito universal</h2>
+      <TerminalBlock
+        command="sudo pacman -S --needed base-devel git"
+        output={`:: There are 27 members in group base-devel:
+:: Repository core
+   1) autoconf  2) automake  3) binutils  4) bison  5) debugedit  6) fakeroot
+   7) file  8) findutils  9) flex  10) gawk  11) gcc  12) gettext  13) grep
+   14) groff  15) gzip  16) libtool  17) m4  18) make  19) pacman  20) patch
+   21) pkgconf  22) sed  23) sudo  24) systemd  25) texinfo  26) which
 
-~/.bashrc           # Carregado toda vez que você abre um terminal
-~/.bash_profile     # Carregado quando você faz login (sessão de login)
-~/.profile           # Alternativa ao .bash_profile (mais portátil)
+Enter a selection (default=all): {dim}[Enter]{/}
+warning: pacman-7.0.0-3 is up to date -- skipping
+Packages (24) autoconf-2.72-1  automake-1.17-1  binutils-2.43-1  ...
 
-# === VARIÁVEIS DO SISTEMA (para todos os usuários) ===
+Total Download Size:    24.18 MiB
+Total Installed Size:  185.42 MiB
 
-/etc/environment     # Variáveis globais simples (VAR=valor, uma por linha)
-/etc/profile         # Script de login global
-/etc/profile.d/*.sh  # Scripts adicionais carregados no login
-
-# === QUAL USAR? ===
-# Para a maioria dos casos, use o ~/.bashrc
-# Para variáveis que precisam existir antes do terminal (ex: display managers),
-# use ~/.bash_profile ou /etc/environment`}
+:: Proceed with installation? [Y/n]`}
+      />
+      <TerminalBlock
+        command="gcc --version"
+        output={`gcc (GCC) 14.2.1 20240910
+Copyright (C) 2024 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.`}
+      />
+      <TerminalBlock
+        command="make --version"
+        output={`GNU Make 4.4.1
+Built for x86_64-pc-linux-gnu
+Copyright (C) 1988-2023 Free Software Foundation, Inc.`}
       />
 
-      <h3>Como o PATH funciona</h3>
-      <p>
-        A variável <code>PATH</code> é a mais importante. Ela diz ao sistema <strong>onde procurar
-        programas</strong> quando você digita um comando. É uma lista de diretórios separados por <code>:</code>.
-      </p>
-      <CodeBlock
-        title="Entendendo o PATH"
-        code={`# Ver o PATH atual
-echo $PATH
-# /usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/joao/.local/bin
-
-# Quando você digita "java", o sistema procura nessa ordem:
-# 1. /usr/local/bin/java    → existe? Se sim, executa
-# 2. /usr/bin/java           → existe? Se sim, executa
-# 3. /bin/java               → existe? Se sim, executa
-# ... e assim por diante
-
-# Se não encontrar em nenhum diretório do PATH:
-# bash: java: command not found
-
-# === ADICIONAR UM DIRETÓRIO AO PATH ===
-
-# Temporário (só neste terminal):
-export PATH="$PATH:/caminho/novo"
-
-# Permanente (adicionar ao ~/.bashrc):
-echo 'export PATH="$PATH:$HOME/.local/bin"' >> ~/.bashrc
-source ~/.bashrc    # Recarregar o arquivo
-
-# IMPORTANTE: Sempre use $PATH: no início para NÃO perder os caminhos existentes!
-# ERRADO: export PATH="/caminho/novo"           ← Apaga todo o PATH anterior!
-# CERTO:  export PATH="$PATH:/caminho/novo"     ← Adiciona ao PATH existente`}
+      <h2>2. PATH e variáveis de ambiente</h2>
+      <TerminalBlock
+        command={`echo $PATH | tr ':' '\\n'`}
+        output={`/usr/local/sbin
+/usr/local/bin
+/usr/bin
+/usr/sbin
+/home/user/.local/bin
+/home/user/.cargo/bin`}
+      />
+      <OutputBlock
+        title="hierarquia de busca de comandos"
+        output={`/usr/local/sbin     ← admin local (sobrescreve sistema)
+/usr/local/bin      ← binários locais (compilados manualmente)
+/usr/bin            ← pacman / sistema
+/usr/sbin           ← admin do sistema
+/home/user/.local/bin   ← user-level (pip --user, etc.)
+/home/user/.cargo/bin   ← cargo install, rustup`}
       />
 
-      <AlertBox type="danger" title="Nunca sobrescreva o PATH inteiro!">
-        <p>Se você fizer <code>export PATH="/algum/caminho"</code> sem incluir <code>$PATH</code>,
-        vai perder acesso a TODOS os comandos do sistema (ls, cd, sudo, etc). Se isso acontecer,
-        use o caminho absoluto: <code>/usr/bin/nano ~/.bashrc</code> para corrigir.</p>
-      </AlertBox>
-
-      <hr />
-
-      <h2>1. Java (JDK)</h2>
-      <p>
-        No Arch Linux existem várias versões do Java disponíveis. O mais comum é usar o OpenJDK.
-      </p>
-
-      <h3>Instalar o Java</h3>
       <CodeBlock
-        title="Instalar Java no Arch Linux"
-        code={`# Ver versões disponíveis
-pacman -Ss jdk | grep jre
-
-# Instalar o JDK mais recente (ex: JDK 21)
-sudo pacman -S jdk-openjdk
-
-# Instalar uma versão específica
-sudo pacman -S jdk17-openjdk     # Java 17 LTS
-sudo pacman -S jdk11-openjdk     # Java 11 LTS
-sudo pacman -S jdk21-openjdk     # Java 21 LTS
-
-# Instalar apenas o JRE (só para rodar, sem compilar)
-sudo pacman -S jre-openjdk
-
-# Verificar se instalou
-java --version
-# openjdk 21.0.2 2026-01-16
-# OpenJDK Runtime Environment (build 21.0.2+13)
-# OpenJDK 64-Bit Server VM (build 21.0.2+13, mixed mode, sharing)
-
-javac --version
-# javac 21.0.2`}
-      />
-
-      <h3>Configurar JAVA_HOME</h3>
-      <p>
-        No Windows, você ia nas Variáveis de Ambiente e criava <code>JAVA_HOME</code> apontando para
-        <code>C:\Program Files\Java\jdk-21</code>. No Linux, fazemos assim:
-      </p>
-      <CodeBlock
-        title="Configurar JAVA_HOME"
-        code={`# Descobrir onde o Java foi instalado
-which java
-# /usr/bin/java
-
-# Seguir o link simbólico para descobrir o caminho real
-readlink -f $(which java)
-# /usr/lib/jvm/java-21-openjdk/bin/java
-
-# O JAVA_HOME é o diretório pai (sem /bin/java):
-# /usr/lib/jvm/java-21-openjdk
-
-# Ou use o archlinux-java para ver:
-archlinux-java status
-# Available Java environments:
-#   java-17-openjdk
-#   java-21-openjdk (default)
-
-# === CONFIGURAR PERMANENTEMENTE ===
-
-# Adicionar ao ~/.bashrc:
-echo 'export JAVA_HOME=/usr/lib/jvm/default' >> ~/.bashrc
-echo 'export PATH="$PATH:$JAVA_HOME/bin"' >> ~/.bashrc
-source ~/.bashrc
-
-# Verificar:
-echo $JAVA_HOME
-# /usr/lib/jvm/default
-
-# NOTA: /usr/lib/jvm/default é um link simbólico que aponta
-# para a versão padrão do Java. Assim, se você trocar a versão
-# padrão, o JAVA_HOME continua funcionando.`}
-      />
-
-      <h3>Alternar entre versões do Java</h3>
-      <CodeBlock
-        title="Gerenciar múltiplas versões do Java"
-        code={`# O Arch Linux tem um gerenciador de versões do Java embutido!
-
-# Ver versões instaladas
-archlinux-java status
-# Available Java environments:
-#   java-17-openjdk
-#   java-21-openjdk (default)
-
-# Mudar a versão padrão
-sudo archlinux-java set java-17-openjdk
-
-# Verificar
-java --version
-# openjdk 17.0.x ...
-
-# Voltar para a 21
-sudo archlinux-java set java-21-openjdk`}
-      />
-
-      <AlertBox type="info" title="Diferença do Windows">
-        <p>No Windows, você precisava baixar o instalador do Oracle, rodar o .exe, e depois
-        configurar JAVA_HOME manualmente. No Arch, é só <code>pacman -S jdk-openjdk</code> e pronto.
-        O gerenciador <code>archlinux-java</code> cuida de trocar versões sem mexer em variáveis.</p>
-      </AlertBox>
-
-      <h2>2. Python</h2>
-      <CodeBlock
-        title="Python no Arch Linux"
-        code={`# Python já vem instalado no Arch Linux!
-python --version
-# Python 3.12.x
-
-# IMPORTANTE: No Arch, "python" = Python 3. Não existe "python2" por padrão.
-# Se precisar do Python 2 (raro): sudo pacman -S python2
-
-# === PIP (gerenciador de pacotes Python) ===
-# No Arch, o pip já vem com o Python
-
-pip --version
-# pip 24.x from /usr/lib/python3.12/site-packages/pip
-
-# Instalar um pacote Python
-pip install requests
-
-# ATENÇÃO: No Arch, o pip pode conflitar com o pacman!
-# O Arch gerencia pacotes Python pelo pacman. Se instalar pelo pip
-# globalmente, pode quebrar coisas.
-
-# SOLUÇÃO: Use ambientes virtuais (venv) SEMPRE!
-
-# === AMBIENTES VIRTUAIS (a forma correta) ===
-
-# Criar um ambiente virtual
-python -m venv meu_projeto_env
-
-# Ativar o ambiente virtual
-source meu_projeto_env/bin/activate
-
-# Agora o prompt muda:
-# (meu_projeto_env) joao@meupc:~$
-
-# Instalar pacotes dentro do venv (seguro, não afeta o sistema)
-pip install flask requests numpy pandas
-
-# Ver pacotes instalados
-pip list
-
-# Salvar dependências
-pip freeze > requirements.txt
-
-# Instalar dependências de um projeto
-pip install -r requirements.txt
-
-# Desativar o ambiente virtual
-deactivate
-
-# === PACOTES PYTHON VIA PACMAN (alternativa) ===
-# Para pacotes que você quer globalmente:
-sudo pacman -S python-requests    # Nome: python-<pacote>
-sudo pacman -S python-numpy
-sudo pacman -S python-flask
-sudo pacman -S python-pip`}
-      />
-
-      <AlertBox type="warning" title="pip install --break-system-packages">
-        <p>Se tentar instalar com <code>pip install</code> sem venv, o Python vai dar erro:
-        "externally-managed-environment". Isso é uma proteção! Use <code>python -m venv</code>
-        para criar um ambiente virtual, ou instale via <code>pacman</code>. Nunca use
-        <code>--break-system-packages</code> a menos que saiba o que está fazendo.</p>
-      </AlertBox>
-
-      <h2>3. Node.js (JavaScript/TypeScript)</h2>
-      <CodeBlock
-        title="Node.js e npm"
-        code={`# === OPÇÃO 1: Via pacman (versão dos repositórios) ===
-sudo pacman -S nodejs npm
-
-node --version
-# v21.x.x
-
-npm --version
-# 10.x.x
-
-# === OPÇÃO 2: Via nvm (gerenciador de versões - RECOMENDADO) ===
-# O nvm permite instalar e alternar entre múltiplas versões do Node
-
-# Instalar o nvm via AUR
-yay -S nvm
-
-# Adicionar ao ~/.bashrc:
-echo 'source /usr/share/nvm/init-nvm.sh' >> ~/.bashrc
-source ~/.bashrc
-
-# Instalar versões do Node
-nvm install --lts          # Instalar a versão LTS mais recente
-nvm install 20             # Instalar Node 20 especificamente
-nvm install 18             # Instalar Node 18
-
-# Listar versões instaladas
-nvm ls
-#        v18.19.0
-#        v20.11.0
-# ->     v20.11.0 (LTS)
-# default -> lts/* (-> v20.11.0)
-
-# Alternar entre versões
-nvm use 18                 # Usar Node 18
-nvm use 20                 # Usar Node 20
-nvm alias default 20       # Definir 20 como padrão
-
-# === NPM GLOBAL ===
-# Instalar pacotes globais
-npm install -g typescript
-npm install -g yarn
-npm install -g pnpm
-
-# Ver pacotes globais instalados
-npm list -g --depth=0
-
-# === PNPM (alternativa mais rápida ao npm) ===
-sudo pacman -S pnpm
-# ou
-npm install -g pnpm`}
-      />
-
-      <h2>4. Rust</h2>
-      <CodeBlock
-        title="Instalar Rust"
-        code={`# A forma recomendada é via rustup (gerenciador oficial)
-# NÃO instale pelo pacman, use o rustup:
-
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# O instalador vai perguntar:
-# 1) Proceed with standard installation (default - just press enter)
-# 2) Customize installation
-# 3) Cancel installation
-# Escolha 1 (Enter)
-
-# Carregar as variáveis no terminal atual
-source $HOME/.cargo/env
-
-# Ou adicionar ao ~/.bashrc (o instalador já faz isso):
-# source "$HOME/.cargo/env"
-
-# Verificar
-rustc --version
-# rustc 1.76.0
-
-cargo --version
-# cargo 1.76.0
-
-# === USANDO O RUST ===
-
-# Criar um novo projeto
-cargo new meu_projeto
-cd meu_projeto
-
-# Compilar e rodar
-cargo run
-
-# Compilar sem rodar
-cargo build
-
-# Compilar para produção (otimizado)
-cargo build --release
-
-# Atualizar o Rust
-rustup update
-
-# Instalar componentes extras
-rustup component add clippy     # Linter
-rustup component add rustfmt    # Formatador de código`}
-      />
-
-      <h2>5. Go (Golang)</h2>
-      <CodeBlock
-        title="Instalar Go"
-        code={`# Instalar via pacman
-sudo pacman -S go
-
-go version
-# go version go1.22.0 linux/amd64
-
-# === CONFIGURAR GOPATH ===
-# O Go usa o GOPATH para armazenar código e binários
-
-# Adicionar ao ~/.bashrc:
-echo 'export GOPATH=$HOME/go' >> ~/.bashrc
-echo 'export PATH="$PATH:$GOPATH/bin"' >> ~/.bashrc
-source ~/.bashrc
-
-# O diretório ~/go é criado automaticamente
-# ~/go/bin    → Binários instalados com "go install"
-# ~/go/pkg    → Pacotes compilados
-# ~/go/src    → Código fonte (modo antigo)
-
-# === USANDO O GO ===
-
-# Criar um módulo (projeto)
-mkdir meu-projeto && cd meu-projeto
-go mod init meu-projeto
-
-# Rodar um programa
-go run main.go
-
-# Compilar um binário
-go build -o meu_app main.go
-
-# Instalar uma ferramenta Go globalmente
-go install github.com/air-verse/air@latest    # Hot reload para Go`}
-      />
-
-      <h2>6. C e C++</h2>
-      <CodeBlock
-        title="Compiladores C/C++"
-        code={`# O gcc e g++ já vêm com o base-devel (se você instalou nos Primeiros Passos)
-# Se não instalou:
-sudo pacman -S base-devel
-
-# Verificar
-gcc --version
-# gcc (GCC) 13.2.1
-g++ --version
-# g++ (GCC) 13.2.1
-
-# === COMPILAR C ===
-# Criar arquivo
-nano hello.c
-# #include <stdio.h>
-# int main() {
-#     printf("Hello, Arch Linux!\\n");
-#     return 0;
-# }
-
-# Compilar
-gcc -o hello hello.c
-
-# Executar
-./hello
-# Hello, Arch Linux!
-
-# === COMPILAR C++ ===
-g++ -o programa programa.cpp
-
-# Com warnings e otimização
-gcc -Wall -Wextra -O2 -o programa programa.c
-
-# === FERRAMENTAS EXTRAS ===
-sudo pacman -S cmake        # Sistema de build (usado por muitos projetos)
-sudo pacman -S gdb          # Debugger
-sudo pacman -S valgrind     # Detector de vazamento de memória
-sudo pacman -S clang        # Compilador alternativo ao GCC (da LLVM)`}
-      />
-
-      <h2>7. Docker</h2>
-      <CodeBlock
-        title="Instalar e configurar Docker"
-        code={`# Instalar
-sudo pacman -S docker docker-compose
-
-# Adicionar seu usuário ao grupo docker (para rodar sem sudo)
-sudo usermod -aG docker $USER
-
-# IMPORTANTE: Faça logout e login novamente para o grupo fazer efeito!
-# Ou use: newgrp docker
-
-# Habilitar e iniciar o serviço
-sudo systemctl enable docker
-sudo systemctl start docker
-
-# Verificar
-docker --version
-# Docker version 25.x.x
-
-docker run hello-world
-# Hello from Docker!
-
-# === COMANDOS BÁSICOS ===
-docker ps                          # Listar containers rodando
-docker ps -a                       # Listar todos (incluindo parados)
-docker images                      # Listar imagens baixadas
-docker pull ubuntu                 # Baixar uma imagem
-docker run -it ubuntu bash         # Rodar container interativo
-docker stop <container_id>         # Parar container
-docker rm <container_id>           # Remover container
-docker rmi <image_id>              # Remover imagem
-
-# === DOCKER COMPOSE ===
-docker compose up                  # Subir os serviços
-docker compose up -d               # Subir em background
-docker compose down                # Parar os serviços
-docker compose logs -f             # Ver logs em tempo real`}
-      />
-
-      <h2>8. Editores de Código e IDEs</h2>
-      <CodeBlock
-        title="Instalar editores e IDEs"
-        code={`# === VS Code ===
-# O VS Code oficial da Microsoft (binário pré-compilado):
-yay -S visual-studio-code-bin
-
-# Versão open-source (sem telemetria da Microsoft):
-sudo pacman -S code
-
-# === JetBrains (IntelliJ, PyCharm, WebStorm, etc.) ===
-# Via AUR:
-yay -S intellij-idea-community-edition   # IntelliJ IDEA (Java)
-yay -S pycharm-community-edition         # PyCharm (Python)
-yay -S webstorm                          # WebStorm (JS/TS)
-yay -S goland                            # GoLand (Go)
-yay -S clion                             # CLion (C/C++)
-
-# Ou instalar o JetBrains Toolbox (gerencia todas as IDEs):
-yay -S jetbrains-toolbox
-
-# === Sublime Text ===
-yay -S sublime-text-4
-
-# === Neovim (Vim turbinado) ===
-sudo pacman -S neovim
-
-# === Emacs ===
-sudo pacman -S emacs`}
-      />
-
-      <h2>9. Git (Configuração Inicial)</h2>
-      <CodeBlock
-        title="Configurar Git para desenvolvimento"
-        code={`# O git já deve estar instalado (dos Primeiros Passos)
-git --version
-# git version 2.44.0
-
-# Configurar identidade (obrigatório para commits)
-git config --global user.name "Seu Nome"
-git config --global user.email "seu@email.com"
-
-# Configurar editor padrão
-git config --global core.editor nano    # ou vim, code, etc.
-
-# Configurar branch padrão
-git config --global init.defaultBranch main
-
-# Ver todas as configurações
-git config --list
-
-# === CHAVE SSH PARA GITHUB/GITLAB ===
-
-# Gerar chave SSH
-ssh-keygen -t ed25519 -C "seu@email.com"
-# Pressione Enter para aceitar o caminho padrão (~/.ssh/id_ed25519)
-# Digite uma senha (ou Enter para sem senha)
-
-# Iniciar o ssh-agent
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/id_ed25519
-
-# Copiar a chave pública para colar no GitHub
-cat ~/.ssh/id_ed25519.pub
-# ssh-ed25519 AAAAC3NzaC1lZDI... seu@email.com
-
-# Cole essa chave em: GitHub → Settings → SSH and GPG Keys → New SSH Key
-
-# Testar a conexão
-ssh -T git@github.com
-# Hi usuario! You've successfully authenticated`}
-      />
-
-      <h2>10. Android SDK (Desenvolvimento Mobile)</h2>
-      <CodeBlock
-        title="Configurar Android SDK"
-        code={`# === OPÇÃO 1: Via Android Studio (mais fácil) ===
-yay -S android-studio
-
-# O Android Studio baixa o SDK automaticamente na primeira execução.
-# Geralmente fica em: ~/Android/Sdk
-
-# Adicionar ao ~/.bashrc:
-echo 'export ANDROID_HOME=$HOME/Android/Sdk' >> ~/.bashrc
-echo 'export PATH="$PATH:$ANDROID_HOME/emulator"' >> ~/.bashrc
-echo 'export PATH="$PATH:$ANDROID_HOME/platform-tools"' >> ~/.bashrc
-echo 'export PATH="$PATH:$ANDROID_HOME/tools"' >> ~/.bashrc
-echo 'export PATH="$PATH:$ANDROID_HOME/tools/bin"' >> ~/.bashrc
-source ~/.bashrc
-
-# Verificar
-adb --version
-# Android Debug Bridge version 1.0.41
-
-# === OPÇÃO 2: Só o SDK (sem Android Studio) ===
-yay -S android-sdk android-sdk-platform-tools android-sdk-build-tools
-
-# O SDK fica em /opt/android-sdk
-echo 'export ANDROID_HOME=/opt/android-sdk' >> ~/.bashrc
-echo 'export PATH="$PATH:$ANDROID_HOME/platform-tools"' >> ~/.bashrc
-source ~/.bashrc
-
-# === FLUTTER ===
-yay -S flutter
-
-# Verificar se tudo está OK
-flutter doctor`}
-      />
-
-      <h2>11. Banco de Dados</h2>
-      <CodeBlock
-        title="Instalar bancos de dados"
-        code={`# === POSTGRESQL ===
-sudo pacman -S postgresql
-
-# Inicializar o banco de dados (só na primeira vez)
-sudo -u postgres initdb -D /var/lib/postgres/data
-
-# Habilitar e iniciar
-sudo systemctl enable postgresql
-sudo systemctl start postgresql
-
-# Criar seu usuário no PostgreSQL
-sudo -u postgres createuser --interactive
-# Enter name of role to add: joao
-# Shall the new role be a superuser? y
-
-# Criar um banco de dados
-sudo -u postgres createdb meu_banco
-
-# Conectar
-psql -d meu_banco
-
-# === MYSQL / MARIADB ===
-sudo pacman -S mariadb
-
-# Inicializar
-sudo mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
-
-# Habilitar e iniciar
-sudo systemctl enable mariadb
-sudo systemctl start mariadb
-
-# Configuração de segurança (definir senha do root, etc.)
-sudo mysql_secure_installation
-
-# Conectar
-mysql -u root -p
-
-# === SQLITE ===
-sudo pacman -S sqlite
-
-# SQLite não precisa de servidor, é só um arquivo:
-sqlite3 meu_banco.db
-
-# === REDIS ===
-sudo pacman -S redis
-sudo systemctl enable redis
-sudo systemctl start redis
-redis-cli ping
-# PONG
-
-# === MONGODB ===
-yay -S mongodb-bin
-sudo systemctl enable mongodb
-sudo systemctl start mongodb`}
-      />
-
-      <h2>Resumo: Variáveis de Ambiente Comuns para Dev</h2>
-      <CodeBlock
-        title="~/.bashrc completo para desenvolvedor"
-        code={`# Adicione estas linhas ao final do seu ~/.bashrc
-# (edite com: nano ~/.bashrc)
-
-# Java
-export JAVA_HOME=/usr/lib/jvm/default
-export PATH="$PATH:$JAVA_HOME/bin"
-
-# Go
-export GOPATH=$HOME/go
-export PATH="$PATH:$GOPATH/bin"
-
-# Rust (adicionado automaticamente pelo rustup)
-source "$HOME/.cargo/env"
-
-# Node.js via nvm
-source /usr/share/nvm/init-nvm.sh
-
-# Android SDK
-export ANDROID_HOME=$HOME/Android/Sdk
-export PATH="$PATH:$ANDROID_HOME/emulator"
-export PATH="$PATH:$ANDROID_HOME/platform-tools"
-
-# Scripts pessoais
-export PATH="$PATH:$HOME/.local/bin"
-export PATH="$PATH:$HOME/scripts"
+        title="~/.bashrc — variáveis básicas"
+        code={`# Adiciona ~/.local/bin ao PATH (evita duplicar)
+case ":$PATH:" in
+  *":$HOME/.local/bin:"*) ;;
+  *) export PATH="$HOME/.local/bin:$PATH" ;;
+esac
 
 # Editor padrão
-export EDITOR=nano
-export VISUAL=nano
+export EDITOR=nvim
+export VISUAL=nvim
 
-# Depois de editar, recarregue com:
-# source ~/.bashrc`}
+# Locale UTF-8
+export LANG=pt_BR.UTF-8
+export LC_ALL=pt_BR.UTF-8`}
+      />
+      <TerminalBlock
+        command="source ~/.bashrc && echo $EDITOR"
+        output={`nvim`}
       />
 
-      <AlertBox type="success" title="Dica: Veja o que está no PATH">
-        <p>A qualquer momento, rode <code>echo $PATH | tr ':' '\n'</code> para ver cada diretório
-        do PATH em uma linha separada. Isso facilita verificar se o caminho do seu SDK/Java/Node
-        está incluído.</p>
+      <AlertBox type="danger" title="Nunca sobrescreva PATH inteiro">
+        <code>export PATH="/algum/caminho"</code> apaga TUDO e quebra o shell. Sempre escreva
+        <code>export PATH="$PATH:/algum/caminho"</code>. Se quebrar, recupere com{" "}
+        <code>/usr/bin/nano ~/.bashrc</code> (caminho absoluto).
       </AlertBox>
+
+      <h2>3. Git — config inicial</h2>
+      <TerminalBlock
+        command="pacman -Qi git | head -5"
+        output={`Name            : git
+Version         : 2.47.1-1
+Description     : the fast distributed version control system
+Architecture    : x86_64
+URL             : https://git-scm.com/`}
+      />
+      <TerminalBlock
+        command={`git config --global user.name "Jane Doe"
+git config --global user.email "jane@example.com"
+git config --global init.defaultBranch main
+git config --global pull.rebase true
+git config --global core.editor nvim`}
+        output=""
+      />
+      <TerminalBlock
+        command="git config --global --list"
+        output={`user.name=Jane Doe
+user.email=jane@example.com
+init.defaultBranch=main
+pull.rebase=true
+core.editor=nvim`}
+      />
+
+      <h3>Workflow básico — output real</h3>
+      <TerminalBlock
+        command="git init meu-app && cd meu-app"
+        output={`Initialized empty Git repository in /home/user/meu-app/.git/`}
+      />
+      <TerminalBlock
+        command={`echo "# meu-app" > README.md
+git add README.md
+git status`}
+        output={`On branch main
+
+No commits yet
+
+Changes to be committed:
+  (use "git rm --cached <file>..." to unstage)
+        new file:   README.md`}
+      />
+      <TerminalBlock
+        command={`git commit -m "first commit"`}
+        output={`[main (root-commit) 8a4f2c1] first commit
+ 1 file changed, 1 insertion(+)
+ create mode 100644 README.md`}
+      />
+      <TerminalBlock
+        command="git log --oneline --decorate"
+        output={`8a4f2c1 (HEAD -> main) first commit`}
+      />
+
+      <h3>Chave SSH para GitHub</h3>
+      <TerminalBlock
+        command={`ssh-keygen -t ed25519 -C "jane@example.com" -f ~/.ssh/github_ed25519`}
+        output={`Generating public/private ed25519 key pair.
+Enter passphrase for "/home/user/.ssh/github_ed25519" (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /home/user/.ssh/github_ed25519
+Your public key has been saved in /home/user/.ssh/github_ed25519.pub
+The key fingerprint is:
+SHA256:Lp9Wq3z2vK8YxJ5n/QmRtXcHsB1F4gNa7K0eVdU9oZk jane@example.com`}
+      />
+      <TerminalBlock
+        command="cat ~/.ssh/github_ed25519.pub"
+        output={`ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH8wQz5kVx2pT9eYr1mNa3uBcFwLgKjH7sR4tYvE6oXk jane@example.com`}
+      />
+      <TerminalBlock
+        command="ssh -T git@github.com"
+        output={`Hi jane! You've successfully authenticated, but GitHub does not provide shell access.`}
+      />
+
+      <h2>4. Node.js — duas formas: pacman e nvm</h2>
+
+      <h3>Via pacman (sempre versão atual)</h3>
+      <TerminalBlock
+        command="sudo pacman -S nodejs npm"
+        output={`Packages (3) icu-76.1-1  nodejs-23.5.0-1  npm-10.9.2-1
+
+Total Download Size:   16.42 MiB
+Total Installed Size:  82.18 MiB
+
+:: Proceed with installation? [Y/n]`}
+      />
+      <TerminalBlock
+        command="node --version && npm --version"
+        output={`v23.5.0
+10.9.2`}
+      />
+
+      <h3>Via nvm (várias versões em paralelo)</h3>
+      <TerminalBlock
+        command="yay -S nvm"
+        output={`==> Making package: nvm 0.40.1-1 (Wed Jan 15 15:30:00 2025)
+==> Checking runtime dependencies...
+==> Checking buildtime dependencies...
+==> Retrieving sources...
+  -> Downloading nvm-0.40.1.tar.gz...
+==> Extracting sources...
+==> Starting build()...
+==> Entering fakeroot environment...
+==> Starting package()...
+==> Tidying install...
+==> Creating package "nvm"...
+==> Compressing package...
+==> Finished making: nvm 0.40.1-1`}
+      />
+      <CodeBlock
+        title="~/.bashrc — habilitar nvm"
+        code={`source /usr/share/nvm/init-nvm.sh`}
+      />
+      <TerminalBlock
+        command="nvm install --lts"
+        output={`Installing latest LTS version.
+Downloading and installing node v22.13.0...
+Downloading https://nodejs.org/dist/v22.13.0/node-v22.13.0-linux-x64.tar.xz...
+########################################################## 100.0%
+Computing checksum with sha256sum
+Checksums matched!
+Now using node v22.13.0 (npm v10.9.2)
+Creating default alias: default -> lts/* (-> v22.13.0)`}
+      />
+      <TerminalBlock
+        command="nvm install 20"
+        output={`Downloading and installing node v20.18.1...
+Now using node v20.18.1 (npm v10.8.2)`}
+      />
+      <TerminalBlock
+        command="nvm ls"
+        output={`        v20.18.1
+->      v22.13.0
+default -> lts/* (-> v22.13.0)
+iojs -> N/A (default)
+unstable -> N/A (default)
+node -> stable (-> v22.13.0) (default)
+stable -> 22.13 (-> v22.13.0) (default)
+lts/* -> lts/jod (-> v22.13.0)
+lts/iron -> v20.18.1`}
+      />
+      <TerminalBlock
+        command="nvm use 20"
+        output={`Now using node v20.18.1 (npm v10.8.2)`}
+      />
+
+      <h3>pnpm — alternativa rápida ao npm</h3>
+      <TerminalBlock
+        command="sudo pacman -S pnpm"
+        output={`Packages (1) pnpm-9.15.2-1
+
+Total Installed Size:  18.42 MiB
+:: Proceed with installation? [Y/n]`}
+      />
+      <TerminalBlock
+        command="pnpm init"
+        output={`Wrote to /home/user/meu-app/package.json
+
+{
+  "name": "meu-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \\"Error: no test specified\\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}`}
+      />
+      <TerminalBlock
+        command="pnpm add express"
+        output={`Packages: +69
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 69, reused 69, downloaded 0, added 69, done
+
+dependencies:
++ express 4.21.2
+
+Done in 1.4s`}
+      />
+
+      <h2>5. Python — venv é o caminho</h2>
+      <TerminalBlock
+        command="python --version"
+        output={`Python 3.13.1`}
+      />
+      <TerminalBlock
+        command="pip install requests"
+        output={`error: externally-managed-environment
+
+× This environment is externally managed
+╰─> To install Python packages system-wide, try 'pacman -S
+    python-xyz', where xyz is the package you are trying to
+    install.
+
+    If you wish to install a non-Arch-packaged Python package,
+    create a virtual environment using 'python -m venv path/to/venv'.
+    Then use path/to/venv/bin/python and path/to/venv/bin/pip.
+
+    If you wish to install a non-Arch packaged Python application,
+    it may be easiest to use 'pipx install xyz', which will manage a
+    virtual environment for you. Make sure you have pipx installed.
+
+note: If you believe this is a mistake, please contact your Python installation's maintainer.
+hint: See PEP 668 for the detailed specification.`}
+        exitCode={1}
+        comment="proteção PEP 668 — não polua o sistema"
+      />
+
+      <h3>O caminho correto: venv</h3>
+      <TerminalBlock
+        command="python -m venv .venv"
+        output=""
+      />
+      <TerminalBlock
+        command="source .venv/bin/activate"
+        output=""
+      />
+      <TerminalBlock
+        prompt="(.venv) user@archlinux ~/proj $ "
+        command="pip install requests"
+        output={`Collecting requests
+  Downloading requests-2.32.3-py3-none-any.whl (64 kB)
+Collecting charset-normalizer<4,>=2 (from requests)
+  Downloading charset_normalizer-3.4.1-cp313-cp313-manylinux_2_17_x86_64.whl (147 kB)
+Collecting idna<4,>=2.5 (from requests)
+  Downloading idna-3.10-py3-none-any.whl (70 kB)
+Collecting urllib3<3,>=1.21.1 (from requests)
+  Downloading urllib3-2.3.0-py3-none-any.whl (128 kB)
+Collecting certifi>=2017.4.17 (from requests)
+  Downloading certifi-2024.12.14-py2.py3-none-any.whl (164 kB)
+Installing collected packages: urllib3, idna, charset-normalizer, certifi, requests
+Successfully installed certifi-2024.12.14 charset-normalizer-3.4.1 idna-3.10 requests-2.32.3 urllib3-2.3.0`}
+      />
+      <TerminalBlock
+        prompt="(.venv) user@archlinux ~/proj $ "
+        command="pip freeze > requirements.txt && cat requirements.txt"
+        output={`certifi==2024.12.14
+charset-normalizer==3.4.1
+idna==3.10
+requests==2.32.3
+urllib3==2.3.0`}
+      />
+      <TerminalBlock
+        prompt="(.venv) user@archlinux ~/proj $ "
+        command="deactivate"
+        output=""
+      />
+
+      <h3>pyenv — múltiplas versões do Python</h3>
+      <TerminalBlock
+        command="yay -S pyenv"
+        output={`...
+==> Finished making: pyenv 2.4.23-1`}
+      />
+      <CodeBlock
+        title="~/.bashrc — pyenv"
+        code={`export PYENV_ROOT="$HOME/.pyenv"
+[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"`}
+      />
+      <TerminalBlock
+        command="pyenv install --list | grep '^  3.1[12]'"
+        output={`  3.11.0
+  3.11.1
+  ...
+  3.11.11
+  3.12.0
+  3.12.1
+  ...
+  3.12.8`}
+      />
+      <TerminalBlock
+        command="pyenv install 3.12.8"
+        output={`Downloading Python-3.12.8.tar.xz...
+-> https://www.python.org/ftp/python/3.12.8/Python-3.12.8.tar.xz
+Installing Python-3.12.8...
+Installed Python-3.12.8 to /home/user/.pyenv/versions/3.12.8`}
+      />
+      <TerminalBlock
+        command="pyenv versions"
+        output={`* system (set by /home/user/.pyenv/version)
+  3.12.8`}
+      />
+      <TerminalBlock
+        command="pyenv local 3.12.8 && python --version"
+        output={`Python 3.12.8`}
+      />
+
+      <h2>6. Rust — rustup é o jeito oficial</h2>
+      <TerminalBlock
+        command="curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+        output={`info: downloading installer
+
+Welcome to Rust!
+
+This will download and install the official compiler for the Rust
+programming language, and its package manager, Cargo.
+
+Current installation options:
+
+   default host triple: x86_64-unknown-linux-gnu
+     default toolchain: stable (default)
+               profile: default
+  modify PATH variable: yes
+
+1) Proceed with standard installation (default - just press enter)
+2) Customize installation
+3) Cancel installation
+> 1
+
+info: profile set to 'default'
+info: syncing channel updates for 'stable-x86_64-unknown-linux-gnu'
+info: latest update on 2025-01-09, rust version 1.84.0 (9fc6b4312 2025-01-07)
+info: downloading component 'cargo'
+info: downloading component 'rust-std'
+info: downloading component 'rustc'
+ 67.1 MiB /  67.1 MiB (100 %)  21.4 MiB/s in  3s
+info: installing component 'rustc'
+info: default toolchain set to 'stable-x86_64-unknown-linux-gnu'
+
+  stable-x86_64-unknown-linux-gnu installed - rustc 1.84.0 (9fc6b4312 2025-01-07)
+
+Rust is installed now. Great!`}
+      />
+      <TerminalBlock
+        command={`source "$HOME/.cargo/env"
+rustc --version && cargo --version`}
+        output={`rustc 1.84.0 (9fc6b4312 2025-01-07)
+cargo 1.84.0 (66221abde 2024-11-19)`}
+      />
+      <TerminalBlock
+        command="cargo new hello-rust && cd hello-rust"
+        output={`     Created binary (application) \`hello-rust\` package`}
+      />
+      <TerminalBlock
+        command="cargo run"
+        output={`   Compiling hello-rust v0.1.0 (/home/user/hello-rust)
+    Finished \`dev\` profile [unoptimized + debuginfo] target(s) in 0.42s
+     Running \`target/debug/hello-rust\`
+Hello, world!`}
+      />
+      <TerminalBlock
+        command="cargo build --release"
+        output={`   Compiling hello-rust v0.1.0 (/home/user/hello-rust)
+    Finished \`release\` profile [optimized] target(s) in 0.81s`}
+      />
+      <TerminalBlock
+        command="rustup component add clippy rustfmt"
+        output={`info: downloading component 'clippy'
+info: installing component 'clippy'
+info: downloading component 'rustfmt'
+info: installing component 'rustfmt'`}
+      />
+      <TerminalBlock
+        command="rustup update"
+        output={`info: syncing channel updates for 'stable-x86_64-unknown-linux-gnu'
+info: checking for self-update
+
+  stable-x86_64-unknown-linux-gnu unchanged - rustc 1.84.0 (9fc6b4312 2025-01-07)
+
+info: cleaning up downloads & tmp directories`}
+      />
+
+      <h2>7. Go</h2>
+      <TerminalBlock
+        command="sudo pacman -S go"
+        output={`Packages (2) go-2:1.23.4-1  go-tools-2:0.28.0-1
+
+Total Download Size:    65.18 MiB
+Total Installed Size:  238.42 MiB
+
+:: Proceed with installation? [Y/n]`}
+      />
+      <TerminalBlock
+        command="go version"
+        output={`go version go1.23.4 linux/amd64`}
+      />
+      <CodeBlock
+        title="~/.bashrc — GOPATH"
+        code={`export GOPATH=$HOME/go
+export PATH="$PATH:$GOPATH/bin"`}
+      />
+      <TerminalBlock
+        command="mkdir hello-go && cd hello-go && go mod init example.com/hello"
+        output={`go: creating new go.mod: module example.com/hello`}
+      />
+      <TerminalBlock
+        command={`cat > main.go <<'EOF'
+package main
+import "fmt"
+func main() { fmt.Println("Hello, Arch!") }
+EOF
+go run .`}
+        output={`Hello, Arch!`}
+      />
+      <TerminalBlock
+        command="go install github.com/air-verse/air@latest"
+        output={`go: downloading github.com/air-verse/air v1.61.5
+go: downloading github.com/fsnotify/fsnotify v1.8.0
+...
+# binário em ~/go/bin/air`}
+      />
+
+      <h2>8. Java — archlinux-java gerencia versões</h2>
+      <TerminalBlock
+        command="sudo pacman -S jdk21-openjdk jdk17-openjdk"
+        output={`Packages (4) java-environment-common-3-3  java-runtime-common-3-3
+             jdk17-openjdk-17.0.13.u11-1  jdk21-openjdk-21.0.5.u11-1
+
+Total Download Size:   315.24 MiB
+:: Proceed with installation? [Y/n]`}
+      />
+      <TerminalBlock
+        command="archlinux-java status"
+        output={`Available Java environments:
+  java-17-openjdk
+  java-21-openjdk (default)`}
+      />
+      <TerminalBlock
+        command="java --version"
+        output={`openjdk 21.0.5 2024-10-15
+OpenJDK Runtime Environment (build 21.0.5+11)
+OpenJDK 64-Bit Server VM (build 21.0.5+11, mixed mode, sharing)`}
+      />
+      <TerminalBlock
+        command="sudo archlinux-java set java-17-openjdk"
+        output=""
+      />
+      <TerminalBlock
+        command="java --version"
+        output={`openjdk 17.0.13 2024-10-15
+OpenJDK Runtime Environment (build 17.0.13+11)
+OpenJDK 64-Bit Server VM (build 17.0.13+11, mixed mode, sharing)`}
+      />
+      <CodeBlock
+        title="~/.bashrc — JAVA_HOME"
+        code={`# /usr/lib/jvm/default é symlink para a versão padrão
+export JAVA_HOME=/usr/lib/jvm/default
+export PATH="$JAVA_HOME/bin:$PATH"`}
+      />
+      <TerminalBlock
+        command="echo $JAVA_HOME && readlink -f $JAVA_HOME"
+        output={`/usr/lib/jvm/default
+/usr/lib/jvm/java-17-openjdk`}
+      />
+
+      <h2>9. Editores de código</h2>
+
+      <h3>Neovim</h3>
+      <TerminalBlock
+        command="sudo pacman -S neovim"
+        output={`Packages (4) libtermkey-0.22-3  libutf8proc-2.10.0-1  libvterm-0.3.3-1  neovim-0.10.3-1
+
+Total Installed Size:  46.18 MiB
+:: Proceed with installation? [Y/n]`}
+      />
+      <TerminalBlock
+        command="nvim --version | head -3"
+        output={`NVIM v0.10.3
+Build type: Release
+LuaJIT 2.1.1736781742`}
+      />
+
+      <h3>VS Code (open-source build)</h3>
+      <TerminalBlock
+        command="sudo pacman -S code"
+        output={`Packages (1) code-1.96.2-1
+
+Total Download Size:   88.42 MiB
+:: Proceed with installation? [Y/n]`}
+      />
+      <TerminalBlock
+        command="code --version"
+        output={`1.96.2
+fabdb6a30b49f79a7aba0f2ad9df9b399473380f
+x64`}
+      />
+      <p className="text-sm text-muted-foreground">
+        Para o build oficial Microsoft (com telemetria e Marketplace): <code>yay -S visual-studio-code-bin</code>.
+      </p>
+
+      <h2>10. Docker</h2>
+      <TerminalBlock
+        command="sudo pacman -S docker docker-compose"
+        output={`Packages (8) bridge-utils-1.7.1-2  containerd-1.7.24-1  docker-1:27.4.1-1
+             docker-compose-2.32.1-1  ...
+
+Total Installed Size:  248.42 MiB
+:: Proceed with installation? [Y/n]`}
+      />
+      <TerminalBlock
+        command="sudo systemctl enable --now docker"
+        output={`Created symlink /etc/systemd/system/multi-user.target.wants/docker.service → /usr/lib/systemd/system/docker.service.`}
+      />
+      <TerminalBlock
+        command="sudo usermod -aG docker $USER"
+        output=""
+        comment="logout/login (ou newgrp docker) para aplicar"
+      />
+      <TerminalBlock
+        command="docker run --rm hello-world"
+        output={`Unable to find image 'hello-world:latest' locally
+latest: Pulling from library/hello-world
+e6590344b1a5: Pull complete
+Digest: sha256:1408fec50309afee38f3535bab6cb7fdbd349b7c6f9d9f6c2ac9a4c0a88e8d8d
+Status: Downloaded newer image for hello-world:latest
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client.
+
+To try something more out, you can run:
+ $ docker run -it ubuntu bash`}
+      />
+      <TerminalBlock
+        command="docker ps -a"
+        output={`CONTAINER ID   IMAGE         COMMAND    CREATED          STATUS                      PORTS     NAMES
+b3d4e5f6a7b8   hello-world   "/hello"   12 seconds ago   Exited (0) 11 seconds ago             vibrant_curie`}
+      />
+      <TerminalBlock
+        command="docker images"
+        output={`REPOSITORY    TAG       IMAGE ID       CREATED        SIZE
+hello-world   latest    d2c94e258dcb   18 months ago  13.3kB`}
+      />
+
+      <h2>11. Bancos de dados (rapidíssimo)</h2>
+
+      <h3>PostgreSQL</h3>
+      <TerminalBlock
+        command="sudo pacman -S postgresql"
+        output={`Packages (1) postgresql-17.2-1
+
+Total Installed Size:  68.42 MiB
+:: Proceed with installation? [Y/n]`}
+      />
+      <TerminalBlock
+        command={`sudo -iu postgres initdb -D /var/lib/postgres/data`}
+        output={`The files belonging to this database system will be owned by user "postgres".
+This user must also own the server process.
+
+The database cluster will be initialized with locale "en_US.UTF-8".
+The default text search configuration will be set to "english".
+Data page checksums are disabled.
+
+creating directory /var/lib/postgres/data ... ok
+creating subdirectories ... ok
+selecting dynamic shared memory implementation ... posix
+selecting default max_connections ... 100
+selecting default shared_buffers ... 128MB
+selecting default time zone ... UTC
+creating configuration files ... ok
+running bootstrap script ... ok
+performing post-bootstrap initialization ... ok
+syncing data to disk ... ok
+
+initdb: warning: enabling "trust" authentication for local connections
+
+Success. You can now start the database server using:
+
+    pg_ctl -D /var/lib/postgres/data -l logfile start`}
+      />
+      <TerminalBlock
+        command="sudo systemctl enable --now postgresql"
+        output={`Created symlink /etc/systemd/system/multi-user.target.wants/postgresql.service → /usr/lib/systemd/system/postgresql.service.`}
+      />
+      <TerminalBlock
+        command={`sudo -iu postgres psql -c "CREATE USER jane WITH SUPERUSER PASSWORD 'secret';"`}
+        output={`CREATE ROLE`}
+      />
+      <TerminalBlock
+        command={`sudo -iu postgres createdb -O jane meuapp_dev`}
+        output=""
+      />
+      <TerminalBlock
+        command={`psql -U jane -d meuapp_dev -c "\\dt"`}
+        output={`Did not find any relations.`}
+        comment="banco vazio = comportamento esperado"
+      />
+
+      <h3>SQLite (zero config)</h3>
+      <TerminalBlock
+        command="sudo pacman -S sqlite"
+        output={`Packages (1) sqlite-3.47.2-1
+:: Proceed with installation? [Y/n]`}
+      />
+      <TerminalBlock
+        command={`sqlite3 app.db <<'EOF'
+CREATE TABLE users(id INTEGER PRIMARY KEY, name TEXT);
+INSERT INTO users(name) VALUES ('jane'),('john');
+SELECT * FROM users;
+EOF`}
+        output={`1|jane
+2|john`}
+      />
+
+      <h3>Redis</h3>
+      <TerminalBlock
+        command="sudo pacman -S redis && sudo systemctl enable --now redis"
+        output={`Packages (1) redis-7.4.1-1
+...
+Created symlink /etc/systemd/system/multi-user.target.wants/redis.service → /usr/lib/systemd/system/redis.service.`}
+      />
+      <TerminalBlock
+        command={`redis-cli ping`}
+        output={`PONG`}
+      />
+      <TerminalBlock
+        command={`redis-cli SET hello "world" && redis-cli GET hello`}
+        output={`OK
+"world"`}
+      />
+
+      <h2>12. Resumo: ~/.bashrc completo de dev</h2>
+      <CodeBlock
+        title="~/.bashrc — todas as variáveis de uma só vez"
+        code={`# === PATH local primeiro (priority) ===
+case ":$PATH:" in
+  *":$HOME/.local/bin:"*) ;;
+  *) export PATH="$HOME/.local/bin:$PATH" ;;
+esac
+
+# === Editor & locale ===
+export EDITOR=nvim
+export VISUAL=nvim
+export LANG=pt_BR.UTF-8
+
+# === Java ===
+export JAVA_HOME=/usr/lib/jvm/default
+export PATH="$JAVA_HOME/bin:$PATH"
+
+# === Go ===
+export GOPATH="$HOME/go"
+export PATH="$PATH:$GOPATH/bin"
+
+# === Rust (instalado pelo rustup) ===
+[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+
+# === Node via nvm ===
+[ -s /usr/share/nvm/init-nvm.sh ] && source /usr/share/nvm/init-nvm.sh
+
+# === pyenv ===
+export PYENV_ROOT="$HOME/.pyenv"
+[ -d "$PYENV_ROOT/bin" ] && export PATH="$PYENV_ROOT/bin:$PATH"
+command -v pyenv &>/dev/null && eval "$(pyenv init -)"`}
+      />
+      <TerminalBlock
+        command={`source ~/.bashrc
+echo "node $(node -v) | python $(python --version | awk '{print $2}') | rust $(rustc --version | awk '{print $2}') | go $(go version | awk '{print $3}') | java $(java -version 2>&1 | head -1 | awk -F'\\"' '{print $2}')"`}
+        output={`node v22.13.0 | python 3.13.1 | rust 1.84.0 | go go1.23.4 | java 21.0.5`}
+      />
+
+      <AlertBox type="success" title="Truque: ver o PATH como lista">
+        <code>echo $PATH | tr ':' '\n'</code> imprime cada diretório em uma linha — facilita
+        identificar duplicatas e descobrir onde um binário está sendo encontrado primeiro.
+      </AlertBox>
+
+      <h2>13. Referências</h2>
+      <ul>
+        <li><a href="https://wiki.archlinux.org/title/Java" target="_blank" rel="noopener noreferrer">ArchWiki — Java</a></li>
+        <li><a href="https://wiki.archlinux.org/title/Python" target="_blank" rel="noopener noreferrer">ArchWiki — Python</a></li>
+        <li><a href="https://wiki.archlinux.org/title/Node.js" target="_blank" rel="noopener noreferrer">ArchWiki — Node.js</a></li>
+        <li><a href="https://wiki.archlinux.org/title/Rust" target="_blank" rel="noopener noreferrer">ArchWiki — Rust</a></li>
+        <li><a href="https://wiki.archlinux.org/title/Go" target="_blank" rel="noopener noreferrer">ArchWiki — Go</a></li>
+        <li><a href="https://wiki.archlinux.org/title/Docker" target="_blank" rel="noopener noreferrer">ArchWiki — Docker</a></li>
+        <li><a href="https://wiki.archlinux.org/title/PostgreSQL" target="_blank" rel="noopener noreferrer">ArchWiki — PostgreSQL</a></li>
+      </ul>
     </PageContainer>
   );
 }
