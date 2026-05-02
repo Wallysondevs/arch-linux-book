@@ -107,9 +107,13 @@ Vite + React 19 SPA — "Arch Linux: Manual Definitivo", a Portuguese learning m
 - `AlertBox` / `CodeBlock` — Existing helpers, kept for warnings and multi-line bash scripts/config files only.
 - Theme: Arch teal `#1793D1`, JetBrains Mono, custom WebKit + Firefox scrollbars (terminal-styled, applied to `html`/`body` and `.arch-scroll`/`.terminal-scroll`).
 
-**Sidebar order (beginner → advanced)**: 1.Introdução · 2.Instalação · 3.Terminal Básico · 4.Sistema de Arquivos · 5.Pacotes · 6.Sistema · 7.Shell Avançado · 8.Hardware · 9.Redes · 10.Desenvolvimento · 11.Extras.
+**Sidebar order (beginner → advanced, 18 categories, 80 chapters)**: 1.Introdução · 2.Instalação · 3.Terminal Básico · 4.Sistema de Arquivos · 5.Pacotes · 6.Sistema · 7.Shell Avançado · 8.Hardware · 9.Storage Avançado · 10.Redes · 11.Servidores · 12.Containers & Virt · 13.Bancos de Dados · 14.Linguagens · 15.DevOps · 16.Multimídia & Desktop · 17.Segurança · 18.Extras.
 
 Every page uses `TerminalBlock` for command + real terminal output, `OutputBlock` for column-by-column annotation of `ls -l`, `stat`, `systemctl status` etc., and `CommandFlagList` for flag references. Routes are defined in `src/App.tsx`.
+
+**JSX gotcha**: When a `TerminalBlock` `output`/`command` prop contains a literal `"` character, always use a template literal — `output={`...has "quotes"...`}` — never `output="...\"..."`. JSX attribute string-literals do **not** support backslash escapes and will produce TS1005/TS1382 errors.
+
+**Deployment**: pushed to `Wallysondevs/arch-linux-book` GitHub repo (`main` source, `gh-pages` built). Live at https://wallysondevs.github.io/arch-linux-book/. Deploy command: `cd artifacts/arch-preview && PORT=5000 BASE_PATH=/arch-linux-book/ NODE_ENV=production pnpm run build` then orphan-commit `dist/public/` (with `.nojekyll` and `404.html` copied from `index.html`) and force-push to `gh-pages`.
 
 - `pnpm --filter @workspace/arch-preview run dev` — start the dev server
 
