@@ -30,6 +30,7 @@ const NAVIGATION = [
       { path: "/navegacao", label: "Navegação", icon: Folder },
       { path: "/visualizacao", label: "Visualização", icon: Eye },
       { path: "/manipulacao-arquivos", label: "Manipulação de Arquivos", icon: FileText },
+      { path: "/editores", label: "Editores (nano, vim)", icon: PenTool },
     ]
   },
   {

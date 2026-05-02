@@ -19,6 +19,7 @@ import SistemaArquivos from "@/pages/SistemaArquivos";
 import Navegacao from "@/pages/Navegacao";
 import ManipulacaoArquivos from "@/pages/ManipulacaoArquivos";
 import Visualizacao from "@/pages/Visualizacao";
+import Editores from "@/pages/Editores";
 import Permissoes from "@/pages/Permissoes";
 import Usuarios from "@/pages/Usuarios";
 import Processos from "@/pages/Processos";
@@ -77,6 +78,7 @@ function Router() {
         <Route path="/navegacao" component={Navegacao} />
         <Route path="/manipulacao-arquivos" component={ManipulacaoArquivos} />
         <Route path="/visualizacao" component={Visualizacao} />
+        <Route path="/editores" component={Editores} />
         <Route path="/permissoes" component={Permissoes} />
         <Route path="/usuarios" component={Usuarios} />
         <Route path="/processos" component={Processos} />
