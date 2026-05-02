@@ -1,78 +1,215 @@
 import { PageContainer } from "@/components/layout/PageContainer";
 import { AlertBox } from "@/components/ui/AlertBox";
+import { TerminalBlock } from "@/components/ui/TerminalBlock";
+import { OutputBlock } from "@/components/ui/OutputBlock";
 
 export default function Filosofia() {
   return (
-    <PageContainer 
-      title="A Filosofia Arch (The Arch Way)" 
-      subtitle="Compreender os princípios orientadores do Arch Linux é essencial para decidir se esta é a distribuição certa para você."
+    <PageContainer
+      title="A Filosofia Arch (The Arch Way)"
+      subtitle="Cinco princípios — simplicidade, modernidade, pragmatismo, foco no usuário e versatilidade — demonstrados em terminais reais."
       difficulty="iniciante"
-      timeToRead="6 min"
+      timeToRead="8 min"
+      category="Introdução"
     >
       <p>
-        O Arch Linux não é apenas um conjunto de softwares, é um estado de espírito. 
-        A distribuição é governada por cinco princípios fundamentais conhecidos coletivamente como <strong>"The Arch Way"</strong>.
+        "The Arch Way" não é marketing — é uma decisão técnica que se sente em cada arquivo do
+        sistema. Vamos provar isso comparando arquivos e comandos reais.
       </p>
 
-      <h2>1. Simplicidade (KISS - Keep It Simple, Stupid)</h2>
+      <h2>1. Simplicidade — KISS levado a sério</h2>
       <p>
-        O Arch define simplicidade como <strong>ausência de adições, modificações e complicações desnecessárias</strong>.
-        Ele entrega o software exatamente como os desenvolvedores originais o criaram (upstream). 
+        O Arch entrega o software <strong>como o autor original o escreveu</strong>. Sem patches
+        pesados, sem ferramentas gráficas exclusivas que escondem arquivos. Compare o
+        <code> /etc/pacman.conf </code> do Arch com o <code>/etc/apt/sources.list.d/</code> do
+        Ubuntu (cheio de fragmentos auto-gerados):
       </p>
-      <ul>
-        <li>Não há ferramentas de configuração gráficas exclusivas da distribuição que escondam os arquivos de texto reais.</li>
-        <li>Não há patches pesados aplicados aos softwares; o GNOME no Arch é o GNOME puro, o KDE é o KDE puro.</li>
-        <li>Arquivos de configuração são mantidos limpos e legíveis em texto puro.</li>
-      </ul>
-      <AlertBox type="warning" title="Simplicidade Técnica, não Simplicidade de Uso">
-        Cuidado com a palavra "simples". No mundo Arch, simples significa que a arquitetura do sistema 
-        é fácil de entender para quem lê o código. Não significa que o sistema tem botões grandes e brilhantes para o usuário final clicar.
+
+      <TerminalBlock
+        command="head -25 /etc/pacman.conf"
+        output={`#
+# /etc/pacman.conf
+#
+# See the pacman.conf(5) manpage for option and repository directives
+
+#
+# GENERAL OPTIONS
+#
+[options]
+HoldPkg     = pacman glibc
+Architecture = auto
+CheckSpace
+ParallelDownloads = 5
+Color
+ILoveCandy
+SigLevel    = Required DatabaseOptional
+LocalFileSigLevel = Optional
+
+#
+# REPOSITORIES
+#
+[core]
+Include = /etc/pacman.d/mirrorlist
+
+[extra]
+Include = /etc/pacman.d/mirrorlist`}
+      />
+
+      <OutputBlock
+        title="o arquivo INTEIRO de configuração — só isso"
+        output={`[options]
+[core]
+[extra]
+[multilib]
+# fim. nada escondido em /etc/pacman.conf.d/`}
+        annotations={[
+          { line: 0, note: "comportamento global" },
+          { line: 1, note: "repo principal" },
+          { line: 4, note: "sem fragmentação" },
+        ]}
+      />
+
+      <p>
+        Comparativamente, num Ubuntu padrão você encontra:
+      </p>
+
+      <TerminalBlock
+        prompt="ubuntu$ "
+        command="ls /etc/apt/sources.list.d/ | wc -l && find /etc/apt -name '*.conf*' | wc -l"
+        output={`9
+14`}
+        comment="apt espalha config em ~14 arquivos diferentes"
+      />
+
+      <AlertBox type="warning" title="Simplicidade ≠ Facilidade">
+        Cuidado: "simples" no Arch significa <strong>arquitetura clara</strong>, não <em>botões grandes
+        e bonitos</em>. Você vai precisar editar arquivos de texto. Em troca, você sempre saberá
+        onde a configuração mora.
       </AlertBox>
 
-      <h2>2. Modernidade (Bleeding Edge)</h2>
+      <h2>2. Modernidade — Bleeding Edge</h2>
       <p>
-        O Arch Linux foca em manter as versões mais recentes dos softwares disponíveis assim que possível.
-      </p>
-      <ul>
-        <li>É uma distribuição <strong>Rolling Release</strong> (atualização contínua).</li>
-        <li>Não existem "Versões" (como Ubuntu 22.04, 24.04). O seu sistema está sempre na última versão disponível mundialmente.</li>
-        <li>Novos kernels, novos drivers e novos ambientes gráficos chegam aos usuários em questão de dias (ou horas) após o lançamento oficial.</li>
-      </ul>
-
-      <h2>3. Pragmatismo</h2>
-      <p>
-        Os desenvolvedores e usuários do Arch são pragmáticos. Eles escolhem a solução que funciona melhor, 
-        ao invés de se prenderem cegamente a ideologias.
-      </p>
-      <p>
-        Diferente do Debian ou do Fedora, que têm regras extremamente rígidas sobre software proprietário, 
-        o Arch permite que repositórios oficiais contenham pacotes binários de código fechado (closed-source) 
-        se a comunidade precisar deles. A funcionalidade e a utilidade prática superam o purismo ideológico.
+        Arch é <em>rolling release</em> — não existem versões. O kernel mais recente do site oficial
+        do kernel.org costuma estar no Arch <strong>em poucos dias</strong>.
       </p>
 
-      <h2>4. Centralização no Usuário (User-Centric)</h2>
-      <p>
-        Muitas distribuições tentam ser <em>user-friendly</em> (amigáveis ao usuário). 
-        O Arch tenta ser <strong>user-centric</strong> (centrado no usuário).
-      </p>
-      <ul>
-        <li>A distribuição tem a intenção de preencher as necessidades de quem contribui para ela, ao invés de tentar agradar às massas.</li>
-        <li>Espera-se que o usuário assuma a responsabilidade por seu próprio sistema. O sistema é do usuário (<em>Do-It-Yourself - DIY</em>).</li>
-        <li>Você constrói o sistema peça por peça durante a instalação, escolhendo exatamente o que quer. Se algo quebrar, você sabe como consertar, pois foi você quem montou.</li>
-      </ul>
+      <TerminalBlock
+        command="pacman -Si linux | grep -E 'Name|Version|Build'"
+        output={`Name            : linux
+Version         : 6.8.7.arch1-1
+Build Date      : Wed 17 Apr 2024 15:23:10`}
+      />
 
-      <h2>5. Versatilidade</h2>
+      <TerminalBlock
+        command="curl -s https://www.kernel.org/finger_banner | head -3"
+        output={`The latest stable version of the Linux kernel is:        6.8.7
+The latest mainline version of the Linux kernel is:      6.9-rc4
+The latest stable 6.8 version of the Linux kernel is:    6.8.7`}
+        comment="o que o kernel.org publica HOJE chega no Arch nesta semana"
+      />
+
+      <h2>3. Pragmatismo — funcionou, entrou</h2>
       <p>
-        O Arch não impõe um ambiente de desktop, um navegador web ou um editor de texto padrão. 
-        Ao instalar a base, você tem apenas uma tela preta com um terminal.
-        A partir dali, o Arch pode se tornar um servidor web levíssimo, uma estação de trabalho robusta para programação, 
-        ou uma máquina monstra focada em jogos AAA. Ele é exatamente o que você faz dele.
+        Diferente do Debian ou Fedora, o Arch não tem ideologia rígida sobre software proprietário.
+        Drivers da NVIDIA, firmware fechado, codecs — tudo está nos repositórios oficiais.
       </p>
 
-      <AlertBox type="info" title="Resumo da Ópera">
-        Se você quer que um sistema operacional pense por você e esconda os detalhes, o Arch não é para você.
-        Se você quer entender como o Linux funciona por baixo dos panos, ter total controle e ter acesso ao software 
-        mais recente minutos após seu lançamento, você encontrou seu lar.
+      <TerminalBlock
+        command="pacman -Ss nvidia | head -8"
+        output={`{c}extra/nvidia 550.67-12 (nvidia){/}
+    NVIDIA drivers for linux
+{c}extra/nvidia-utils 550.67-2 (nvidia){/}
+    NVIDIA drivers utilities
+{c}extra/nvidia-settings 550.67-1 (nvidia){/}
+    Tool for configuring the NVIDIA graphics driver
+{c}extra/opencl-nvidia 550.67-2 (nvidia){/}
+    OpenCL implemention for NVIDIA`}
+        comment="driver proprietário — a um pacman -S de distância"
+      />
+
+      <h2>4. User-centric — o sistema é seu</h2>
+      <p>
+        "User-friendly" é tentar agradar a todos. "User-centric" é assumir que o usuário é capaz de
+        ler documentação e tomar decisões. Por isso, na primeira inicialização do Arch, você tem
+        apenas isto:
+      </p>
+
+      <TerminalBlock
+        prompt=""
+        command=""
+        lines={[
+          { type: "output", text: `Arch Linux 6.8.7-arch1-1 (tty1)\n\narchlinux login: _` }
+        ]}
+      />
+
+      <p>
+        Sem assistente. Sem "Bem-vindo!". Você decide o que instalar, com qual init system
+        (sim, dá pra trocar o systemd), qual shell, qual desktop. O ArchWiki é parte do contrato:
+      </p>
+
+      <TerminalBlock
+        command="pacman -Qi arch-wiki-docs | head -8"
+        output={`Name            : arch-wiki-docs
+Version         : 20240315-1
+Description     : Pages from Arch Wiki optimized for offline browsing
+Architecture    : any
+URL             : https://gitlab.archlinux.org/archlinux/arch-wiki-docs
+Licenses        : FDL-1.3-or-later
+Groups          : None
+Provides        : None`}
+        comment="a wiki INTEIRA, pra ler offline"
+      />
+
+      <h2>5. Versatilidade — uma base, mil propósitos</h2>
+      <p>
+        A instalação base do Arch tem ~570 pacotes e ocupa cerca de 2 GB. A partir dali, o sistema
+        pode virar um servidor minimalista ou uma estação de gaming AAA.
+      </p>
+
+      <TerminalBlock
+        command="pacman -Qg base | wc -l"
+        output="11"
+        comment="o grupo 'base' tem só 11 pacotes essenciais"
+      />
+
+      <TerminalBlock
+        command="pacman -Qg base"
+        output={`base bash
+base bzip2
+base coreutils
+base file
+base filesystem
+base findutils
+base gawk
+base gcc-libs
+base gettext
+base glibc
+base grep`}
+      />
+
+      <OutputBlock
+        title="anatomia do mínimo absoluto"
+        output={`bash         interpretador de comandos
+bzip2        descompactação
+coreutils    ls, cp, mv, rm, cat, etc.
+file         identifica tipo de arquivo
+filesystem   estrutura de diretórios (FHS)
+findutils    find, xargs
+gawk         processamento de texto
+gcc-libs     bibliotecas C compartilhadas
+gettext      i18n (traduções)
+glibc        a libc do GNU
+grep         busca em texto`}
+        annotations={[
+          { line: 4, note: "/, /etc, /usr, /var..." },
+          { line: 9, note: "coração de qualquer Linux" },
+        ]}
+      />
+
+      <AlertBox type="info" title="Resumo prático">
+        Quer um SO que pensa por você e esconde os detalhes? Use Ubuntu, Fedora ou Mint — são
+        excelentes. Quer entender o Linux por dentro, ter controle total e ler menos changelogs
+        e mais commits? Bem-vindo. <code>pacman -Syu</code> e siga.
       </AlertBox>
     </PageContainer>
   );

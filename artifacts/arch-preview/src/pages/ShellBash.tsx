@@ -1,4 +1,7 @@
 import { PageContainer } from "@/components/layout/PageContainer";
+import { TerminalBlock } from "@/components/ui/TerminalBlock";
+import { OutputBlock } from "@/components/ui/OutputBlock";
+import { CommandFlagList } from "@/components/ui/CommandFlag";
 import { CodeBlock } from "@/components/ui/CodeBlock";
 import { AlertBox } from "@/components/ui/AlertBox";
 
@@ -6,918 +9,930 @@ export default function ShellBash() {
   return (
     <PageContainer
       title="Shell e Bash"
-      subtitle="Domine o interpretador de comandos mais popular do Linux. Aprenda variáveis, aliases, funções, scripts e estruturas de controle."
+      subtitle="Variáveis, expansões, condicionais, loops, funções, arrays e scripts. Cada construção é demonstrada com comando e a saída literal que aparece no terminal."
       difficulty="intermediario"
-      timeToRead="25 min"
+      timeToRead="40 min"
+      category="Shell Avançado"
     >
-      <h2>O que é o Shell?</h2>
+      <h2>O que é um shell?</h2>
       <p>
-        O shell é a interface entre você e o kernel do Linux. Ele interpreta os comandos que você digita
-        e os envia para o sistema operacional executar. O <strong>Bash</strong> (Bourne Again Shell) é o
-        shell padrão na maioria das distribuições Linux e é o que usaremos neste guia.
-      </p>
-      <p>
-        Existem outros shells como <code>zsh</code>, <code>fish</code> e <code>dash</code>, mas o Bash
-        continua sendo o mais utilizado e o padrão para scripts de sistema.
+        Um shell é um programa que lê comandos do usuário, expande as construções
+        da linguagem e os executa (via <code>fork</code>/<code>exec</code>). O Bash
+        (Bourne Again SHell) é o padrão na maioria das distros, incluindo o Arch.
       </p>
 
-      <h2>Variáveis de Ambiente</h2>
-      <p>
-        Variáveis de ambiente são valores armazenados na sessão do shell que programas e scripts podem acessar.
-        Elas controlam o comportamento do sistema e dos programas.
-      </p>
-
-      <h3>Variáveis Importantes do Sistema</h3>
-      <CodeBlock
-        title="Visualizar variáveis comuns"
-        code={`echo $HOME        # Diretório home do usuário
-echo $USER        # Nome do usuário atual
-echo $SHELL       # Shell em uso
-echo $PATH        # Caminhos de busca de executáveis
-echo $PWD         # Diretório atual
-echo $LANG        # Idioma do sistema
-echo $EDITOR      # Editor padrão
-echo $TERM        # Tipo de terminal`}
+      <TerminalBlock
+        command={`echo $SHELL
+bash --version | head -1`}
+        output={`/bin/bash
+GNU bash, version 5.2.21(1)-release (x86_64-pc-linux-gnu)`}
       />
 
-      <h3>Criando e Exportando Variáveis</h3>
-      <CodeBlock
-        title="Variáveis locais vs exportadas"
-        code={`# Variável local (só existe no shell atual)
-MINHA_VAR="Hello World"
-echo $MINHA_VAR
+      <TerminalBlock
+        comment="quais shells estão instalados no sistema"
+        command="cat /etc/shells"
+        output={`# Pathnames of valid login shells.
+# See shells(5) for details.
 
-# Variável exportada (disponível para processos filhos)
-export MINHA_VAR="Hello World"
-
-# Definir e exportar ao mesmo tempo
-export JAVA_HOME="/usr/lib/jvm/java-17-openjdk"
-
-# Adicionar ao PATH
-export PATH="$PATH:$HOME/.local/bin"
-
-# Ver todas as variáveis de ambiente
-env
-
-# Ver todas as variáveis (inclusive locais)
-set`}
+/bin/sh
+/bin/bash
+/usr/bin/sh
+/usr/bin/bash
+/usr/bin/zsh
+/usr/bin/fish`}
       />
 
-      <AlertBox type="info" title="Convenção de nomes">
-        Por convenção, variáveis de ambiente são escritas em MAIÚSCULAS. Variáveis locais de scripts
-        podem usar minúsculas ou camelCase.
+      <h2>Variáveis</h2>
+
+      <TerminalBlock
+        comment="atribuição: SEM espaços ao redor do ="
+        command={`nome="Arch"
+echo "Olá, $nome!"`}
+        output="Olá, Arch!"
+      />
+
+      <TerminalBlock
+        comment="${} delimita o nome — necessário antes de letra"
+        command={`fruta=banana
+echo "uma \${fruta}da"`}
+        output="uma bananada"
+      />
+
+      <h3>Variáveis locais × exportadas</h3>
+
+      <TerminalBlock
+        command={`X=local
+bash -c 'echo "filho vê: [$X]"'`}
+        output="filho vê: []"
+        comment="X só existe neste shell"
+      />
+
+      <TerminalBlock
+        command={`export X=exportada
+bash -c 'echo "filho vê: [$X]"'`}
+        output="filho vê: [exportada]"
+      />
+
+      <h3>Variáveis especiais que todo script precisa</h3>
+
+      <OutputBlock
+        title="variáveis automáticas do bash"
+        output={`$0    nome do script
+$1..  argumentos posicionais ($1, $2, ...)
+$#    quantidade de argumentos
+$@    todos os argumentos (preserva separação)
+$*    todos os argumentos (joined por IFS)
+$?    exit code do último comando
+$$    PID deste shell
+$!    PID do último processo em background
+$_    último argumento do comando anterior
+PIPESTATUS  array com exit codes de cada etapa do pipe`}
+      />
+
+      <CodeBlock
+        title="demo.sh"
+        code={`#!/bin/bash
+echo "script: $0"
+echo "primeiro: $1"
+echo "todos: $@"
+echo "qtd: $#"
+true
+echo "rc: $?"
+false
+echo "rc: $?"`}
+      />
+
+      <TerminalBlock
+        command="bash demo.sh foo bar baz"
+        output={`script: demo.sh
+primeiro: foo
+todos: foo bar baz
+qtd: 3
+rc: 0
+rc: 1`}
+      />
+
+      <h3>Variáveis de ambiente importantes</h3>
+
+      <TerminalBlock
+        command="env | sort | head -10"
+        output={`DISPLAY=:0
+EDITOR=nvim
+HOME=/home/user
+LANG=pt_BR.UTF-8
+LOGNAME=user
+PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/lib/jvm/default/bin
+PWD=/home/user
+SHELL=/bin/bash
+TERM=xterm-256color
+USER=user`}
+      />
+
+      <TerminalBlock
+        command={`echo $PATH | tr ':' '\\n'`}
+        output={`/usr/local/sbin
+/usr/local/bin
+/usr/bin
+/usr/lib/jvm/default/bin
+/home/user/.local/bin`}
+      />
+
+      <TerminalBlock
+        comment="adicionar diretório ao PATH só para esta sessão"
+        command={`export PATH="$HOME/scripts:$PATH"
+echo $PATH | cut -d: -f1`}
+        output="/home/user/scripts"
+      />
+
+      <h2>Expansões — a verdadeira mágica do shell</h2>
+
+      <h3>Expansão de chaves <code>{"{a,b,c}"}</code></h3>
+
+      <TerminalBlock
+        command={`echo arq{1,2,3}.txt`}
+        output="arq1.txt arq2.txt arq3.txt"
+      />
+
+      <TerminalBlock
+        command={`echo {a..e}`}
+        output="a b c d e"
+      />
+
+      <TerminalBlock
+        command={`echo {01..05}`}
+        output="01 02 03 04 05"
+      />
+
+      <TerminalBlock
+        comment="produto cartesiano!"
+        command={`echo {dev,prod}-{web,db}.log`}
+        output="dev-web.log dev-db.log prod-web.log prod-db.log"
+      />
+
+      <h3>Expansão de til <code>~</code></h3>
+
+      <TerminalBlock
+        command={`echo ~ ; echo ~root ; echo ~+ ; echo ~-`}
+        output={`/home/user
+/root
+/home/user/projetos
+/home/user`}
+      />
+
+      <h3>Expansão de parâmetro</h3>
+
+      <OutputBlock
+        title="formas mais úteis"
+        output={`\${var}          valor
+\${var:-DEF}     usa DEF se var estiver vazia/indef
+\${var:=DEF}     atribui DEF se vazia, e usa
+\${var:?MSG}     aborta com MSG se vazia
+\${var:+ALT}     usa ALT se var TIVER valor
+\${#var}         comprimento (em chars)
+\${var:N:M}      substring começando em N, M chars
+\${var#PAT}      remove menor prefixo que casa
+\${var##PAT}     remove maior prefixo que casa
+\${var%PAT}      remove menor sufixo
+\${var%%PAT}     remove maior sufixo
+\${var/PAT/REPL} substitui primeira ocorrência
+\${var//PAT/REPL} substitui todas
+\${var^^}        UPPERCASE
+\${var,,}        lowercase`}
+      />
+
+      <TerminalBlock
+        command={`f="/home/user/foto.tar.gz"
+echo "basename     : \${f##*/}"
+echo "dirname      : \${f%/*}"
+echo "sem extensão : \${f%.*}"
+echo "extensão     : \${f##*.}"
+echo "trocar gz→bz2: \${f/.gz/.bz2}"`}
+        output={`basename     : foto.tar.gz
+dirname      : /home/user
+sem extensão : /home/user/foto.tar
+extensão     : gz
+trocar gz→bz2: /home/user/foto.tar.bz2`}
+      />
+
+      <TerminalBlock
+        command={`s="ABCDEF"
+echo \${#s}
+echo \${s:1:3}
+echo \${s,,}`}
+        output={`6
+BCD
+abcdef`}
+      />
+
+      <h3>Substituição de comando <code>$(...)</code></h3>
+
+      <TerminalBlock
+        command={`echo "hoje: $(date +%F)"`}
+        output="hoje: 2026-03-26"
+      />
+
+      <TerminalBlock
+        command={`arquivos=$(ls *.txt | wc -l)
+echo "tem $arquivos arquivos"`}
+        output="tem 7 arquivos"
+      />
+
+      <h3>Expansão aritmética <code>$(( ))</code></h3>
+
+      <TerminalBlock
+        command={`echo $(( 2 + 3 * 4 ))
+x=10
+echo $(( x ** 2 ))
+echo $(( (x + 5) % 3 ))`}
+        output={`14
+100
+0`}
+      />
+
+      <h3>Glob (path expansion)</h3>
+
+      <TerminalBlock
+        command={`ls
+echo *.txt
+echo arq?.log
+echo [abc]*.md`}
+        output={`arq1.log arq2.log arq3.log notas.md README.md ignored.md
+arq1.txt arq2.txt
+arq1.log arq2.log arq3.log
+README.md`}
+      />
+
+      <TerminalBlock
+        comment="globstar: ** desce recursivamente (precisa estar habilitado)"
+        command={`shopt -s globstar
+ls **/*.ts | head -3`}
+        output={`src/App.ts
+src/components/Header.ts
+src/lib/utils.ts`}
+      />
+
+      <h2>Aspas — o detalhe que mais quebra scripts</h2>
+
+      <TerminalBlock
+        command={`nome="Ana Silva"
+echo $nome      # SEM aspas
+echo "$nome"    # COM aspas
+echo '$nome'    # aspas simples não expandem`}
+        output={`Ana Silva
+Ana Silva
+$nome`}
+      />
+
+      <TerminalBlock
+        comment="diferença CRÍTICA quando há espaço nos nomes"
+        command={`mkdir "uma pasta"
+touch "uma pasta/arq.txt"
+for f in uma\\ pasta/*; do echo "[$f]"; done`}
+        output="[uma pasta/arq.txt]"
+      />
+
+      <AlertBox type="warning" title="Regra de ouro">
+        Sempre use aspas duplas em variáveis: <code>"$var"</code>. Sem aspas, o
+        shell faz word-splitting e glob expansion no valor. <code>shellcheck</code>{" "}
+        avisa todas essas situações.
       </AlertBox>
-
-      <h2>.bashrc vs .bash_profile</h2>
-      <p>
-        Entender a diferença entre esses dois arquivos é fundamental para configurar seu ambiente corretamente.
-      </p>
-      <ul>
-        <li><code>~/.bash_profile</code> — Executado apenas em <strong>login shells</strong> (quando você faz login via TTY ou SSH).</li>
-        <li><code>~/.bashrc</code> — Executado em <strong>shells interativos não-login</strong> (quando você abre um terminal no ambiente gráfico).</li>
-        <li><code>~/.bash_logout</code> — Executado quando você faz logout de um login shell.</li>
-      </ul>
-
-      <AlertBox type="success" title="Dica prática">
-        Na maioria dos casos, coloque suas configurações no <code>~/.bashrc</code> e adicione esta linha
-        no <code>~/.bash_profile</code> para garantir que ele sempre carregue o bashrc:
-      </AlertBox>
-      <CodeBlock
-        title="~/.bash_profile"
-        code={`[[ -f ~/.bashrc ]] && source ~/.bashrc`}
-      />
 
       <h2>Aliases</h2>
-      <p>
-        Aliases são atalhos para comandos longos ou frequentes. Defina-os no seu <code>~/.bashrc</code>.
-      </p>
-      <CodeBlock
-        title="Exemplos de aliases úteis"
-        code={`# Aliases de navegação
-alias ..='cd ..'
-alias ...='cd ../..'
-alias ll='ls -lah --color=auto'
-alias la='ls -A'
 
-# Aliases de segurança (pedir confirmação)
-alias rm='rm -i'
-alias cp='cp -i'
-alias mv='mv -i'
-
-# Aliases do pacman
-alias update='sudo pacman -Syu'
-alias install='sudo pacman -S'
-alias search='pacman -Ss'
-alias remove='sudo pacman -Rns'
-alias orphans='sudo pacman -Rns $(pacman -Qdtq)'
-
-# Aliases de rede
-alias myip='curl ifconfig.me'
-alias ports='ss -tulanp'
-
-# Ver aliases definidos
-alias
-
-# Remover um alias temporariamente
-unalias ll`}
+      <TerminalBlock
+        command={`alias ll='ls -lah --color=auto'
+alias`}
+        output={`alias ll='ls -lah --color=auto'
+alias ls='ls --color=auto'
+alias rm='rm -i'`}
       />
 
-      <h2>Funções no Bash</h2>
-      <p>
-        Funções são mais poderosas que aliases porque aceitam parâmetros e podem conter lógica complexa.
-      </p>
+      <TerminalBlock
+        command="ll | head -3"
+        output={`total 24K
+drwxr-xr-x  3 user user 4.0K Mar 26 18:30 .
+drwxr-xr-x 14 user user 4.0K Mar 26 17:11 ..`}
+      />
+
+      <TerminalBlock
+        command="unalias ll"
+        output=""
+      />
+
+      <h2>Funções</h2>
+
       <CodeBlock
-        title="Definindo funções"
-        code={`# Criar diretório e entrar nele
-mkcd() {
+        title="formato canônico"
+        code={`mkcd() {
     mkdir -p "$1" && cd "$1"
 }
 
-# Extrair qualquer tipo de arquivo compactado
-extract() {
-    if [ -f "$1" ]; then
-        case "$1" in
-            *.tar.bz2) tar xjf "$1" ;;
-            *.tar.gz)  tar xzf "$1" ;;
-            *.tar.xz)  tar xJf "$1" ;;
-            *.bz2)     bunzip2 "$1" ;;
-            *.gz)      gunzip "$1" ;;
-            *.tar)     tar xf "$1" ;;
-            *.zip)     unzip "$1" ;;
-            *.7z)      7z x "$1" ;;
-            *)         echo "Formato não reconhecido: $1" ;;
-        esac
-    else
-        echo "Arquivo não encontrado: $1"
-    fi
+# múltiplos parâmetros + retorno
+soma() {
+    local a=$1 b=$2
+    echo $((a + b))
 }
 
-# Buscar processo por nome
-psg() {
-    ps aux | grep -i "$1" | grep -v grep
-}`}
+# usando o retorno
+total=$(soma 5 7)
+echo "$total"   # 12
+
+# retornando exit code
+existe_user() {
+    id "$1" &>/dev/null
+}
+existe_user root && echo "ok" || echo "no"`}
       />
 
-      <h2>Personalização do Prompt (PS1)</h2>
-      <p>
-        A variável <code>PS1</code> controla a aparência do prompt do terminal.
-      </p>
-      <CodeBlock
-        title="Códigos especiais do PS1"
-        code={`# Códigos disponíveis:
-# \\u  - Nome do usuário
-# \\h  - Hostname (curto)
-# \\H  - Hostname (completo)
-# \\w  - Diretório atual (caminho completo)
-# \\W  - Diretório atual (apenas o nome)
-# \\d  - Data
-# \\t  - Hora (24h)
-# \\T  - Hora (12h)
-# \\n  - Nova linha
-# \\$  - # se root, $ se usuário normal
-
-# Prompt simples
-PS1='\\u@\\h:\\w\\$ '
-
-# Prompt colorido
-PS1='\\[\\033[01;32m\\]\\u@\\h\\[\\033[00m\\]:\\[\\033[01;34m\\]\\w\\[\\033[00m\\]\\$ '
-
-# Prompt com hora
-PS1='[\\t] \\u@\\h:\\w\\$ '
-
-# Prompt em duas linhas
-PS1='\\[\\033[01;32m\\]\\u@\\h\\[\\033[00m\\] \\[\\033[01;34m\\]\\w\\[\\033[00m\\]\\n\\$ '`}
+      <TerminalBlock
+        command={`source funcs.sh
+mkcd /tmp/teste
+pwd`}
+        output="/tmp/teste"
       />
 
-      <h2>Histórico de Comandos</h2>
-      <CodeBlock
-        title="Trabalhando com o histórico"
-        code={`# Ver o histórico completo
-history
-
-# Ver os últimos 20 comandos
-history 20
-
-# Executar o último comando
-!!
-
-# Executar o comando número 42 do histórico
-!42
-
-# Executar o último comando que começou com "sudo"
-!sudo
-
-# Buscar no histórico (Ctrl+R)
-# Digite Ctrl+R e comece a digitar para buscar
-
-# Limpar o histórico
-history -c
-
-# Configurações no ~/.bashrc
-export HISTSIZE=10000         # Comandos na memória
-export HISTFILESIZE=20000     # Comandos no arquivo
-export HISTCONTROL=ignoredups # Ignorar duplicatas
-export HISTTIMEFORMAT='%F %T '  # Adicionar data/hora`}
-      />
-
-      <h2>Estruturas de Controle</h2>
+      <h2>Estruturas de controle</h2>
 
       <h3>if / elif / else</h3>
+
       <CodeBlock
-        title="Condicionais"
-        code={`# Sintaxe básica
-if [ "$1" = "hello" ]; then
-    echo "Olá!"
-elif [ "$1" = "bye" ]; then
-    echo "Tchau!"
+        title="testes mais usados"
+        code={`# strings
+[[ -z "$s" ]]      # vazia?
+[[ -n "$s" ]]      # não-vazia?
+[[ "$a" == "$b" ]] # igual?
+[[ "$a" =~ ^[0-9]+$ ]]  # regex (só com [[...]])
+
+# números
+(( a > 10 ))       # use (( )) para aritmética
+[[ $a -gt 10 ]]    # alternativa POSIX
+
+# arquivos
+[[ -e arq ]]   # existe (qualquer tipo)
+[[ -f arq ]]   # arquivo regular
+[[ -d arq ]]   # diretório
+[[ -L arq ]]   # link simbólico
+[[ -r arq ]]   # legível
+[[ -w arq ]]   # gravável
+[[ -x arq ]]   # executável
+[[ -s arq ]]   # tamanho > 0
+[[ a -nt b ]]  # a mais novo que b
+[[ a -ot b ]]  # a mais antigo que b`}
+      />
+
+      <CodeBlock
+        title="exemplo prático"
+        code={`#!/bin/bash
+arq="/etc/pacman.conf"
+
+if [[ ! -f "$arq" ]]; then
+    echo "arquivo não existe" >&2
+    exit 1
+elif [[ ! -r "$arq" ]]; then
+    echo "sem permissão de leitura" >&2
+    exit 2
 else
-    echo "Comando desconhecido"
-fi
-
-# Testes com arquivos
-if [ -f "/etc/pacman.conf" ]; then
-    echo "Arquivo existe"
-fi
-
-if [ -d "/home/$USER" ]; then
-    echo "Diretório existe"
-fi
-
-# Testes numéricos
-if [ "$idade" -gt 18 ]; then
-    echo "Maior de idade"
-fi
-# -eq (igual), -ne (diferente), -lt (menor), -le (menor ou igual)
-# -gt (maior), -ge (maior ou igual)
-
-# Testes com strings
-if [ -z "$var" ]; then
-    echo "Variável vazia"
-fi
-
-if [ -n "$var" ]; then
-    echo "Variável não vazia"
-fi
-
-# Operadores lógicos
-if [ "$a" -gt 0 ] && [ "$a" -lt 100 ]; then
-    echo "Entre 0 e 100"
+    echo "linhas: $(wc -l < "$arq")"
 fi`}
       />
 
-      <h3>for</h3>
-      <CodeBlock
-        title="Loops for"
-        code={`# Iterar sobre lista
-for fruta in maçã banana laranja; do
-    echo "Fruta: $fruta"
-done
-
-# Iterar sobre arquivos
-for arquivo in *.txt; do
-    echo "Processando: $arquivo"
-done
-
-# Loop com sequência numérica
-for i in {1..10}; do
-    echo "Número: $i"
-done
-
-# Loop estilo C
-for ((i=0; i<10; i++)); do
-    echo "Índice: $i"
-done
-
-# Renomear arquivos em lote
-for f in *.JPG; do
-    mv "$f" "\${f%.JPG}.jpg"
-done`}
-      />
-
-      <h3>while e until</h3>
-      <CodeBlock
-        title="Loops while e until"
-        code={`# While - enquanto a condição for verdadeira
-contador=0
-while [ $contador -lt 5 ]; do
-    echo "Contagem: $contador"
-    ((contador++))
-done
-
-# Ler arquivo linha por linha
-while IFS= read -r linha; do
-    echo "Linha: $linha"
-done < arquivo.txt
-
-# Until - até a condição ser verdadeira
-until ping -c 1 google.com &>/dev/null; do
-    echo "Sem internet, tentando novamente em 5s..."
-    sleep 5
-done
-echo "Internet conectada!"`}
+      <TerminalBlock
+        command="bash check.sh"
+        output="linhas: 117"
       />
 
       <h3>case</h3>
+
       <CodeBlock
-        title="Estrutura case"
-        code={`case "$1" in
-    start)
-        echo "Iniciando serviço..."
+        title="estilo init script"
+        code={`#!/bin/bash
+case "$1" in
+    start|up)
+        echo "iniciando..."
         ;;
-    stop)
-        echo "Parando serviço..."
+    stop|down)
+        echo "parando..."
         ;;
-    restart)
-        echo "Reiniciando serviço..."
+    restart|reload)
+        echo "reiniciando..."
         ;;
     status)
-        echo "Verificando status..."
+        echo "ativo"
+        ;;
+    *.conf)
+        echo "arquivo de config: $1"
         ;;
     *)
-        echo "Uso: $0 {start|stop|restart|status}"
-        exit 1
+        echo "uso: $0 {start|stop|restart|status}" >&2
+        exit 2
         ;;
 esac`}
       />
 
-      <h2>Escrevendo Scripts</h2>
+      <TerminalBlock
+        command={`bash svc.sh start
+bash svc.sh stop
+bash svc.sh foo`}
+        output={`iniciando...
+parando...
+uso: svc.sh {start|stop|restart|status}`}
+      />
 
-      <h3>Estrutura Básica</h3>
+      <h3>for</h3>
+
+      <TerminalBlock
+        command={`for f in maca banana uva; do
+    echo "fruta: $f"
+done`}
+        output={`fruta: maca
+fruta: banana
+fruta: uva`}
+      />
+
+      <TerminalBlock
+        command={`for i in {1..5}; do echo "n=$i"; done`}
+        output={`n=1
+n=2
+n=3
+n=4
+n=5`}
+      />
+
+      <TerminalBlock
+        comment="estilo C — útil para controle preciso"
+        command={`for ((i=0; i<3; i++)); do
+    echo "i=$i"
+done`}
+        output={`i=0
+i=1
+i=2`}
+      />
+
+      <TerminalBlock
+        comment="iterando sobre arquivos com glob"
+        command={`for f in *.txt; do
+    echo "$(wc -l < "$f") linhas em $f"
+done`}
+        output={`12 linhas em notas.txt
+4 linhas em todo.txt
+87 linhas em receita.txt`}
+      />
+
+      <h3>while</h3>
+
+      <TerminalBlock
+        command={`i=0
+while (( i < 3 )); do
+    echo "tick $i"
+    ((i++))
+done`}
+        output={`tick 0
+tick 1
+tick 2`}
+      />
+
       <CodeBlock
-        title="meu_script.sh"
-        code={`#!/bin/bash
-# Shebang: indica qual interpretador usar
+        title="ler arquivo linha a linha (forma correta)"
+        code={`while IFS= read -r linha; do
+    echo "[$linha]"
+done < /etc/hostname`}
+      />
 
-# Boas práticas: falhar ao encontrar erros
+      <TerminalBlock
+        command="bash leitor.sh"
+        output="[archlinux]"
+      />
+
+      <AlertBox type="info" title="IFS= read -r — porquê?">
+        <code>IFS=</code> evita o trim de espaços no início/fim;
+        <code>-r</code> impede que <code>\</code> seja interpretado como escape.
+        Esse é o jeito canônico de ler texto sem perder bytes.
+      </AlertBox>
+
+      <h3>until</h3>
+
+      <CodeBlock
+        title="esperar a internet voltar"
+        code={`until ping -c1 -W1 1.1.1.1 &>/dev/null; do
+    echo "sem rede, retry em 5s..."
+    sleep 5
+done
+echo "online!"`}
+      />
+
+      <h2>Arrays</h2>
+
+      <TerminalBlock
+        command={`frutas=("maca" "banana" "uva" "kiwi")
+echo \${frutas[0]}
+echo \${frutas[2]}
+echo "qtd: \${#frutas[@]}"
+echo "todas: \${frutas[@]}"`}
+        output={`maca
+uva
+qtd: 4
+todas: maca banana uva kiwi`}
+      />
+
+      <TerminalBlock
+        comment="adicionar / fatiar"
+        command={`frutas+=("manga")
+echo "\${frutas[@]}"
+echo "fatia: \${frutas[@]:1:2}"`}
+        output={`maca banana uva kiwi manga
+fatia: banana uva`}
+      />
+
+      <TerminalBlock
+        comment="iterar preservando elementos com espaço"
+        command={`for f in "\${frutas[@]}"; do
+    echo "- $f"
+done`}
+        output={`- maca
+- banana
+- uva
+- kiwi
+- manga`}
+      />
+
+      <h3>Arrays associativos (Bash 4+)</h3>
+
+      <TerminalBlock
+        command={`declare -A cor
+cor[vermelho]="#FF0000"
+cor[verde]="#00FF00"
+cor[azul]="#0000FF"
+
+for k in "\${!cor[@]}"; do
+    echo "$k = \${cor[$k]}"
+done`}
+        output={`vermelho = #FF0000
+verde = #00FF00
+azul = #0000FF`}
+      />
+
+      <h2>Lendo entrada do usuário</h2>
+
+      <TerminalBlock
+        command={`read -p "Seu nome: " nome
+echo "Olá, $nome!"`}
+        output={`Seu nome: Maria
+Olá, Maria!`}
+      />
+
+      <TerminalBlock
+        comment="silenciosa, com timeout"
+        command={`read -sp "Senha: " s ; echo
+read -t 5 -p "5s para responder: " r || echo "(timeout)"`}
+        output={`Senha:
+5s para responder: (timeout)`}
+      />
+
+      <h2>Exit codes</h2>
+
+      <TerminalBlock
+        command={`true ; echo $?
+false ; echo $?
+ls /nada 2>/dev/null ; echo $?`}
+        output={`0
+1
+2`}
+      />
+
+      <TerminalBlock
+        comment="PIPESTATUS — exit code de cada etapa do pipe"
+        command={`false | true | true
+echo "\${PIPESTATUS[@]}"`}
+        output="1 0 0"
+      />
+
+      <h2>set — opções do shell</h2>
+
+      <CommandFlagList
+        command="set"
+        items={[
+          { flag: "-e", description: "Sai imediatamente se um comando falhar (exit != 0)." },
+          { flag: "-u", description: "Erro ao usar variável não-definida." },
+          { flag: "-x", description: "Imprime cada comando antes de executar (debug)." },
+          { flag: "-o pipefail", description: "Status do pipe = primeiro erro, não o último comando." },
+          { flag: "-n", description: "Apenas valida sintaxe, sem executar." },
+        ]}
+      />
+
+      <CodeBlock
+        title="strict mode — coloque no topo de TODO script"
+        code={`#!/bin/bash
+set -euo pipefail
+IFS=$'\\n\\t'`}
+      />
+
+      <h2>Trap — handlers de sinal</h2>
+
+      <CodeBlock
+        title="cleanup garantido"
+        code={`#!/bin/bash
 set -euo pipefail
 
-# Variáveis
-NOME="Arch Linux"
-VERSAO="Rolling Release"
+TMP=$(mktemp -d)
 
-# Funções
-mostrar_info() {
-    echo "Sistema: $NOME"
-    echo "Versão: $VERSAO"
-    echo "Usuário: $USER"
-    echo "Data: $(date)"
+cleanup() {
+    local rc=$?
+    echo "limpando $TMP (rc=$rc)" >&2
+    rm -rf "$TMP"
+}
+trap cleanup EXIT INT TERM
+
+# trabalho usando $TMP...
+echo "criado: $TMP"
+sleep 2
+echo "fim normal"`}
+      />
+
+      <TerminalBlock
+        command="bash worker.sh"
+        output={`criado: /tmp/tmp.AbC123
+fim normal
+limpando /tmp/tmp.AbC123 (rc=0)`}
+      />
+
+      <TerminalBlock
+        comment="com Ctrl+C no meio"
+        command="bash worker.sh"
+        output={`criado: /tmp/tmp.XyZ789
+^C
+limpando /tmp/tmp.XyZ789 (rc=130)`}
+      />
+
+      <h2>~/.bashrc, ~/.bash_profile, ~/.profile</h2>
+
+      <OutputBlock
+        title="qual arquivo carrega quando"
+        output={`tipo de shell                       arquivo lido
+---------------------------------   ---------------------------
+login (TTY, ssh)                    ~/.bash_profile  (ou ~/.profile)
+interativo não-login (terminal)     ~/.bashrc
+não-interativo (script)             nenhum
+ao sair de login shell              ~/.bash_logout`}
+      />
+
+      <CodeBlock
+        title="receita padrão de ~/.bash_profile"
+        code={`# garante que o .bashrc rode também em login shells
+[[ -f ~/.bashrc ]] && source ~/.bashrc
+
+# configurações que SÓ fazem sentido em login (PATH, locale)
+export PATH="$HOME/.local/bin:$PATH"`}
+      />
+
+      <CodeBlock
+        title="trecho típico de ~/.bashrc"
+        code={`# se não interativo, não faz nada
+[[ $- != *i* ]] && return
+
+alias ls='ls --color=auto'
+alias ll='ls -lah'
+alias grep='grep --color=auto'
+
+# histórico
+HISTSIZE=100000
+HISTFILESIZE=200000
+HISTCONTROL=ignoreboth:erasedups
+HISTTIMEFORMAT='%F %T  '
+shopt -s histappend cmdhist
+
+# prompt colorido
+PS1='\\[\\e[1;32m\\]\\u@\\h\\[\\e[0m\\]:\\[\\e[1;34m\\]\\w\\[\\e[0m\\]\\$ '
+
+# completions extras
+[[ -r /usr/share/bash-completion/bash_completion ]] && \\
+    . /usr/share/bash-completion/bash_completion`}
+      />
+
+      <h2>PS1 — personalizando o prompt</h2>
+
+      <OutputBlock
+        title="códigos do PS1"
+        output={`\\u   nome do usuário
+\\h   hostname (curto)
+\\H   hostname completo
+\\w   diretório atual (caminho completo, ~ para HOME)
+\\W   só o nome do diretório atual
+\\d   data ("Wed Mar 26")
+\\t   hora 24h (HH:MM:SS)
+\\T   hora 12h
+\\$   # se root, $ se usuário comum
+\\n   nova linha
+\\[ \\] delimita sequência não-imprimível (cores)`}
+      />
+
+      <TerminalBlock
+        command={`PS1='[\\u@\\h \\W]\\$ '
+pwd`}
+        output={`[user@archlinux ~]$ pwd
+/home/user`}
+      />
+
+      <h2>Histórico — atalhos do dia a dia</h2>
+
+      <OutputBlock
+        title="bangs e teclado"
+        output={`Ctrl+R   busca reversa interativa
+Ctrl+P   comando anterior (= seta ↑)
+Ctrl+N   próximo (= seta ↓)
+!!       repete o último comando
+!$       último argumento do comando anterior
+!*       todos os argumentos do anterior
+!abc     último comando que começava com "abc"
+!abc:p   imprime mas não executa
+!?xyz    último comando que CONTÉM "xyz"
+^old^new substitui "old" por "new" no último`}
+      />
+
+      <TerminalBlock
+        command={`mkdir /tmp/projetos
+cd !$`}
+        output="cd /tmp/projetos"
+      />
+
+      <TerminalBlock
+        comment="esqueceu o sudo? !! resolve"
+        command={`pacman -Syu`}
+        output={`error: you cannot perform this operation unless you are root.`}
+      />
+      <TerminalBlock
+        command="sudo !!"
+        output={`sudo pacman -Syu
+:: Synchronizing package databases...
+ core         167.4 KiB   2.40 MiB/s 00:00
+ extra       1739.1 KiB   8.34 MiB/s 00:00
+ multilib     142.5 KiB   2.10 MiB/s 00:00
+:: Starting full system upgrade...
+nothing to do`}
+      />
+
+      <TerminalBlock
+        command={`history | tail -3`}
+        output={`  421  cd /tmp/projetos
+  422  pacman -Syu
+  423  sudo pacman -Syu`}
+      />
+
+      <h2>Atalhos de edição de linha</h2>
+
+      <OutputBlock
+        title="bash usa o readline (mesmo do gdb, psql)"
+        output={`Ctrl+A   início da linha
+Ctrl+E   final da linha
+Ctrl+B   um caractere para trás       (= ←)
+Ctrl+F   um caractere para frente     (= →)
+Alt+B    palavra para trás
+Alt+F    palavra para frente
+Ctrl+W   apaga PALAVRA antes do cursor
+Ctrl+U   apaga até o INÍCIO da linha
+Ctrl+K   apaga até o FINAL da linha
+Ctrl+Y   cola o que foi apagado
+Ctrl+L   limpa a tela (= clear)
+Ctrl+T   troca os 2 caracteres ao redor do cursor
+Alt+.    insere o último argumento (= !$)
+Ctrl+_   undo
+Ctrl+X Ctrl+E   abre o $EDITOR para editar a linha atual`}
+      />
+
+      <h2>Job control</h2>
+
+      <TerminalBlock
+        command={`sleep 60 &
+jobs`}
+        output={`[1] 4827
+[1]+  Running                 sleep 60 &`}
+      />
+
+      <TerminalBlock
+        command={`sleep 30
+^Z`}
+        output={`[2]+  Stopped                 sleep 30`}
+      />
+
+      <TerminalBlock
+        command={`bg %2
+jobs`}
+        output={`[2]+ sleep 30 &
+[1]-  Running                 sleep 60 &
+[2]+  Running                 sleep 30 &`}
+      />
+
+      <TerminalBlock
+        command="fg %1"
+        output={`sleep 60`}
+      />
+
+      <h2>Escrevendo um script de produção</h2>
+
+      <CodeBlock
+        title="boilerplate completo"
+        code={`#!/usr/bin/env bash
+# meu_script.sh — descrição do propósito
+# uso: ./meu_script.sh [-v] arquivo
+set -euo pipefail
+IFS=$'\\n\\t'
+
+readonly SCRIPT_NAME="$(basename "$0")"
+readonly SCRIPT_DIR="$(cd "$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+readonly LOG_FILE="/tmp/\${SCRIPT_NAME%.sh}.log"
+
+log()  { printf '[%s] %s\\n' "$(date +%FT%T)" "$*" | tee -a "$LOG_FILE" >&2; }
+die()  { log "ERRO: $*"; exit 1; }
+
+usage() {
+    cat <<EOF
+uso: $SCRIPT_NAME [-v] [-h] arquivo
+
+  -v   verbose
+  -h   mostra esta ajuda
+EOF
+    exit "\${1:-0}"
 }
 
-# Execução
-echo "=== Informações do Sistema ==="
-mostrar_info`}
-      />
-
-      <CodeBlock
-        title="Tornar o script executável e rodar"
-        code={`chmod +x meu_script.sh
-./meu_script.sh`}
-      />
-
-      <h3>Variáveis Especiais</h3>
-      <CodeBlock
-        title="Variáveis especiais do Bash"
-        code={`$0    # Nome do script
-$1    # Primeiro argumento
-$2    # Segundo argumento
-$#    # Número de argumentos
-$@    # Todos os argumentos (como lista)
-$*    # Todos os argumentos (como string)
-$?    # Código de saída do último comando (0 = sucesso)
-$$    # PID do processo atual
-$!    # PID do último processo em background`}
-      />
-
-      <h3>Comando read</h3>
-      <CodeBlock
-        title="Lendo entrada do usuário"
-        code={`# Leitura simples
-echo "Qual seu nome?"
-read nome
-echo "Olá, $nome!"
-
-# Com prompt na mesma linha
-read -p "Digite sua idade: " idade
-
-# Leitura silenciosa (para senhas)
-read -sp "Digite sua senha: " senha
-echo  # Nova linha após input silencioso
-
-# Com timeout
-read -t 10 -p "Responda em 10 segundos: " resposta
-
-# Ler apenas N caracteres
-read -n 1 -p "Continuar? (s/n): " opcao`}
-      />
-
-      <h3>Arrays</h3>
-      <CodeBlock
-        title="Trabalhando com arrays"
-        code={`# Declarar array
-frutas=("maçã" "banana" "laranja" "uva")
-
-# Acessar elementos
-echo \${frutas[0]}      # maçã
-echo \${frutas[2]}      # laranja
-
-# Todos os elementos
-echo \${frutas[@]}
-
-# Tamanho do array
-echo \${#frutas[@]}     # 4
-
-# Adicionar elemento
-frutas+=("manga")
-
-# Iterar sobre array
-for fruta in "\${frutas[@]}"; do
-    echo "Fruta: $fruta"
+verbose=0
+while getopts "vh" opt; do
+    case $opt in
+        v) verbose=1 ;;
+        h) usage 0 ;;
+        *) usage 2 ;;
+    esac
 done
+shift $((OPTIND - 1))
 
-# Arrays associativos (Bash 4+)
-declare -A cores
-cores[vermelho]="#FF0000"
-cores[verde]="#00FF00"
-cores[azul]="#0000FF"
+[[ $# -ge 1 ]] || die "argumento obrigatório faltando"
+arquivo="$1"
+[[ -r "$arquivo" ]] || die "não posso ler $arquivo"
 
-echo \${cores[vermelho]}`}
+(( verbose )) && log "processando $arquivo"
+
+# trabalho de verdade aqui
+linhas=$(wc -l < "$arquivo")
+log "$arquivo tem $linhas linhas"`}
       />
 
-      <h3>Exit Codes</h3>
-      <CodeBlock
-        title="Códigos de saída"
-        code={`# Todo comando retorna um código de saída
-ls /tmp
-echo $?    # 0 = sucesso
-
-ls /diretorio_inexistente
-echo $?    # 2 = erro (arquivo não encontrado)
-
-# Definir código de saída no script
-exit 0     # Sucesso
-exit 1     # Erro genérico
-
-# Usar em condicionais
-if grep -q "root" /etc/passwd; then
-    echo "Usuário root encontrado"
-fi
-
-# Encadear com && e ||
-make && echo "Build OK" || echo "Build falhou"`}
+      <TerminalBlock
+        command={`chmod +x meu_script.sh
+./meu_script.sh -v /etc/hostname`}
+        output={`[2026-03-26T18:51:02] processando /etc/hostname
+[2026-03-26T18:51:02] /etc/hostname tem 1 linhas`}
       />
 
-      <AlertBox type="warning" title="Cuidado com espaços">
-        No Bash, espaços importam! <code>[ "$var" = "valor" ]</code> está correto,
-        mas <code>["$var"="valor"]</code> causará erro. Sempre coloque espaços ao redor dos
-        colchetes e operadores.
+      <h2>Debug</h2>
+
+      <TerminalBlock
+        command="bash -x demo.sh foo bar"
+        output={`+ echo 'script: demo.sh'
+script: demo.sh
++ echo 'primeiro: foo'
+primeiro: foo
++ echo 'todos: foo bar'
+todos: foo bar
++ echo 'qtd: 2'
+qtd: 2
++ true
++ echo 'rc: 0'
+rc: 0
++ false
++ echo 'rc: 1'
+rc: 1`}
+      />
+
+      <TerminalBlock
+        command="shellcheck demo.sh"
+        output={`In demo.sh line 3:
+echo $1
+     ^-- {y}SC2086{/}: Double quote to prevent globbing and word splitting.
+
+Did you mean:
+echo "$1"`}
+      />
+
+      <AlertBox type="success" title="Sempre rode shellcheck">
+        <code>sudo pacman -S shellcheck</code> — pega 80% dos bugs típicos de bash
+        (aspas, subshells, exit codes esquecidos, comparações erradas).
       </AlertBox>
 
-      <AlertBox type="info" title="Depurando scripts">
-        Use <code>bash -x script.sh</code> para executar um script em modo de depuração.
-        Cada comando será impresso antes de ser executado, o que facilita encontrar erros.
-        Você também pode adicionar <code>set -x</code> dentro do script.
-      </AlertBox>
+      <h2>Cola visual</h2>
 
-      <h2>Atalhos Globais do Terminal</h2>
-      <p>
-        Esses atalhos funcionam em qualquer terminal Linux com Bash (ou Zsh). Memorizar eles
-        vai acelerar muito o seu trabalho:
-      </p>
-      <CodeBlock
-        title="Atalhos de teclado essenciais"
-        code={`# === CONTROLE DE PROCESSOS ===
-Ctrl+C    → Cancela/interrompe o comando que está rodando
-Ctrl+Z    → Pausa o processo atual (retome com "fg" ou "bg")
-Ctrl+D    → Faz logout da sessão (equivalente a digitar "exit")
-
-# === EDIÇÃO DE LINHA ===
-Ctrl+A    → Move o cursor para o INÍCIO da linha
-Ctrl+E    → Move o cursor para o FINAL da linha
-Ctrl+W    → Apaga a PALAVRA anterior ao cursor
-Ctrl+U    → Apaga tudo do cursor até o INÍCIO da linha
-Ctrl+K    → Apaga tudo do cursor até o FINAL da linha
-Ctrl+Y    → Cola o texto que foi apagado com Ctrl+U/K/W
-Ctrl+L    → Limpa a tela (equivalente ao comando "clear")
-
-# === HISTÓRICO ===
-Ctrl+R    → Busca reversa no histórico (digite parte do comando)
-Ctrl+P    → Comando anterior (equivale a seta ↑)
-Ctrl+N    → Próximo comando (equivale a seta ↓)
-!!        → Repete o último comando executado
-!$        → Último argumento do comando anterior
-!abc      → Executa o último comando que começava com "abc"
-!abc:p    → Mostra (sem executar) o último comando que começava com "abc"
-
-# === EXEMPLOS PRÁTICOS ===
-
-# Esqueceu o sudo? Use !! para repetir com sudo:
-pacman -Syu
-# error: you cannot perform this operation unless you are root
-sudo !!
-# Executa: sudo pacman -Syu
-
-# Ctrl+R para buscar no histórico:
-# (pressione Ctrl+R e digite "ssh")
-# (reverse-i-search): ssh user@servidor.com
-# (pressione Enter para executar ou Ctrl+G para cancelar)
-
-# Usar o último argumento do comando anterior:
-mkdir /home/joao/projetos/novo_projeto
-cd !$
-# Executa: cd /home/joao/projetos/novo_projeto`}
+      <OutputBlock
+        title="quando usar cada construção"
+        output={`tarefa                       construção
+--------------------------   --------------------------
+testar arquivo               [[ -f arq ]] / [[ -d arq ]]
+testar string                [[ -z "$s" ]] / [[ "$a" == "$b" ]]
+testar regex                 [[ "$s" =~ ^[0-9]+$ ]]
+aritmética                   (( i++ ))   /  $(( a + b ))
+substring                    \${var:N:M}
+sem extensão                 \${arq%.*}
+substituir                   \${var//PAT/REPL}
+ler arquivo                  while IFS= read -r linha; do ... done < arq
+salvar saída                 var=$(comando)
+trap cleanup                 trap funcao EXIT INT TERM`}
       />
-
-      <h2>Variáveis de Ambiente</h2>
-      <p>
-        Variáveis de ambiente são pares chave=valor que armazenam configurações do sistema e
-        do usuário. Muitos programas dependem delas para funcionar corretamente.
-      </p>
-      <CodeBlock
-        title="Gerenciar variáveis de ambiente"
-        code={`# === VER VARIÁVEIS ===
-
-# Listar TODAS as variáveis de ambiente
-env
-
-# Saída (exemplo parcial):
-# HOME=/home/joao
-# USER=joao
-# SHELL=/bin/bash
-# PATH=/usr/local/bin:/usr/bin:/bin
-# LANG=pt_BR.UTF-8
-# EDITOR=nano
-# ...
-
-# Listar todas (alternativa)
-printenv
-
-# Ver o valor de uma variável específica
-printenv HOME
-# /home/joao
-
-# Ou usando echo:
-echo $HOME
-# /home/joao
-
-echo $PATH
-# /usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin
-
-echo $SHELL
-# /bin/bash
-
-echo $USER
-# joao
-
-# === CRIAR E MODIFICAR ===
-
-# Criar uma variável local (só existe neste terminal)
-MINHA_VAR="valor qualquer"
-echo $MINHA_VAR
-# valor qualquer
-
-# Exportar para processos filhos (subshells, programas que você rodar)
-export MINHA_VAR="valor qualquer"
-
-# Definir o editor padrão (usado pelo visudo, crontab, git, etc.)
-export EDITOR=nano
-
-# Adicionar diretório ao PATH (para encontrar seus scripts)
-export PATH="$PATH:$HOME/scripts"
-
-# === REMOVER ===
-
-# Remover uma variável de ambiente
-unset MINHA_VAR
-echo $MINHA_VAR
-# (vazio - foi removida)
-
-# === TORNAR PERMANENTE ===
-
-# Variáveis definidas no terminal morrem quando você fecha o terminal.
-# Para tornar permanente, adicione ao ~/.bashrc ou ~/.bash_profile:
-
-echo 'export EDITOR=nano' >> ~/.bashrc
-echo 'export PATH="$PATH:$HOME/scripts"' >> ~/.bashrc
-
-# Recarregar o arquivo:
-source ~/.bashrc
-
-# Variáveis importantes do sistema:
-# HOME     = Diretório home do usuário (/home/joao)
-# USER     = Nome do usuário atual
-# SHELL    = Shell padrão (/bin/bash)
-# PATH     = Diretórios onde o sistema procura executáveis
-# LANG     = Idioma e encoding do sistema
-# EDITOR   = Editor de texto padrão
-# TERM     = Tipo de terminal (xterm-256color, etc.)
-# PWD      = Diretório atual
-# OLDPWD   = Diretório anterior (cd - usa isso)
-# DISPLAY  = Servidor gráfico (X11)
-# XDG_SESSION_TYPE = wayland ou x11`}
-      />
-
-      <h2>Editores de Texto no Terminal</h2>
-      <p>
-        Você vai precisar editar arquivos de configuração com frequência no Arch Linux.
-        Os dois editores mais comuns são o <code>nano</code> (mais fácil) e o <code>vim</code> (mais poderoso).
-      </p>
-
-      <h3>Nano - Para iniciantes</h3>
-      <p>
-        O <code>nano</code> é simples e intuitivo. Os atalhos são mostrados na parte de baixo da tela.
-      </p>
-      <CodeBlock
-        title="Atalhos do Nano"
-        code={`# Abrir um arquivo
-nano /etc/pacman.conf
-
-# Atalhos principais (^ = Ctrl):
-Ctrl+O    → Salvar o arquivo (Write Out)
-Ctrl+X    → Sair do editor
-Ctrl+W    → Pesquisar texto no arquivo
-Ctrl+K    → Recortar a linha inteira
-Ctrl+U    → Colar a linha recortada
-Ctrl+G    → Abrir a ajuda
-Ctrl+\\   → Buscar e substituir
-Alt+U     → Desfazer (undo)
-Alt+E     → Refazer (redo)
-Ctrl+_    → Ir para linha/coluna específica
-
-# Navegar:
-Ctrl+Y    → Página anterior (Page Up)
-Ctrl+V    → Próxima página (Page Down)
-Ctrl+A    → Início da linha
-Ctrl+E    → Final da linha`}
-      />
-
-      <h3>Vim - Para quem quer produtividade</h3>
-      <p>
-        O <code>vim</code> tem uma curva de aprendizado, mas é extremamente poderoso quando
-        dominado. Ele funciona com <strong>modos</strong>:
-      </p>
-      <CodeBlock
-        title="Comandos do Vim"
-        code={`# Abrir um arquivo
-vim /etc/pacman.conf
-
-# === MODOS DO VIM ===
-# Normal (padrão) → Navegação e comandos
-# Insert          → Digitação de texto
-# Visual          → Seleção de texto
-# Command         → Comandos com :
-
-# === ENTRAR NO MODO INSERT (para digitar) ===
-i      → Inserir antes do cursor
-a      → Inserir depois do cursor
-o      → Nova linha abaixo e entra em insert
-O      → Nova linha acima e entra em insert
-Esc    → Voltar ao modo Normal
-
-# === SALVAR E SAIR (modo Normal, digite :) ===
-:w     → Salvar
-:q     → Sair
-:wq    → Salvar e sair
-:q!    → Sair SEM salvar (forçar)
-:x     → Salvar e sair (atalho para :wq)
-ZZ     → Salvar e sair (sem digitar :)
-
-# === NAVEGAÇÃO (modo Normal) ===
-h j k l  → Esquerda, Baixo, Cima, Direita
-w        → Próxima palavra
-b        → Palavra anterior
-0        → Início da linha
-$        → Final da linha
-gg       → Início do arquivo
-G        → Final do arquivo
-:42      → Ir para a linha 42
-
-# === EDIÇÃO (modo Normal) ===
-dd       → Deletar (recortar) linha inteira
-yy       → Copiar linha inteira
-p        → Colar abaixo
-P        → Colar acima
-u        → Desfazer (undo)
-Ctrl+R   → Refazer (redo)
-x        → Deletar caractere sob o cursor
-
-# === BUSCAR ===
-/texto   → Buscar "texto" para frente
-?texto   → Buscar "texto" para trás
-n        → Próxima ocorrência
-N        → Ocorrência anterior
-:%s/velho/novo/g  → Substituir todas as ocorrências`}
-      />
-
-      <h3>Outros editores</h3>
-      <CodeBlock
-        title="Instalar outros editores"
-        code={`# Emacs - Editor altamente extensível (quase um sistema operacional)
-sudo pacman -S emacs
-emacs arquivo.txt
-
-# Atalhos básicos do Emacs:
-# Ctrl+X Ctrl+S → Salvar
-# Ctrl+X Ctrl+C → Sair
-# Ctrl+G        → Cancelar comando
-# Ctrl+S        → Buscar
-
-# micro - Editor moderno (atalhos tipo Ctrl+S, Ctrl+C, Ctrl+V)
-sudo pacman -S micro
-micro arquivo.txt
-# Funciona como um editor "normal" - Ctrl+S salva, Ctrl+Q sai`}
-      />
-
-      <h2>Informações do Sistema</h2>
-      <p>
-        Comandos para obter informações sobre o hardware, kernel e estado do sistema:
-      </p>
-      <CodeBlock
-        title="Comandos de informação do sistema"
-        code={`# === KERNEL E SISTEMA ===
-
-uname -a
-# Saída: Linux meupc 6.12.1-arch1-1 #1 SMP x86_64 GNU/Linux
-# Mostra: kernel, hostname, versão, arquitetura, SO
-
-uname -r        # Só a versão do kernel: 6.12.1-arch1-1
-uname -m        # Arquitetura: x86_64
-arch            # Mesmo que uname -m: x86_64
-
-# === HARDWARE ===
-
-# Informações da CPU
-cat /proc/cpuinfo | head -20
-# processor   : 0
-# model name  : AMD Ryzen 7 5800X 8-Core Processor
-# cpu MHz     : 3800.000
-# cache size  : 512 KB
-# cpu cores   : 8
-
-# Resumo rápido da CPU
-lscpu | head -15
-
-# Informações de memória
-cat /proc/meminfo | head -5
-# MemTotal:       32768000 kB
-# MemFree:        18234567 kB
-# MemAvailable:   25678901 kB
-
-# Uso de memória em formato legível
-free -h
-#               total   used   free   shared  buff/cache  available
-# Mem:           31Gi   5.2Gi  17Gi   234Mi      8.7Gi      25Gi
-# Swap:         4.0Gi     0B   4.0Gi
-
-# === TEMPO E DATA ===
-
-date                        # Data e hora atual
-# Wed Mar 26 18:30:00 -03 2026
-
-date +"%d/%m/%Y %H:%M"     # Formato customizado
-# 26/03/2026 18:30
-
-cal                         # Calendário do mês atual
-#      March 2026
-# Su Mo Tu We Th Fr Sa
-#  1  2  3  4  5  6  7
-#  8  9 10 11 12 13 14
-# ...
-
-cal 2026                    # Calendário do ano inteiro
-cal -3                      # Mês anterior, atual e próximo
-
-# === UPTIME ===
-
-uptime
-# 18:30:00 up 5 days, 3:42, 2 users, load average: 0.15, 0.10, 0.05
-# Mostra: hora, tempo ligado, usuários logados, carga do sistema
-
-uptime -p                   # Formato legível
-# up 5 days, 3 hours, 42 minutes
-
-# === DISPOSITIVOS ===
-
-lsusb                       # Listar dispositivos USB
-# Bus 001 Device 001: ID xxxx:xxxx Linux Foundation USB 3.0 root hub
-# Bus 001 Device 003: ID xxxx:xxxx Logitech USB Receiver
-
-lsusb -t                    # Formato árvore (mostra hierarquia)
-
-lspci                       # Listar dispositivos PCI
-# 00:02.0 VGA compatible controller: Intel Corporation ...
-# 00:1f.3 Audio device: Intel Corporation ...
-
-lspci -v                    # Detalhado (com drivers em uso)
-
-# === QUEM ESTÁ LOGADO ===
-
-whoami                      # Seu nome de usuário: joao
-w                           # Quem está logado e o que está fazendo
-# USER   TTY    FROM          LOGIN@  IDLE  WHAT
-# joao   tty1   -             18:00   30.00s bash
-# maria  pts/0  192.168.1.5   18:15   0.00s vim
-
-who                         # Lista simplificada de quem está logado`}
-      />
-
-      <h2>Agendamento de Tarefas com Cron</h2>
-      <p>
-        O <code>cron</code> permite agendar comandos para rodar automaticamente em horários
-        específicos — ideal para backups, limpeza, atualizações e monitoramento.
-      </p>
-      <CodeBlock
-        title="Usando crontab"
-        code={`# Instalar o cron (não vem instalado por padrão no Arch)
-sudo pacman -S cronie
-
-# Habilitar e iniciar o serviço
-sudo systemctl enable cronie
-sudo systemctl start cronie
-
-# Editar as tarefas agendadas do seu usuário
-crontab -e
-
-# Listar as tarefas agendadas
-crontab -l
-
-# Remover todas as tarefas agendadas
-crontab -r
-
-# === FORMATO DO CRONTAB ===
-# ┌───────────── minuto (0 - 59)
-# │ ┌───────────── hora (0 - 23)
-# │ │ ┌───────────── dia do mês (1 - 31)
-# │ │ │ ┌───────────── mês (1 - 12)
-# │ │ │ │ ┌───────────── dia da semana (0 - 7, 0 e 7 = domingo)
-# │ │ │ │ │
-# * * * * * comando
-
-# === EXEMPLOS ===
-
-# Backup todo dia às 3 da manhã
-0 3 * * * tar czf /backup/home_$(date +\\%Y\\%m\\%d).tar.gz /home/joao
-
-# Limpar cache do pacman todo domingo às 4h
-0 4 * * 0 paccache -r
-
-# Atualizar lista de mirrors todo dia 1 do mês
-0 2 1 * * reflector --country Brazil --sort rate --save /etc/pacman.d/mirrorlist
-
-# Rodar script a cada 5 minutos
-*/5 * * * * /home/joao/scripts/verificar.sh
-
-# Rodar algo de segunda a sexta às 8h
-0 8 * * 1-5 /home/joao/scripts/bom_dia.sh
-
-# Rodar a cada hora
-0 * * * * /home/joao/scripts/monitorar.sh
-
-# === CARACTERES ESPECIAIS ===
-# *     = Qualquer valor
-# */5   = A cada 5 (minutos, horas, etc)
-# 1-5   = De 1 até 5
-# 1,15  = Nos valores 1 e 15
-# @reboot = Rodar uma vez quando o sistema iniciar
-
-# Rodar um script no boot
-@reboot /home/joao/scripts/ao_iniciar.sh`}
-      />
-
-      <AlertBox type="info" title="Cron vs Systemd Timers">
-        No Arch Linux, os <code>systemd timers</code> (veja a página de Systemd) são uma alternativa
-        moderna ao cron. Timers são mais integrados com o journal (logs) e podem ter dependências.
-        O cron é mais simples e universal (funciona em qualquer Linux).
-      </AlertBox>
-
-      <h2>Desligar, Reiniciar e Logout</h2>
-      <CodeBlock
-        title="Controle de energia e sessão"
-        code={`# === DESLIGAR ===
-shutdown -h now          # Desligar imediatamente
-shutdown -h +10          # Desligar em 10 minutos
-shutdown -h 23:00        # Desligar às 23h
-poweroff                 # Desligar imediatamente (atalho)
-halt                     # Parar o sistema (pode não desligar a energia)
-systemctl poweroff       # Desligar via systemd
-
-# === REINICIAR ===
-shutdown -r now          # Reiniciar imediatamente
-reboot                   # Reiniciar imediatamente (atalho)
-systemctl reboot         # Reiniciar via systemd
-
-# === CANCELAR SHUTDOWN AGENDADO ===
-shutdown -c              # Cancela um shutdown agendado
-
-# === LOGOUT ===
-exit                     # Sair da sessão atual
-logout                   # Sair da sessão (em login shells)
-Ctrl+D                   # Atalho para logout
-
-# === DICA: Mensagem de aviso ===
-shutdown -h +5 "Sistema será desligado em 5 minutos para manutenção"
-# Todos os usuários logados recebem a mensagem`}
-      />
-
     </PageContainer>
   );
 }

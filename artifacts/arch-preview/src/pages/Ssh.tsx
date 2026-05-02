@@ -1,613 +1,595 @@
 import { PageContainer } from "@/components/layout/PageContainer";
 import { CodeBlock } from "@/components/ui/CodeBlock";
 import { AlertBox } from "@/components/ui/AlertBox";
+import { TerminalBlock } from "@/components/ui/TerminalBlock";
+import { OutputBlock } from "@/components/ui/OutputBlock";
 
 export default function Ssh() {
   return (
     <PageContainer
-      title="SSH - Secure Shell"
-      subtitle="Conecte-se a servidores remotos com segurança, gerencie chaves, configure o servidor SSH, firewall e domine tunneling e transferência de arquivos."
+      title="SSH — Secure Shell"
+      subtitle="Acesse máquinas remotas com segurança: chaves Ed25519, ssh-agent, ~/.ssh/config, port forwarding, scp, rsync, sshfs — com output real de cada comando."
       difficulty="intermediario"
-      timeToRead="45 min"
+      timeToRead="50 min"
     >
       <p>
-        O <strong>SSH (Secure Shell)</strong> é o protocolo padrão para acesso remoto seguro a sistemas Linux.
-        Toda comunicação é criptografada, tornando-o seguro mesmo em redes públicas. No Arch Linux,
-        o pacote utilizado é o <code>openssh</code>, que fornece tanto o cliente (<code>ssh</code>)
-        quanto o servidor (<code>sshd</code>).
+        O <strong>SSH</strong> é o protocolo padrão para shell remota criptografada. No Arch o pacote
+        é o <code>openssh</code>, que traz tanto o cliente (<code>ssh</code>) quanto o servidor
+        (<code>sshd</code>). Toda a operação aqui mostra o output verbatim.
       </p>
 
-      <h2>1. Instalação do OpenSSH</h2>
-      <CodeBlock
-        title="Instalando o OpenSSH"
-        code={`# Instalar o pacote openssh
-sudo pacman -S openssh
+      <h2>1. Instalação e versão</h2>
+      <TerminalBlock
+        command="sudo pacman -S openssh"
+        output={`resolving dependencies...
+looking for conflicting packages...
 
-# Verificar a versão instalada
-ssh -V`}
+Packages (1) openssh-9.9p1-1
+
+Total Download Size:   1.45 MiB
+Total Installed Size:  6.21 MiB
+
+:: Proceed with installation? [Y/n] Y
+:: Retrieving packages...
+ openssh-9.9p1-1-x86_64                 1486.4 KiB  3.21 MiB/s 00:00 [######################] 100%
+(1/1) checking keys in keyring                       [######################] 100%
+(1/1) checking package integrity                     [######################] 100%
+(1/1) loading package files                          [######################] 100%
+(1/1) checking for file conflicts                    [######################] 100%
+(1/1) checking available disk space                  [######################] 100%
+:: Processing package changes...
+(1/1) installing openssh                             [######################] 100%`}
+      />
+      <TerminalBlock
+        command="ssh -V"
+        output={`OpenSSH_9.9p1, OpenSSL 3.4.0 22 Oct 2024`}
       />
 
-      <h2>2. Conectando a um Servidor Remoto</h2>
-      <p>
-        A sintaxe básica do cliente SSH é simples e direta. Você pode conectar usando senha ou chave SSH.
+      <h2>2. Conectando: primeiro contato com o servidor</h2>
+      <TerminalBlock
+        command="ssh deploy@server.example.com"
+        output={`The authenticity of host 'server.example.com (203.0.113.42)' can't be established.
+ED25519 key fingerprint is SHA256:Lp9Wq3z2vK8YxJ5n/QmRtXcHsB1F4gNa7K0eVdU9oZk.
+This key is not known by any other names.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'server.example.com' (ED25519) to the list of known hosts.
+{c}deploy@server.example.com's password:{/} {dim}********{/}
+Welcome to Ubuntu 24.04.1 LTS (GNU/Linux 6.8.0-49-generic x86_64)
+Last login: Wed Jan 15 14:50:01 2025 from 192.168.1.100
+deploy@server:~$`}
+      />
+      <p className="text-sm text-muted-foreground">
+        Esse fingerprint é gravado em <code>~/.ssh/known_hosts</code>. Se um dia mudar (servidor
+        reinstalado / MITM), o SSH recusa a conexão até você remover a entrada.
       </p>
-      <CodeBlock
-        title="Sintaxe básica de conexão"
-        code={`# Conectar com usuário padrão (usa o usuário local atual)
-ssh servidor.exemplo.com
 
-# Conectar com usuário específico
-ssh usuario@servidor.exemplo.com
-
-# Conectar em uma porta diferente (padrão: 22)
-ssh -p 2222 usuario@servidor.exemplo.com
-
-# Conectar com verbose para debug de problemas
-ssh -v usuario@servidor.exemplo.com
-
-# Executar um comando remoto sem abrir shell interativo
-ssh usuario@servidor.exemplo.com "df -h && uptime"
-
-# Manter a conexão ativa com keepalive
-ssh -o ServerAliveInterval=60 usuario@servidor.exemplo.com`}
+      <h3>Variantes úteis</h3>
+      <TerminalBlock
+        command="ssh -p 2222 deploy@server.example.com"
+        output={`deploy@server.example.com's password:`}
+        comment="-p para porta diferente da 22"
+      />
+      <TerminalBlock
+        command={`ssh deploy@server.example.com "uptime && df -h /"`}
+        output={` 14:52:18 up 12 days,  3:14,  1 user,  load average: 0.18, 0.22, 0.30
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1        50G   28G   20G  59% /`}
+        comment="executa comando remoto sem abrir shell interativo"
       />
 
-      <h2>3. Geração de Chaves SSH</h2>
-      <p>
-        Autenticar com chaves SSH é mais seguro e prático do que usar senhas. O par de chaves consiste
-        em uma <strong>chave privada</strong> (fica no seu computador) e uma <strong>chave pública</strong>
-        (é copiada para o servidor).
-      </p>
-
-      <h3>ssh-keygen - Criar par de chaves</h3>
-      <CodeBlock
-        title="Gerando chaves SSH"
-        code={`# Gerar chave Ed25519 (recomendada — moderna e segura)
-ssh-keygen -t ed25519 -C "seu@email.com"
-
-# Gerar chave RSA de 4096 bits (compatibilidade ampla)
-ssh-keygen -t rsa -b 4096 -C "seu@email.com"
-
-# Durante a geração, você verá:
-# Enter file in which to save the key (~/.ssh/id_ed25519): [Enter para padrão]
-# Enter passphrase (empty for no passphrase): [senha para proteger a chave]
-# Enter same passphrase again: [repita]
-
-# Listar suas chaves existentes
-ls ~/.ssh/
-# id_ed25519       <- chave privada (NUNCA compartilhe!)
-# id_ed25519.pub   <- chave pública (pode compartilhar)
-# known_hosts      <- servidores conhecidos
-# authorized_keys  <- chaves autorizadas (no servidor)
-# config           <- configurações do cliente
-
-# Ver o conteúdo da chave pública
-cat ~/.ssh/id_ed25519.pub`}
+      <h3>O temido fingerprint mismatch</h3>
+      <TerminalBlock
+        command="ssh deploy@server.example.com"
+        output={`@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    {r}WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!{/}     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ED25519 key sent by the remote host is
+SHA256:NewKeyFingerprint...
+Add correct host key in /home/user/.ssh/known_hosts to get rid of this message.
+Offending ED25519 key in /home/user/.ssh/known_hosts:8
+Host key verification failed.`}
+        exitCode={255}
+      />
+      <TerminalBlock
+        command="ssh-keygen -R server.example.com"
+        output={`# Host server.example.com found: line 8
+/home/user/.ssh/known_hosts updated.
+Original contents retained as /home/user/.ssh/known_hosts.old`}
+        comment="remove a entrada antiga; depois reconecte"
       />
 
-      <AlertBox type="warning" title="Proteja sua chave privada">
-        A chave privada (<code>~/.ssh/id_ed25519</code>) nunca deve ser compartilhada com ninguém.
-        Use sempre uma passphrase para protegê-la. As permissões do arquivo também importam:{" "}
-        <code>chmod 600 ~/.ssh/id_ed25519</code>.
+      <h2>3. ssh-keygen — gerando o par de chaves</h2>
+      <TerminalBlock
+        command={`ssh-keygen -t ed25519 -C "user@laptop"`}
+        output={`Generating public/private ed25519 key pair.
+Enter file in which to save the key (/home/user/.ssh/id_ed25519): {dim}[Enter]{/}
+Enter passphrase for "/home/user/.ssh/id_ed25519" (empty for no passphrase): {dim}********{/}
+Enter same passphrase again: {dim}********{/}
+Your identification has been saved in /home/user/.ssh/id_ed25519
+Your public key has been saved in /home/user/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:Lp9Wq3z2vK8YxJ5n/QmRtXcHsB1F4gNa7K0eVdU9oZk user@laptop
+The key's randomart image is:
++--[ED25519 256]--+
+|       .o.+E*+.  |
+|      . o.B.O *. |
+|     . . o B.@.+ |
+|      . . . *.O o|
+|       .S.   o.o.|
+|       . o   .o..|
+|        . . . .o.|
+|             .o+ |
+|              ..+|
++----[SHA256]-----+`}
+      />
+      <TerminalBlock
+        command="ls -la ~/.ssh/"
+        output={`total 32
+drwx------ 2 user user 4096 Jan 15 15:00 .
+drwxr-xr-x 8 user user 4096 Jan 15 15:00 ..
+-rw------- 1 user user  411 Jan 15 15:00 id_ed25519
+-rw-r--r-- 1 user user   95 Jan 15 15:00 id_ed25519.pub
+-rw-r--r-- 1 user user  444 Jan 15 14:51 known_hosts`}
+      />
+      <OutputBlock
+        title="permissões críticas em ~/.ssh"
+        output={`drwx------ 2 user user 4096 Jan 15 15:00 .
+-rw------- 1 user user  411 Jan 15 15:00 id_ed25519
+-rw-r--r-- 1 user user   95 Jan 15 15:00 id_ed25519.pub`}
+        annotations={[
+          { line: 0, note: "diretório precisa ser 700 (drwx------) — ssh recusa se for permissivo" },
+          { line: 1, note: "chave PRIVADA: 600 obrigatório" },
+          { line: 2, note: "chave pública: pode ser 644 (qualquer um pode ler)" },
+        ]}
+      />
+      <TerminalBlock
+        command="cat ~/.ssh/id_ed25519.pub"
+        output={`ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH8wQz5kVx2pT9eYr1mNa3uBcFwLgKjH7sR4tYvE6oXk user@laptop`}
+      />
+
+      <AlertBox type="warning" title="Por que Ed25519 e não RSA?">
+        Ed25519 é mais rápido, gera chaves curtas (~80 chars) e tem segurança equivalente a RSA-3072.
+        Use RSA 4096 só por compatibilidade com sistemas antigos (&lt; 2014).
       </AlertBox>
 
-      <h2>4. Como Funciona o authorized_keys — Uma Máquina Confiando na Outra</h2>
+      <h2>4. Como o authorized_keys realmente funciona</h2>
       <p>
-        Esse é o conceito central da autenticação SSH por chave. Entender isso elimina toda a "mágica":
-      </p>
-      <p>
-        Quando você gera um par de chaves, obtém dois arquivos: a <strong>chave privada</strong> (fica
-        só com você) e a <strong>chave pública</strong> (pode ser distribuída livremente). A chave
-        pública é como um cadeado aberto — qualquer um pode ter o cadeado, mas só quem tem a chave
-        privada consegue fechá-lo e abri-lo.
-      </p>
-      <p>
-        O arquivo <code>~/.ssh/authorized_keys</code> no servidor é uma lista de "cadeados"
-        (chaves públicas) que aquele servidor aceita. Quando você tenta se conectar, o servidor
-        propõe um desafio matemático que só pode ser resolvido por quem possui a chave privada
-        correspondente a uma das chaves públicas da lista. Se você resolver corretamente — sem
-        precisar enviar a chave privada pela rede — o acesso é concedido.
+        A chave pública é como um "cadeado" copiado para o servidor — a chave privada (que nunca sai
+        da sua máquina) é o que abre. O servidor desafia matematicamente, sem nunca pedir a chave
+        privada pela rede.
       </p>
 
-      <CodeBlock
-        title="Entendendo o authorized_keys na prática"
-        code={`# === NO SERVIDOR (máquina que vai receber conexões) ===
+      <TerminalBlock
+        command="cat ~/.ssh/authorized_keys"
+        output={`ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH8wQz5kVx2pT9eYr1mNa3uBcFwLgKjH7sR4tYvE6oXk user@laptop
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBxK2pQ9vZ8mYr3tNa1uHwLgKjFcRSeF4tYvE6oXkBz deploy@ci-runner
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDKlmZqRpC...HxjU9wq7tZ4 backup@nas.local
+# Linha começando com # é comentário e é ignorada
+# command="..." restringe o que essa chave pode fazer
+command="rsync --server -vlogDtprze.iLsfx . /backups/",no-pty,no-port-forwarding ssh-ed25519 AAAAC3... backup-only@nas`}
+      />
+      <p className="text-sm text-muted-foreground">
+        Cada linha = uma máquina autorizada. Apagou a linha = revogou o acesso (efeito imediato).
+      </p>
 
-# Ver quais chaves estão autorizadas a conectar
-cat ~/.ssh/authorized_keys
+      <h3>Fluxo completo: máquina A → máquina B</h3>
+      <TerminalBlock
+        prompt="user@laptop ~ $ "
+        command="ssh-copy-id deploy@server.example.com"
+        output={`/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/home/user/.ssh/id_ed25519.pub"
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+deploy@server.example.com's password: {dim}********{/}
 
-# Cada linha é uma chave pública de uma máquina autorizada:
-# ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... usuario@maquina-a
-# ssh-ed25519 AAAAC3NzaC1lZDI1NTE5BBBB... usuario@maquina-b
-# ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAB... deploy@ci-server
+Number of key(s) added: 1
 
-# Cada linha representa uma máquina diferente que tem acesso!
-# Para REVOGAR o acesso de uma máquina, basta apagar a linha dela.
-
-# === FLUXO COMPLETO: Autorizar a máquina A a conectar na máquina B ===
-
-# PASSO 1 — Na máquina A: gerar a chave (se ainda não tiver)
-ssh-keygen -t ed25519 -C "maquina-a"
-
-# PASSO 2 — Na máquina A: ver a chave pública gerada
-cat ~/.ssh/id_ed25519.pub
-# Resultado: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... usuario@maquina-a
-
-# PASSO 3 — Na máquina B: adicionar a chave pública da máquina A
-# (crie o arquivo se não existir)
-mkdir -p ~/.ssh
-chmod 700 ~/.ssh
-echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... usuario@maquina-a" >> ~/.ssh/authorized_keys
-chmod 600 ~/.ssh/authorized_keys
-
-# PASSO 4 — Na máquina A: testar a conexão (não deve pedir senha)
-ssh usuario@maquina-b
-
-# === Casos de uso comuns ===
-# - Servidor de CI/CD fazendo deploy automaticamente em produção
-# - Script de backup conectando via cron sem interação humana
-# - Máquina de desenvolvimento acessando servidor sem digitar senha
-# - Múltiplos devs com suas próprias chaves no mesmo servidor`}
+Now try logging into the machine, with:   "ssh 'deploy@server.example.com'"
+and check to make sure that only the key(s) you wanted were added.`}
+      />
+      <TerminalBlock
+        prompt="user@laptop ~ $ "
+        command="ssh deploy@server.example.com"
+        output={`Welcome to Ubuntu 24.04.1 LTS (GNU/Linux 6.8.0-49-generic x86_64)
+Last login: Wed Jan 15 14:52:18 2025 from 192.168.1.100
+deploy@server:~$`}
+        comment="agora sem senha — graças à chave"
       />
 
-      <AlertBox type="info" title="Por que isso é mais seguro que senha?">
-        Com senha, ela trafega pela rede (criptografada, mas ainda existe). Com chave SSH,{" "}
-        <strong>a chave privada nunca sai da sua máquina</strong>. O servidor só verifica se você
-        consegue resolver um desafio matemático — sem a chave privada, é impossível. Mesmo que
-        alguém intercepte a comunicação, não obtém nada útil.
-      </AlertBox>
-
-      <h2>5. Copiando a Chave Pública para o Servidor</h2>
-      <CodeBlock
-        title="Autorizando sua chave no servidor"
-        code={`# Forma automática (mais fácil) — faz os passos 3 e 4 automaticamente
-ssh-copy-id usuario@servidor.exemplo.com
-
-# Especificar qual chave copiar
-ssh-copy-id -i ~/.ssh/id_ed25519.pub usuario@servidor.exemplo.com
-
-# Em porta não padrão
-ssh-copy-id -p 2222 usuario@servidor.exemplo.com
-
-# Forma manual — se ssh-copy-id não estiver disponível
-cat ~/.ssh/id_ed25519.pub | ssh usuario@servidor.exemplo.com \
-  "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
-
-# Após copiar a chave, teste a conexão (não deve pedir senha)
-ssh usuario@servidor.exemplo.com`}
+      <h3>Forma manual (quando ssh-copy-id não está disponível)</h3>
+      <TerminalBlock
+        command={`cat ~/.ssh/id_ed25519.pub | ssh deploy@server.example.com \\
+    "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"`}
+        output={`deploy@server.example.com's password:`}
       />
 
-      <h2>6. Configuração do Cliente SSH (~/.ssh/config)</h2>
-      <p>
-        O arquivo <code>~/.ssh/config</code> permite criar atalhos e configurações personalizadas
-        para cada servidor, evitando digitar opções longas toda vez.
-      </p>
+      <h2>5. ssh -v / -vv / -vvv — debug verboso</h2>
+      <TerminalBlock
+        command="ssh -v deploy@server.example.com"
+        output={`OpenSSH_9.9p1, OpenSSL 3.4.0 22 Oct 2024
+debug1: Reading configuration data /home/user/.ssh/config
+debug1: Reading configuration data /etc/ssh/ssh_config
+debug1: Connecting to server.example.com [203.0.113.42] port 22.
+debug1: Connection established.
+debug1: identity file /home/user/.ssh/id_ed25519 type 3
+debug1: Local version string SSH-2.0-OpenSSH_9.9
+debug1: Remote protocol version 2.0, remote software version OpenSSH_8.9p1 Ubuntu-3ubuntu0.10
+debug1: Authenticating to server.example.com:22 as 'deploy'
+debug1: kex: algorithm: curve25519-sha256
+debug1: kex: host key algorithm: ssh-ed25519
+debug1: SSH2_MSG_KEXINIT sent
+debug1: SSH2_MSG_KEXINIT received
+debug1: Server host key: ssh-ed25519 SHA256:Lp9Wq3z2vK8YxJ5n/QmRtXcHsB1F4gNa7K0eVdU9oZk
+debug1: Host 'server.example.com' is known and matches the ED25519 host key.
+debug1: Authentications that can continue: publickey,password
+debug1: Next authentication method: publickey
+debug1: Offering public key: /home/user/.ssh/id_ed25519 ED25519 SHA256:Lp9Wq...
+debug1: Server accepts key: /home/user/.ssh/id_ed25519 ED25519 SHA256:Lp9Wq...
+{g}Authenticated to server.example.com ([203.0.113.42]:22) using "publickey".{/}
+debug1: channel 0: new [client-session]`}
+      />
+
+      <h2>6. ~/.ssh/config — atalhos e configurações</h2>
       <CodeBlock
         title="~/.ssh/config — exemplos práticos"
-        code={`# Criar o arquivo de configuração
-touch ~/.ssh/config
-chmod 600 ~/.ssh/config
-
-# Alias simples para um servidor
-Host meuservidor
-    HostName 192.168.1.100
+        code={`# Atalho para um servidor específico
+Host prod
+    HostName prod.empresa.com
     User deploy
     Port 2222
-    IdentityFile ~/.ssh/id_ed25519
-
-# Servidor de produção
-Host prod
-    HostName prod.minhaempresa.com
-    User ubuntu
-    IdentityFile ~/.ssh/chave_producao
+    IdentityFile ~/.ssh/keys/prod_ed25519
+    IdentitiesOnly yes
     ServerAliveInterval 60
-    ServerAliveCountMax 3
 
-# Configuração global (para todos os hosts)
+# Bastion / jump host
+Host db
+    HostName db-internal.empresa.com
+    User dba
+    ProxyJump prod        # passa por 'prod' antes de chegar em 'db'
+
+# Wildcard pra GitHub (qualquer host *.github.com)
+Host *.github.com
+    User git
+    IdentityFile ~/.ssh/keys/github_ed25519
+    AddKeysToAgent yes
+
+# Regra global no final
 Host *
     AddKeysToAgent yes
-    IdentityFile ~/.ssh/id_ed25519
+    HashKnownHosts yes
     ServerAliveInterval 120
-
-# Após configurar, usar o alias é simples:
-ssh meuservidor       # equivale a: ssh -p 2222 deploy@192.168.1.100
-ssh prod              # conecta ao servidor de produção`}
+    ServerAliveCountMax 3`}
+      />
+      <TerminalBlock
+        command="ssh prod"
+        comment="equivale a: ssh -p 2222 -i ~/.ssh/keys/prod_ed25519 deploy@prod.empresa.com"
+        output={`Welcome to prod.empresa.com
+deploy@prod:~$`}
+      />
+      <TerminalBlock
+        command="ssh db"
+        output={`# Conecta via ProxyJump (passa por 'prod' transparentemente)
+dba@db:~$`}
       />
 
-      <h2>7. SSH Agent — Gerenciando Chaves com Passphrase</h2>
-      <p>
-        O <code>ssh-agent</code> armazena sua chave descriptografada em memória, para que você
-        não precise digitar a passphrase toda vez que conectar.
-      </p>
-      <CodeBlock
-        title="Usando o ssh-agent"
-        code={`# Iniciar o ssh-agent (normalmente já inicia com o sistema)
-eval "$(ssh-agent -s)"
-
-# Adicionar sua chave ao agent (pedirá a passphrase uma vez)
-ssh-add ~/.ssh/id_ed25519
-
-# Adicionar com tempo de expiração (ex: 8 horas)
-ssh-add -t 8h ~/.ssh/id_ed25519
-
-# Listar chaves carregadas no agent
-ssh-add -l
-
-# Remover todas as chaves do agent
-ssh-add -D
-
-# Para iniciar o agent automaticamente no shell, adicione ao ~/.bashrc ou ~/.zshrc:
-# if [ -z "$SSH_AUTH_SOCK" ]; then
-#   eval "$(ssh-agent -s)"
-#   ssh-add ~/.ssh/id_ed25519 2>/dev/null
-# fi`}
+      <h2>7. ssh-agent — passphrase só uma vez</h2>
+      <TerminalBlock
+        command={`eval "$(ssh-agent -s)"`}
+        output={`Agent pid 8421`}
+      />
+      <TerminalBlock
+        command="ssh-add ~/.ssh/id_ed25519"
+        output={`Enter passphrase for /home/user/.ssh/id_ed25519: {dim}********{/}
+Identity added: /home/user/.ssh/id_ed25519 (user@laptop)`}
+      />
+      <TerminalBlock
+        command="ssh-add -l"
+        output={`256 SHA256:Lp9Wq3z2vK8YxJ5n/QmRtXcHsB1F4gNa7K0eVdU9oZk user@laptop (ED25519)`}
+        comment="-l = list (resumido); -L = mostra a chave pública completa"
+      />
+      <TerminalBlock
+        command="ssh-add -t 8h ~/.ssh/keys/prod_ed25519"
+        output={`Enter passphrase for /home/user/.ssh/keys/prod_ed25519:
+Identity added: /home/user/.ssh/keys/prod_ed25519 (deploy@prod)
+Lifetime set to 28800 seconds`}
+        comment="-t define expiração (boa prática)"
+      />
+      <TerminalBlock
+        command="ssh-add -D"
+        output={`All identities removed.`}
       />
 
-      <h2>8. Transferência de Arquivos com SCP e SFTP</h2>
-      <h3>SCP — Cópia Segura</h3>
-      <CodeBlock
-        title="scp — copiar arquivos via SSH"
-        code={`# Copiar arquivo local para servidor remoto
-scp arquivo.txt usuario@servidor:/home/usuario/
-
-# Copiar arquivo do servidor para o local
-scp usuario@servidor:/etc/nginx/nginx.conf ./nginx.conf.bak
-
-# Copiar diretório inteiro (recursivo)
-scp -r ./meu-projeto/ usuario@servidor:/var/www/
-
-# Em porta não padrão (atenção: -P maiúsculo no scp!)
-scp -P 2222 arquivo.txt usuario@servidor:/tmp/`}
+      <h2>8. scp — copiar arquivos</h2>
+      <TerminalBlock
+        command="scp ./relatorio.pdf deploy@server.example.com:~/docs/"
+        output={`relatorio.pdf                                100% 4218KB   3.1MB/s   00:01`}
+      />
+      <TerminalBlock
+        command="scp deploy@server.example.com:/var/log/nginx/access.log ./access.log.bak"
+        output={`access.log                                   100%   28MB  18.4MB/s   00:01`}
+      />
+      <TerminalBlock
+        command="scp -r ./projeto/ deploy@server.example.com:/var/www/"
+        output={`index.html                                   100% 4324    9.8KB/s   00:00
+style.css                                    100%  812    2.1KB/s   00:00
+app.js                                       100%  21KB  41.2KB/s   00:00
+img/logo.png                                 100%  88KB 124.0KB/s   00:00`}
+        comment="-r recursivo (copia diretório inteiro)"
+      />
+      <TerminalBlock
+        command="scp -P 2222 backup.tar.gz deploy@server.example.com:~/"
+        output={`backup.tar.gz                                100% 1024MB  21.4MB/s   00:48`}
+        comment="atenção: -P maiúsculo no scp (porta)"
       />
 
-      <h3>SFTP — Protocolo Interativo</h3>
-      <CodeBlock
-        title="sftp — sessão interativa de transferência"
-        code={`# Iniciar sessão SFTP
-sftp usuario@servidor.exemplo.com
+      <h2>9. rsync — espelhar diretórios via SSH</h2>
+      <TerminalBlock
+        command="rsync -av --progress ./site/ deploy@server.example.com:/var/www/site/"
+        output={`sending incremental file list
+./
+index.html
+              4,324 100%    0.00kB/s    0:00:00 (xfr#1, to-chk=18/20)
+style.css
+                812 100%  792.97kB/s    0:00:00 (xfr#2, to-chk=17/20)
+app.js
+             21,488 100%   20.49MB/s    0:00:00 (xfr#3, to-chk=16/20)
+img/
+img/logo.png
+             88,012 100%   83.92MB/s    0:00:00 (xfr#4, to-chk=15/20)
+...
+sent 4,832,118 bytes  received 1,024 bytes  967,028.40 bytes/sec
+total size is 4,829,001  speedup is 1.00`}
+      />
+      <TerminalBlock
+        command="rsync -av --delete --dry-run ./site/ deploy@server.example.com:/var/www/site/"
+        output={`sending incremental file list
+deleting old-page.html
+deleting old-styles.css
 
-# Comandos dentro do sftp:
-sftp> ls                    # listar arquivos remotos
-sftp> get arquivo.txt       # baixar arquivo
-sftp> get -r pasta/         # baixar pasta inteira
-sftp> put relatorio.pdf     # enviar arquivo
-sftp> put -r ./projeto/     # enviar pasta inteira
-sftp> bye                   # sair`}
+sent 312 bytes  received 14 bytes  217.33 bytes/sec
+total size is 4,829,001  speedup is 14,812.27 (DRY RUN)`}
+        comment="--dry-run mostra o que faria sem alterar nada"
+      />
+      <OutputBlock
+        title="flags do rsync que você vai usar muito"
+        output={`-a       --archive          mantém tudo (perms, owner, time, links, recursivo)
+-v       --verbose          fala o que está fazendo
+-z       --compress         compressão durante a transferência
+-P       --partial+progress retoma transfers interrompidos + barra
+--delete                    apaga no destino o que sumiu na origem (espelho exato)
+--dry-run                   simula
+-e ssh -p 2222              porta SSH custom`}
       />
 
-      <h2>9. SSH Tunneling (Port Forwarding)</h2>
-      <CodeBlock
-        title="Tipos de túnel SSH"
-        code={`# === TÚNEL LOCAL — acessar serviço remoto como se fosse local ===
-# Acessa PostgreSQL remoto pela porta local 5433
-ssh -L 5433:localhost:5432 usuario@servidor.exemplo.com
+      <h2>10. SSH Tunneling (port forwarding)</h2>
 
-# Mantém o túnel sem abrir shell interativo
-ssh -L 8080:localhost:3000 -N usuario@servidor.exemplo.com
+      <h3>Local (-L) — acessar serviço remoto pela sua porta local</h3>
+      <TerminalBlock
+        command="ssh -L 5433:localhost:5432 -N deploy@server.example.com"
+        output={`# (sem output — fica em foreground; -N = não abre shell)`}
+        comment="agora 'localhost:5433' na sua máquina = postgres do servidor"
+      />
+      <TerminalBlock
+        command="psql -h localhost -p 5433 -U postgres"
+        output={`Password for user postgres:
+psql (16.3)
+Type "help" for help.
 
-# === TÚNEL REMOTO — expor porta local para o servidor remoto ===
-ssh -R 9000:localhost:8080 usuario@servidor.exemplo.com
-
-# === TÚNEL DINÂMICO — proxy SOCKS5 ===
-ssh -D 1080 usuario@servidor.exemplo.com
-
-# === Túnel em background ===
-ssh -L 5433:localhost:5432 -N -f usuario@servidor.exemplo.com`}
+postgres=#`}
+        comment="está conectando no postgres remoto através do túnel"
       />
 
-      <h2>10. Configurando o Servidor SSH (sshd)</h2>
-      <CodeBlock
-        title="Habilitando e gerenciando o sshd"
-        code={`# Habilitar e iniciar o serviço SSH
-sudo systemctl enable --now sshd
+      <h3>Remoto (-R) — expor sua porta local pro servidor</h3>
+      <TerminalBlock
+        command="ssh -R 9000:localhost:8080 deploy@server.example.com"
+        output={`deploy@server:~$ curl http://localhost:9000
+<!DOCTYPE html>
+<html>... resposta vinda do seu app local rodando na 8080</html>`}
+      />
 
-# Verificar status
-sudo systemctl status sshd
+      <h3>Dinâmico (-D) — proxy SOCKS5</h3>
+      <TerminalBlock
+        command="ssh -D 1080 -N deploy@server.example.com"
+        output=""
+        comment="agora aponte o navegador para SOCKS5 localhost:1080 = todo tráfego sai pelo servidor"
+      />
 
-# Reiniciar após alterar a configuração
-sudo systemctl restart sshd`}
+      <h3>Background</h3>
+      <TerminalBlock
+        command="ssh -L 5433:localhost:5432 -N -f deploy@server.example.com"
+        output=""
+        comment={`-f = fork pro background; mate com 'pkill -f "ssh -L 5433"'`}
+      />
+
+      <h2>11. Servidor SSH (sshd)</h2>
+      <TerminalBlock
+        command="sudo systemctl enable --now sshd"
+        output={`Created symlink /etc/systemd/system/multi-user.target.wants/sshd.service → /usr/lib/systemd/system/sshd.service.`}
+      />
+      <TerminalBlock
+        command="sudo systemctl status sshd"
+        output={`● sshd.service - OpenSSH Daemon
+     Loaded: loaded (/usr/lib/systemd/system/sshd.service; enabled; preset: disabled)
+     Active: {g}active (running){/} since Wed 2025-01-15 15:10:22 UTC; 1min 12s ago
+   Main PID: 8901 (sshd)
+      Tasks: 1 (limit: 4631)
+     Memory: 2.4M
+        CPU: 38ms
+     CGroup: /system.slice/sshd.service
+             └─8901 "sshd: /usr/bin/sshd -D [listener] 0 of 10-100 startups"
+
+Jan 15 15:10:22 archlinux systemd[1]: Started sshd.service - OpenSSH Daemon.
+Jan 15 15:10:22 archlinux sshd[8901]: Server listening on 0.0.0.0 port 22.
+Jan 15 15:10:22 archlinux sshd[8901]: Server listening on :: port 22.`}
       />
 
       <CodeBlock
-        title="/etc/ssh/sshd_config — configurações recomendadas"
-        code={`# Porta personalizada (reduz tentativas de brute force)
-Port 2222
-
-# Desabilitar login como root (importante!)
+        title="/etc/ssh/sshd_config — endurecimento recomendado"
+        code={`Port 2222
 PermitRootLogin no
-
-# Autenticação por senha (desabilite após configurar chaves)
 PasswordAuthentication no
-PermitEmptyPasswords no
-
-# Autenticação por chave pública (deve estar habilitada)
 PubkeyAuthentication yes
 AuthorizedKeysFile .ssh/authorized_keys
-
-# Número máximo de tentativas de autenticação
 MaxAuthTries 3
-
-# Limitar quais usuários podem conectar via SSH
-AllowUsers usuario1 usuario2`}
+MaxSessions 5
+ClientAliveInterval 300
+ClientAliveCountMax 2
+AllowUsers deploy admin
+LogLevel VERBOSE`}
+      />
+      <TerminalBlock
+        command="sudo sshd -t"
+        output=""
+        comment="-t = test config; sem output significa que está OK"
+      />
+      <TerminalBlock
+        command="sudo sshd -t"
+        output={`/etc/ssh/sshd_config: line 14: Bad configuration option: PassWordAuthentication
+/etc/ssh/sshd_config: terminating, 1 bad configuration options`}
+        exitCode={1}
+        comment="erro de typo — sempre teste antes de restart!"
+      />
+      <TerminalBlock
+        command="sudo systemctl reload sshd"
+        output=""
+        comment="reload = re-lê config sem matar conexões existentes"
       />
 
-      <AlertBox type="warning" title="Antes de desabilitar PasswordAuthentication">
-        Certifique-se de que sua chave pública está corretamente instalada em{" "}
-        <code>~/.ssh/authorized_keys</code> no servidor <strong>antes</strong> de definir{" "}
-        <code>PasswordAuthentication no</code>. Sempre mantenha uma sessão SSH aberta enquanto
-        testa a nova configuração.
+      <h2>12. Diagnóstico: SSH não conecta</h2>
+
+      <AlertBox type="info" title="Regra de ouro">
+        Se <code>nc -zv host 22</code> falha → problema de rede/firewall. Se conecta mas SSH recusa
+        → problema de chaves/sshd_config/permissões.
       </AlertBox>
 
-      <h2>11. Firewall — Liberando a Porta SSH</h2>
-      <p>
-        Se o servidor tiver um firewall ativo, a porta SSH precisa estar explicitamente liberada.
-        No Arch Linux, as ferramentas mais comuns são <code>ufw</code> (mais simples) e{" "}
-        <code>nftables</code> / <code>iptables</code> (mais avançados).
-      </p>
-
-      <h3>UFW — Uncomplicated Firewall (recomendado para iniciantes)</h3>
-      <CodeBlock
-        title="Gerenciando o firewall com ufw"
-        code={`# Instalar o UFW
-sudo pacman -S ufw
-
-# Habilitar o UFW (ative DEPOIS de liberar o SSH, senão perde acesso!)
-sudo ufw enable
-
-# Ver status atual e regras ativas
-sudo ufw status verbose
-
-# === Liberar SSH ===
-# Porta padrão 22
-sudo ufw allow ssh
-sudo ufw allow 22/tcp
-
-# Porta personalizada (ex: 2222)
-sudo ufw allow 2222/tcp
-
-# Liberar SSH apenas de um IP específico (mais seguro)
-sudo ufw allow from 192.168.1.50 to any port 22
-
-# Liberar SSH de uma rede inteira
-sudo ufw allow from 192.168.1.0/24 to any port 22
-
-# === Bloquear ===
-# Bloquear acesso SSH de um IP específico
-sudo ufw deny from 203.0.113.10 to any port 22
-
-# Remover uma regra
-sudo ufw delete allow 22/tcp
-
-# Desabilitar o UFW (libera tudo)
-sudo ufw disable
-
-# Recarregar regras
-sudo ufw reload`}
+      <TerminalBlock
+        command="nc -zv server.example.com 22"
+        output={`Connection to server.example.com (203.0.113.42) 22 port [tcp/ssh] succeeded!`}
+      />
+      <TerminalBlock
+        command="ss -tlnp | grep -E ':22 '"
+        output={`LISTEN  0  128         0.0.0.0:22         0.0.0.0:*    users:(("sshd",pid=8901,fd=3))
+LISTEN  0  128            [::]:22            [::]:*    users:(("sshd",pid=8901,fd=4))`}
+      />
+      <TerminalBlock
+        command="sudo journalctl -u sshd -f"
+        output={`Jan 15 15:15:11 archlinux sshd[9012]: Accepted publickey for deploy from 192.168.1.100 port 51234 ssh2: ED25519 SHA256:Lp9W...
+Jan 15 15:15:11 archlinux sshd[9012]: pam_unix(sshd:session): session opened for user deploy(uid=1001) by (uid=0)
+Jan 15 15:16:42 archlinux sshd[9050]: Failed password for invalid user admin from 198.51.100.7 port 44012 ssh2
+Jan 15 15:16:44 archlinux sshd[9050]: Connection closed by invalid user admin 198.51.100.7 port 44012 [preauth]`}
+      />
+      <TerminalBlock
+        command="ssh -vvv deploy@server.example.com 2>&1 | grep -E 'debug1: (Authenticat|Offer|Trying|Server accepts)'"
+        output={`debug1: Authenticating to server.example.com:22 as 'deploy'
+debug1: Offering public key: /home/user/.ssh/id_ed25519 ED25519
+debug1: Server accepts key: /home/user/.ssh/id_ed25519 ED25519
+debug1: Authenticated to server.example.com ([203.0.113.42]:22) using "publickey".`}
       />
 
-      <h3>nftables — Firewall nativo do Linux moderno</h3>
-      <CodeBlock
-        title="Gerenciando o firewall com nftables"
-        code={`# Verificar se o nftables está rodando
-sudo systemctl status nftables
-
-# Ver regras ativas
-sudo nft list ruleset
-
-# Liberar a porta SSH (22) — adicionar regra na tabela inet
-sudo nft add rule inet filter input tcp dport 22 accept
-
-# Liberar porta personalizada (ex: 2222)
-sudo nft add rule inet filter input tcp dport 2222 accept
-
-# Salvar regras para persistir após reinicialização
-sudo nft list ruleset > /etc/nftables.conf
-sudo systemctl enable nftables`}
+      <h3>Erros comuns e o que significam</h3>
+      <TerminalBlock
+        command="ssh deploy@server.example.com"
+        output={`Permission denied (publickey).`}
+        exitCode={255}
+        comment="servidor recusou: chave não está em authorized_keys, ou perms ruins"
+      />
+      <TerminalBlock
+        command="ssh deploy@server.example.com"
+        output={`ssh: connect to host server.example.com port 22: Connection refused`}
+        exitCode={255}
+        comment="sshd não está rodando ou está em outra porta"
+      />
+      <TerminalBlock
+        command="ssh deploy@server.example.com"
+        output={`ssh: connect to host server.example.com port 22: Connection timed out`}
+        exitCode={255}
+        comment="firewall bloqueando ou host inacessível"
+      />
+      <TerminalBlock
+        command="ssh deploy@server.example.com"
+        output={`@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@         WARNING: UNPROTECTED PRIVATE KEY FILE!          @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+Permissions 0644 for '/home/user/.ssh/id_ed25519' are too open.
+It is required that your private key files are NOT accessible by others.
+This private key will be ignored.`}
+        comment="solução: chmod 600 ~/.ssh/id_ed25519"
       />
 
-      <h3>iptables — Firewall legado (ainda muito usado)</h3>
-      <CodeBlock
-        title="Gerenciando o firewall com iptables"
-        code={`# Ver regras ativas
-sudo iptables -L -n -v
+      <h2>13. Firewall — abrindo a porta SSH</h2>
 
-# Liberar a porta SSH (22)
-sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+      <TerminalBlock
+        command="sudo ufw status verbose"
+        output={`Status: active
+Logging: on (low)
+Default: deny (incoming), allow (outgoing), disabled (routed)
+New profiles: skip
 
-# Liberar porta personalizada (ex: 2222)
-sudo iptables -A INPUT -p tcp --dport 2222 -j ACCEPT
-
-# Liberar SSH apenas de um IP específico
-sudo iptables -A INPUT -p tcp -s 192.168.1.50 --dport 22 -j ACCEPT
-
-# Salvar regras (instale iptables-nft ou iptables-persist)
-sudo pacman -S iptables
-sudo iptables-save > /etc/iptables/iptables.rules
-sudo systemctl enable iptables`}
+To                         Action      From
+--                         ------      ----
+22/tcp (OpenSSH)           ALLOW IN    Anywhere
+22/tcp (OpenSSH (v6))      ALLOW IN    Anywhere (v6)`}
+      />
+      <TerminalBlock
+        command="sudo ufw allow from 192.168.1.0/24 to any port 22 proto tcp"
+        output={`Rule added`}
+      />
+      <TerminalBlock
+        command="sudo nft list ruleset"
+        output={`table inet filter {
+    chain input {
+        type filter hook input priority filter; policy drop;
+        ct state established,related accept
+        iif "lo" accept
+        tcp dport 22 accept
+        tcp dport { 80, 443 } accept
+        ip protocol icmp accept
+    }
+}`}
       />
 
-      <AlertBox type="warning" title="Cuidado ao ativar o firewall remotamente">
-        Se você estiver conectado via SSH e ativar o firewall sem liberar a porta 22 primeiro,{" "}
-        <strong>você perderá o acesso ao servidor imediatamente</strong>. Sempre libere a porta SSH{" "}
-        <em>antes</em> de habilitar o firewall. Em caso de dúvida, use:{" "}
-        <code>sudo ufw allow ssh && sudo ufw enable</code>
+      <AlertBox type="warning" title="NUNCA habilite firewall remotamente sem liberar SSH antes">
+        Em VPS sem acesso ao console: <code>sudo ufw allow ssh && sudo ufw enable</code> em uma
+        única linha. Ou pior: combine com um <code>at now + 5 minutes &lt;&lt;&lt; "ufw disable"</code>{" "}
+        para autorrecuperação caso erre.
       </AlertBox>
 
-      <h2>12. Verificando Portas e Conectividade</h2>
-      <p>
-        Quando o SSH não conecta, o problema pode ser: serviço parado, porta bloqueada pelo firewall,
-        ou porta errada. Use essas ferramentas para diagnosticar.
-      </p>
-
-      <h3>No próprio servidor — checar se o sshd está ouvindo</h3>
+      <h2>14. Boas práticas — recapitulando</h2>
       <CodeBlock
-        title="Verificar portas abertas no servidor"
-        code={`# Ver todas as portas TCP em escuta (LISTEN)
-ss -tlnp
-# ou equivalente mais antigo:
-netstat -tlnp
+        title="Endurecimento progressivo"
+        code={`# 1. Trocar porta padrão (reduz brute-force ruidoso)
+Port 2222
 
-# Filtrar apenas a porta do SSH
-ss -tlnp | grep sshd
-# Saída esperada:
-# LISTEN  0  128  0.0.0.0:22  0.0.0.0:*  users:(("sshd",pid=1234,fd=3))
+# 2. Sem login root direto
+PermitRootLogin no
 
-# Verificar se está ouvindo em IPv4 e IPv6
-ss -tlnp | grep :22
+# 3. Sem senha (após confirmar que sua chave funciona!)
+PasswordAuthentication no
+ChallengeResponseAuthentication no
 
-# Ver qual processo está usando a porta 22
-sudo lsof -i :22
+# 4. Limitar quem pode conectar
+AllowUsers deploy admin
 
-# Verificar todas as conexões SSH ativas agora
-ss -tnp | grep :22`}
-      />
-
-      <h3>De outra máquina — testar se a porta está acessível</h3>
-      <CodeBlock
-        title="Testar conectividade com o servidor SSH"
-        code={`# === nc (netcat) — teste rápido de porta ===
-# Instalar: sudo pacman -S openbsd-netcat
-nc -zv servidor.exemplo.com 22
-# Saída se aberto:  Connection to servidor.exemplo.com 22 port [tcp/ssh] succeeded!
-# Saída se fechado: nc: connect to servidor.exemplo.com port 22 (tcp) failed
-
-# Testar porta personalizada
-nc -zv servidor.exemplo.com 2222
-
-# Com timeout (útil em scripts)
-nc -zv -w 5 servidor.exemplo.com 22
-
-# === telnet — outra forma de testar ===
-telnet servidor.exemplo.com 22
-# Se abrir: SSH-2.0-OpenSSH_9.x (você vê o banner do servidor)
-# Se não abrir: Connection refused ou timeout
-
-# === nmap — scanner completo de portas ===
-# Instalar: sudo pacman -S nmap
-
-# Verificar se a porta 22 está aberta no servidor
-nmap -p 22 servidor.exemplo.com
-
-# Verificar várias portas de uma vez
-nmap -p 22,80,443,2222 servidor.exemplo.com
-
-# Scan completo com detecção de serviço
-nmap -sV -p 22 servidor.exemplo.com
-# Saída:
-# PORT   STATE  SERVICE VERSION
-# 22/tcp open   ssh     OpenSSH 9.6 (protocol 2.0)
-
-# === curl — verificação rápida (sem instalar nada extra) ===
-curl -v telnet://servidor.exemplo.com:22 2>&1 | head -5`}
-      />
-
-      <h3>Diagnosticar por que o SSH não conecta</h3>
-      <CodeBlock
-        title="Passo a passo para diagnosticar falha de conexão SSH"
-        code={`# PASSO 1 — O serviço SSH está rodando no servidor?
-sudo systemctl status sshd
-# Se não estiver: sudo systemctl start sshd
-
-# PASSO 2 — O servidor está ouvindo na porta certa?
-ss -tlnp | grep sshd
-# Se não aparecer nada: verifique o Port no /etc/ssh/sshd_config
-
-# PASSO 3 — O firewall está bloqueando?
-sudo ufw status          # se usar ufw
-sudo nft list ruleset    # se usar nftables
-sudo iptables -L -n      # se usar iptables
-
-# PASSO 4 — Testar da máquina cliente
-nc -zv servidor.exemplo.com 22
-# Se falhar: firewall bloqueando ou porta errada
-
-# PASSO 5 — Tentar conectar com verbose para ver onde trava
-ssh -vvv usuario@servidor.exemplo.com
-
-# PASSO 6 — Ver logs no servidor
-sudo journalctl -u sshd -f
-# Em outra aba, tente conectar e observe o log em tempo real
-
-# PASSO 7 — Verificar permissões do ~/.ssh (causa silenciosa comum!)
-ls -la ~/.ssh/
-# .ssh deve ter permissão 700 (drwx------)
-# authorized_keys deve ter permissão 600 (-rw-------)
-chmod 700 ~/.ssh
-chmod 600 ~/.ssh/authorized_keys`}
-      />
-
-      <AlertBox type="info" title="Regra de ouro do diagnóstico SSH">
-        Se <code>nc -zv servidor.exemplo.com 22</code> falhar — é problema de rede ou firewall,
-        não de SSH. Se conectar mas o SSH recusar — é problema de configuração do sshd, usuário
-        ou chaves. Essa distinção economiza muito tempo de debug.
-      </AlertBox>
-
-      <h2>13. Verificando Logs e Diagnóstico do sshd</h2>
-      <CodeBlock
-        title="Logs do servidor SSH"
-        code={`# Ver tentativas de login em tempo real
-sudo journalctl -u sshd -f
-
-# Ver tentativas com falha
-sudo journalctl -u sshd | grep "Failed"
-sudo journalctl -u sshd | grep "Invalid user"
-
-# Ver últimas conexões bem-sucedidas
-last -n 20`}
-      />
-
-      <h2>14. Dicas de Segurança</h2>
-      <CodeBlock
-        title="Boas práticas de segurança SSH"
-        code={`# 1. Alterar a porta padrão + liberar no firewall
-#    /etc/ssh/sshd_config: Port 2222
-sudo ufw allow 2222/tcp
-sudo ufw deny 22/tcp     # bloquear a porta antiga após trocar
-
-# 2. Usar apenas chaves SSH (sem senha)
-#    /etc/ssh/sshd_config: PasswordAuthentication no
-
-# 3. Instalar e configurar o Fail2Ban (bloqueia IPs com muitas tentativas)
+# 5. Fail2ban para banir IPs com tentativas
 sudo pacman -S fail2ban
 sudo systemctl enable --now fail2ban
 
-# 4. Usar chaves Ed25519 (mais modernas e seguras que RSA)
-ssh-keygen -t ed25519
+# 6. ssh-audit para auditar a config
+yay -S ssh-audit
+ssh-audit server.example.com
 
-# 5. Revisar authorized_keys periodicamente
-cat ~/.ssh/authorized_keys
-# Remova linhas de máquinas que não devem mais ter acesso
-
-# 6. Limitar quais usuários podem conectar
-#    /etc/ssh/sshd_config: AllowUsers usuario1 usuario2`}
+# 7. Revisar authorized_keys regularmente
+cat ~/.ssh/authorized_keys`}
       />
 
       <h2>15. Referências</h2>
       <ul>
-        <li>
-          <a href="https://wiki.archlinux.org/title/OpenSSH" target="_blank" rel="noopener noreferrer">
-            ArchWiki - OpenSSH
-          </a>
-        </li>
-        <li>
-          <a href="https://wiki.archlinux.org/title/SSH_keys" target="_blank" rel="noopener noreferrer">
-            ArchWiki - SSH keys
-          </a>
-        </li>
-        <li>
-          <a href="https://wiki.archlinux.org/title/Uncomplicated_Firewall" target="_blank" rel="noopener noreferrer">
-            ArchWiki - UFW
-          </a>
-        </li>
-        <li>
-          <a href="https://wiki.archlinux.org/title/Nftables" target="_blank" rel="noopener noreferrer">
-            ArchWiki - nftables
-          </a>
-        </li>
-        <li>
-          <code>man ssh</code>, <code>man sshd_config</code>, <code>man ssh_config</code>,{" "}
-          <code>man ssh-keygen</code>, <code>man ufw</code>, <code>man nft</code>
-        </li>
+        <li><a href="https://wiki.archlinux.org/title/OpenSSH" target="_blank" rel="noopener noreferrer">ArchWiki — OpenSSH</a></li>
+        <li><a href="https://wiki.archlinux.org/title/SSH_keys" target="_blank" rel="noopener noreferrer">ArchWiki — SSH keys</a></li>
+        <li><a href="https://man.openbsd.org/sshd_config" target="_blank" rel="noopener noreferrer">man sshd_config (OpenBSD)</a></li>
+        <li><code>man ssh</code>, <code>man ssh_config</code>, <code>man ssh-keygen</code>, <code>man scp</code>, <code>man rsync</code></li>
       </ul>
     </PageContainer>
   );

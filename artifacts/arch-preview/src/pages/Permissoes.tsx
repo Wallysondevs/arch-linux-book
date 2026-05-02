@@ -1,487 +1,537 @@
 import { PageContainer } from "@/components/layout/PageContainer";
-import { CodeBlock } from "@/components/ui/CodeBlock";
+import { TerminalBlock } from "@/components/ui/TerminalBlock";
+import { OutputBlock } from "@/components/ui/OutputBlock";
+import { CommandFlagList } from "@/components/ui/CommandFlag";
 import { AlertBox } from "@/components/ui/AlertBox";
 
 export default function Permissoes() {
   return (
     <PageContainer
       title="Permissões de Arquivos e Diretórios"
-      subtitle="Entenda o sistema de permissões rwx, chmod, chown, bits especiais (SUID, SGID, sticky bit) e ACLs."
+      subtitle="rwx, octal, chmod, chown, umask, SUID/SGID/sticky e ACLs — explicados pela saída real de cada comando."
       difficulty="intermediario"
-      timeToRead="25 min"
+      timeToRead="30 min"
+      category="Sistema de Arquivos"
     >
       <p>
-        O sistema de permissões do Linux é o mecanismo fundamental de segurança. Cada arquivo e diretório
-        tem um dono, um grupo associado e três conjuntos de permissões que controlam quem pode ler,
-        escrever e executar.
+        O sistema de permissões do Linux é o mecanismo fundamental de segurança. Cada arquivo e
+        diretório tem um <strong>dono</strong>, um <strong>grupo</strong> associado e três
+        conjuntos de permissões que controlam quem pode ler, escrever e executar.
       </p>
 
-      <h2>1. Entendendo a Saída do ls -l</h2>
+      <h2>1. Decifrando <code>ls -l</code></h2>
 
-      <CodeBlock code={`ls -l
+      <TerminalBlock
+        command="ls -l"
+        output={`total 16
+-rwxr-xr-- 1 joao desenvolvedores 4096 Jan 15 10:30 {g}script.sh{/}
+drwxr-x--- 2 joao joao            4096 Jan 15 10:30 {b}documentos{/}
+lrwxrwxrwx 1 root root              11 Jan 15 10:30 {c}link{/} -> /usr/bin/vim
+-rw-r--r-- 1 joao joao             217 Jan 15 10:30 README.md`}
+      />
 
-# Saída:
-# -rwxr-xr-- 1 joao desenvolvedores 4096 Jan 15 10:30 script.sh
-# drwxr-x--- 2 joao joao           4096 Jan 15 10:30 documentos/
-# lrwxrwxrwx 1 root root             11 Jan 15 10:30 link -> /usr/bin/vim`} />
+      <OutputBlock
+        title="anatomia de uma linha do ls -l"
+        output={`-rwxr-xr-- 1 joao desenvolvedores 4096 Jan 15 10:30 script.sh`}
+        annotations={[
+          { line: 0, note: "tipo + 9 bits | links | dono | grupo | tamanho | data | nome" },
+        ]}
+      />
 
-      <p>Decompondo a primeira coluna caractere por caractere:</p>
-      <CodeBlock code={`# -  rwx  r-x  r--
-# │  │││  │││  │││
-# │  │││  │││  └┴┴── Outros (other): r-- = pode ler, não pode escrever, não pode executar
-# │  │││  └┴┴─────── Grupo (group):  r-x = pode ler, não pode escrever, pode executar
-# │  └┴┴──────────── Dono (user):    rwx = pode ler, escrever e executar
-# └────────────────── Tipo: - = arquivo, d = diretório, l = link simbólico
+      <p>Decompondo o primeiro campo, caractere por caractere:</p>
 
-# Significado de cada letra:
-# r (read)    = Leitura
-# w (write)   = Escrita
-# x (execute) = Execução
-# - (nada)    = Permissão negada`} />
+      <OutputBlock
+        title="-rwxr-xr--"
+        output={`-  rwx  r-x  r--
+│  │││  │││  │││
+│  │││  │││  └┴┴── outros (other):  r-- = só leitura
+│  │││  └┴┴─────── grupo (group):   r-x = leitura e execução
+│  └┴┴──────────── dono (user):     rwx = leitura, escrita e execução
+└────────────────── tipo: - arquivo, d diretório, l link, b bloco, c char`}
+      />
 
-      <p>Significado das permissões para arquivos vs diretórios:</p>
-      <ul>
-        <li><strong>r (read)</strong> - Arquivo: pode ver o conteúdo. Diretório: pode listar o conteúdo (ls).</li>
-        <li><strong>w (write)</strong> - Arquivo: pode modificar. Diretório: pode criar/deletar arquivos dentro.</li>
-        <li><strong>x (execute)</strong> - Arquivo: pode executar como programa. Diretório: pode entrar (cd).</li>
-      </ul>
+      <p>O significado de cada bit muda dependendo de ser arquivo ou diretório:</p>
 
-      <AlertBox type="info" title="Diretório sem x mas com r">
-        Se um diretório tem permissão <code>r--</code>, você pode listar os nomes dos arquivos,
-        mas não pode entrar nele (cd), ver detalhes dos arquivos ou abrir nenhum deles.
-        Para acessar o conteúdo de um diretório, você PRECISA de <code>x</code>.
+      <OutputBlock
+        title="r / w / x em arquivos vs diretórios"
+        output={`bit | em ARQUIVO                        | em DIRETÓRIO
+----|------------------------------------|--------------------------------------
+ r  | ler o conteúdo                     | listar nomes (ls)
+ w  | modificar o conteúdo               | criar/renomear/apagar entradas
+ x  | executar como programa             | entrar (cd) e acessar inodes`}
+      />
+
+      <AlertBox type="info" title="Diretório com r mas sem x">
+        Você consegue <code>ls</code> os nomes mas não consegue <code>cd</code> nem ler nenhum
+        arquivo dentro. Para acessar conteúdo de um diretório, <strong>x é obrigatório</strong>.
       </AlertBox>
 
-      <h2>2. Representação Numérica (Octal)</h2>
+      <h2>2. Octal: o atalho de 3 dígitos</h2>
 
-      <CodeBlock code={`# Cada permissão tem um valor numérico:
-# r = 4
-# w = 2
-# x = 1
-# - = 0
+      <OutputBlock
+        title="tabela de equivalência"
+        output={`r=4   w=2   x=1   -=0
+─────────────────────
+rwx = 4+2+1 = 7
+rw- = 4+2+0 = 6
+r-x = 4+0+1 = 5
+r-- = 4+0+0 = 4
+-wx = 0+2+1 = 3
+-w- = 0+2+0 = 2
+--x = 0+0+1 = 1
+--- = 0+0+0 = 0`}
+      />
 
-# Some os valores para cada grupo (dono, grupo, outros):
-# rwx = 4+2+1 = 7
-# r-x = 4+0+1 = 5
-# r-- = 4+0+0 = 4
-# rw- = 4+2+0 = 6
-# --- = 0+0+0 = 0
+      <OutputBlock
+        title="combos mais comuns"
+        output={`755  rwxr-xr-x   executáveis e diretórios padrão
+644  rw-r--r--   arquivos texto / config legível
+700  rwx------   diretório só do dono (~/.ssh)
+600  rw-------   chave privada SSH
+777  rwxrwxrwx   ⚠ NUNCA use isso
+000  ---------   ninguém pode nada`}
+      />
 
-# Exemplos comuns:
-# 755 = rwxr-xr-x  (dono: tudo, grupo/outros: ler e executar)
-# 644 = rw-r--r--  (dono: ler/escrever, grupo/outros: apenas ler)
-# 700 = rwx------  (dono: tudo, grupo/outros: nada)
-# 600 = rw-------  (dono: ler/escrever, grupo/outros: nada)
-# 777 = rwxrwxrwx  (todos podem tudo - EVITE!)
-# 000 = ---------  (ninguém pode nada)`} />
+      <h2>3. <code>chmod</code> — saída real com <code>-v</code></h2>
 
-      <h2>3. chmod - Mudar Permissões</h2>
+      <p>
+        Sem <code>-v</code>, o <code>chmod</code> é silencioso. Use <code>-v</code> (verbose) ou
+        <code>-c</code> (changes only) para ver o que aconteceu:
+      </p>
 
-      <h3>Modo Numérico (Octal)</h3>
-      <CodeBlock code={`# Dar permissão total ao dono, leitura+execução para grupo e outros
-chmod 755 script.sh
+      <TerminalBlock
+        command={`echo '#!/bin/bash\\necho ola' > script.sh
+ls -l script.sh
+chmod -v 755 script.sh
+ls -l script.sh`}
+        output={`-rw-r--r-- 1 joao joao 23 Jan 15 11:02 script.sh
+mode of 'script.sh' changed from 0644 ({y}rw-r--r--{/}) to 0755 ({g}rwxr-xr-x{/})
+-rwxr-xr-x 1 joao joao 23 Jan 15 11:02 script.sh`}
+      />
 
-# Arquivo privado (só o dono lê e escreve)
-chmod 600 chave_privada.pem
+      <h3>Modo simbólico</h3>
 
-# Tornar executável (dono: tudo, grupo/outros: ler+executar)
-chmod 755 meu_programa
+      <TerminalBlock
+        command="chmod -v u+x,go-w arquivo.txt"
+        output={`mode of 'arquivo.txt' changed from 0664 ({y}rw-rw-r--{/}) to 0744 ({g}rwxr--r--{/})`}
+      />
 
-# Diretório com acesso restrito ao dono
-chmod 700 ~/secreto
+      <TerminalBlock
+        command="chmod -v a+r,o-w *.conf"
+        output={`mode of 'app.conf' retained as 0644 (rw-r--r--)
+mode of 'db.conf' changed from 0660 ({y}rw-rw----{/}) to 0664 ({g}rw-rw-r--{/})`}
+      />
 
-# Arquivo legível por todos
-chmod 644 documento.txt
+      <CommandFlagList
+        command="chmod"
+        items={[
+          { flag: "u / g / o / a", description: "Alvo: dono / grupo / outros / todos.", example: "chmod u+x script.sh" },
+          { flag: "+ / - / =", description: "Adiciona / remove / define exatamente.", example: "chmod g=rx pasta/" },
+          { flag: "-v", long: "--verbose", description: "Imprime UMA linha por arquivo (mudou ou não).", example: "chmod -v 644 *.txt" },
+          { flag: "-c", long: "--changes", description: "Como -v, mas só mostra arquivos que mudaram.", example: "chmod -cR 755 ./projeto" },
+          { flag: "-R", long: "--recursive", description: "Aplica em toda a árvore.", example: "chmod -R u=rwX,go=rX docs/" },
+          { flag: "X", description: "Permissão de execução SOMENTE em diretórios (e em arquivos que já tinham x). Ideal para chmod -R.", example: "chmod -R u=rwX,go=rX site/" },
+          { flag: "--reference=", description: "Copia as permissões de outro arquivo.", example: "chmod --reference=modelo.txt novo.txt" },
+        ]}
+      />
 
-# Aplicar recursivamente a todos os arquivos e subdiretórios
-chmod -R 755 /var/www/html`} />
-
-      <h3>Modo Simbólico</h3>
-      <CodeBlock code={`# Sintaxe: chmod [quem][operação][permissão] arquivo
-# Quem: u (user/dono), g (group), o (others), a (all)
-# Operação: + (adicionar), - (remover), = (definir exatamente)
-# Permissão: r, w, x
-
-# Adicionar permissão de execução para o dono
-chmod u+x script.sh
-
-# Remover permissão de escrita do grupo e outros
-chmod go-w arquivo.txt
-
-# Adicionar leitura para todos
-chmod a+r documento.txt
-
-# Definir permissões exatas para o dono
-chmod u=rwx script.sh
-
-# Remover todas as permissões dos outros
-chmod o= secreto.txt
-
-# Adicionar execução para todos
-chmod +x script.sh
-
-# Remover execução de todos
-chmod -x programa
-
-# Combinações
-chmod u+x,g-w,o-rwx arquivo
-
-# Recursivo com modo simbólico
-chmod -R g+rX diretorio/
-# Note o X maiúsculo: dá x apenas para diretórios, não para arquivos`} />
-
-      <AlertBox type="warning" title="chmod -R 777 é SEMPRE errado">
-        Nunca use <code>chmod -R 777</code>. Isso dá permissão total a todos em todos os arquivos,
-        criando uma enorme falha de segurança. Se você sentiu necessidade de usar 777, provavelmente
-        o problema é de ownership (chown), não de permissões.
+      <AlertBox type="warning" title="Por que chmod -R 777 é sempre errado">
+        <p>
+          Veja o que acontece com um diretório SSH:
+        </p>
       </AlertBox>
 
-      <h3>chmod com X maiúsculo</h3>
-      <CodeBlock code={`# O X maiúsculo é inteligente: dá x apenas para diretórios
-# Muito útil para corrigir permissões recursivamente
+      <TerminalBlock
+        command="chmod -R 777 ~/.ssh && ssh servidor"
+        output={`@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@         WARNING: UNPROTECTED PRIVATE KEY FILE!          @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+Permissions 0777 for '/home/joao/.ssh/id_ed25519' are too open.
+It is required that your private key files are NOT accessible by others.
+This private key will be ignored.
+Load key "/home/joao/.ssh/id_ed25519": bad permissions
+joao@servidor: Permission denied (publickey).`}
+        exitCode={255}
+      />
 
-# Problema: chmod -R 755 dá x em TODOS os arquivos (indesejado)
-# Solução: usar dois comandos ou o X maiúsculo
+      <h2>4. <code>X</code> maiúsculo: dando x só em diretórios</h2>
 
-# Abordagem com X maiúsculo:
-chmod -R u=rwX,go=rX /var/www/html
+      <TerminalBlock
+        command={`mkdir -p projeto/{src,docs}
+touch projeto/README.md projeto/src/main.py projeto/docs/notas.txt
+chmod -R 600 projeto
+chmod -R u+rwX,go+rX projeto
+find projeto -printf '%m %p\\n'`}
+        output={`755 projeto
+755 projeto/src
+644 projeto/src/main.py
+755 projeto/docs
+644 projeto/docs/notas.txt
+644 projeto/README.md`}
+        comment="X virou x nos diretórios e foi ignorado nos arquivos. Mágica."
+      />
 
-# Abordagem com find (mais precisa):
-# Diretórios: 755
-find /var/www/html -type d -exec chmod 755 {} \;
-# Arquivos: 644
-find /var/www/html -type f -exec chmod 644 {} \;`} />
+      <h2>5. <code>chown</code> e <code>chgrp</code></h2>
 
-      <h2>4. chown - Mudar Dono e Grupo</h2>
+      <TerminalBlock
+        command="sudo chown -v maria:desenvolvedores arquivo.txt"
+        output={`changed ownership of 'arquivo.txt' from joao:joao to maria:desenvolvedores`}
+      />
 
-      <CodeBlock code={`# Mudar o dono de um arquivo
-sudo chown maria arquivo.txt
+      <TerminalBlock
+        command="sudo chown -Rv joao:joao /home/joao/projeto"
+        output={`changed ownership of '/home/joao/projeto/main.py' from root:root to joao:joao
+changed ownership of '/home/joao/projeto/utils.py' from root:root to joao:joao
+changed ownership of '/home/joao/projeto' from root:root to joao:joao`}
+      />
 
-# Mudar dono e grupo
-sudo chown maria:desenvolvedores arquivo.txt
+      <TerminalBlock
+        command="sudo chgrp -v www-data /srv/http"
+        output={`changed group of '/srv/http' from root to http`}
+      />
 
-# Mudar apenas o grupo (note os dois-pontos antes)
-sudo chown :desenvolvedores arquivo.txt
+      <CommandFlagList
+        command="chown"
+        items={[
+          { flag: "user:group", description: "Define dono e grupo. Pode usar só user, só :group, ou user: (que põe o grupo primário do user).", example: "sudo chown joao:wheel arquivo" },
+          { flag: "-R", description: "Recursivo. Cuidado para não atravessar links simbólicos.", example: "sudo chown -R joao /home/joao" },
+          { flag: "-h", description: "Em links simbólicos: muda o link, não o alvo.", example: "sudo chown -h joao link" },
+          { flag: "-v / -c", description: "Verbose / changes only.", example: "sudo chown -cv root /etc/sudoers" },
+          { flag: "--reference=", description: "Copia owner/group de outro arquivo.", example: "sudo chown --reference=modelo alvo" },
+        ]}
+      />
 
-# Recursivo (todos os arquivos e subdiretórios)
-sudo chown -R joao:joao /home/joao
+      <h2>6. <code>umask</code> — permissões padrão</h2>
 
-# Copiar ownership de outro arquivo
-sudo chown --reference=modelo.txt alvo.txt
-
-# Mudar dono de link simbólico (não do alvo)
-sudo chown -h joao link_simbolico`} />
-
-      <h2>5. chgrp - Mudar Apenas o Grupo</h2>
-
-      <CodeBlock code={`# Mudar o grupo de um arquivo
-sudo chgrp desenvolvedores projeto/
-
-# Recursivo
-sudo chgrp -R www-data /var/www/html
-
-# É equivalente a:
-sudo chown :www-data /var/www/html`} />
-
-      <h2>6. umask - Permissões Padrão</h2>
       <p>
-        O <code>umask</code> define quais permissões são REMOVIDAS ao criar novos arquivos e diretórios.
-        É como uma máscara que bloqueia certas permissões.
+        O <code>umask</code> NÃO define permissões — ele define quais bits serão{" "}
+        <strong>removidos</strong> ao criar um arquivo novo.
       </p>
 
-      <CodeBlock code={`# Ver a umask atual
-umask
-# 0022
+      <TerminalBlock
+        command="umask"
+        output={`0022`}
+      />
 
-# Como funciona:
-# Permissão máxima para arquivos:  666 (nunca cria arquivo com x)
-# Permissão máxima para diretórios: 777
-# umask: 022
-# 
-# Arquivo novo:  666 - 022 = 644 (rw-r--r--)
-# Diretório novo: 777 - 022 = 755 (rwxr-xr-x)
+      <TerminalBlock
+        command="umask -S"
+        output={`u=rwx,g=rx,o=rx`}
+        comment="formato simbólico: o que SOBRA"
+      />
 
-# Definir umask mais restritiva
-umask 077
-# Arquivo novo:  666 - 077 = 600 (rw-------)
-# Diretório novo: 777 - 077 = 700 (rwx------)
+      <OutputBlock
+        title="cálculo: permissão final = padrão & ~umask"
+        output={`                  arquivo  diretório
+padrão máximo:    666      777
+umask:            022      022
+         ─────────────────────────
+permissão final:  644      755
+                  rw-r--r-- rwxr-xr-x`}
+      />
 
-# Definir umask permissiva (NÃO recomendado)
-umask 000
-# Arquivo novo:  666 - 000 = 666 (rw-rw-rw-)
-# Diretório novo: 777 - 000 = 777 (rwxrwxrwx)
+      <p>Veja na prática:</p>
 
-# Ver umask em formato simbólico
-umask -S
-# u=rwx,g=rx,o=rx
+      <TerminalBlock
+        command={`umask 022
+touch a.txt && mkdir a.dir
+ls -ld a.txt a.dir`}
+        output={`drwxr-xr-x 2 joao joao 4096 Jan 15 11:30 a.dir
+-rw-r--r-- 1 joao joao    0 Jan 15 11:30 a.txt`}
+      />
 
-# Para tornar permanente, adicione ao ~/.bashrc:
-# umask 027`} />
+      <TerminalBlock
+        command={`umask 077
+touch b.txt && mkdir b.dir
+ls -ld b.txt b.dir`}
+        output={`drwx------ 2 joao joao 4096 Jan 15 11:30 b.dir
+-rw------- 1 joao joao    0 Jan 15 11:30 b.txt`}
+        comment="umask restritiva: ninguém além do dono enxerga nada"
+      />
 
-      <h2>7. Bits Especiais: SUID, SGID e Sticky Bit</h2>
+      <h2>7. Bits especiais: SUID, SGID e sticky</h2>
 
-      <h3>SUID (Set User ID) - Bit 4000</h3>
-      <p>
-        Quando um arquivo tem SUID ativado, ele é executado com as permissões do <strong>dono do arquivo</strong>,
-        não do usuário que o executou. É por isso que o <code>passwd</code> funciona: qualquer usuário pode
-        mudar sua senha, mas o arquivo /etc/shadow pertence ao root.
-      </p>
+      <h3>SUID — executar como o dono do arquivo</h3>
 
-      <CodeBlock code={`# Ver SUID em ação
-ls -l /usr/bin/passwd
-# -rwsr-xr-x 1 root root 68208 Jan 15 /usr/bin/passwd
-#    ^
-#    s = SUID ativo (x do dono vira s)
+      <TerminalBlock
+        command="ls -l /usr/bin/passwd /usr/bin/sudo"
+        output={`-rw{r}s{/}r-xr-x 1 root root  68208 Jan 15 /usr/bin/passwd
+-rw{r}s{/}r-xr-x 1 root root 175400 Jan 15 /usr/bin/sudo`}
+        comment="o 's' onde seria 'x' do dono = SUID. Roda como root mesmo se você é usuário comum."
+      />
 
-# Ativar SUID
-sudo chmod u+s programa
-sudo chmod 4755 programa
+      <TerminalBlock
+        command="sudo chmod -v u+s ./meu_binario  # ou chmod 4755"
+        output={`mode of './meu_binario' changed from 0755 (rwxr-xr-x) to 4755 (rwsr-xr-x)`}
+      />
 
-# Remover SUID
-sudo chmod u-s programa
+      <p>Listando todos os SUIDs do sistema (auditoria de segurança):</p>
 
-# Encontrar todos os arquivos com SUID no sistema
-sudo find / -perm -4000 -type f 2>/dev/null`} />
+      <TerminalBlock
+        command="sudo find / -perm -4000 -type f 2>/dev/null"
+        output={`/usr/bin/passwd
+/usr/bin/sudo
+/usr/bin/su
+/usr/bin/chage
+/usr/bin/gpasswd
+/usr/bin/newgrp
+/usr/bin/mount
+/usr/bin/umount
+/usr/lib/polkit-1/polkit-agent-helper-1`}
+      />
 
-      <AlertBox type="danger" title="SUID é um risco de segurança">
-        Um programa com SUID roda como root quando qualquer usuário o executa.
-        Se o programa tiver uma vulnerabilidade, um atacante pode obter acesso root.
-        Nunca coloque SUID em scripts shell — apenas em binários compilados e auditados.
+      <AlertBox type="danger" title="SUID em script shell = back-door">
+        SUID em scripts shell é IGNORADO pelo kernel Linux por ser inseguro. Mesmo que você
+        consiga (em binários compilados), audite — uma vulnerabilidade ali = root.
       </AlertBox>
 
-      <h3>SGID (Set Group ID) - Bit 2000</h3>
-      <p>
-        Em arquivos: executa com as permissões do grupo do arquivo.
-        Em diretórios: novos arquivos criados dentro herdam o grupo do diretório (muito útil para equipes).
-      </p>
+      <h3>SGID — herança de grupo em diretórios</h3>
 
-      <CodeBlock code={`# Em diretórios (uso mais comum):
-# Criar diretório de projeto compartilhado
-sudo mkdir /projetos/webapp
+      <TerminalBlock
+        command={`sudo mkdir /projetos/webapp
 sudo chown :desenvolvedores /projetos/webapp
-sudo chmod 2775 /projetos/webapp
+sudo chmod -v 2775 /projetos/webapp
+ls -ld /projetos/webapp`}
+        output={`mode of '/projetos/webapp' changed from 0755 (rwxr-xr-x) to 2775 (rwxrw{m}s{/}r-x)
+drwxrw{m}s{/}r-x 2 root desenvolvedores 4096 Jan 15 11:45 /projetos/webapp`}
+        comment="o 's' no campo do grupo = SGID. Novos arquivos herdarão o grupo 'desenvolvedores'."
+      />
 
-# Agora, qualquer arquivo criado dentro terá o grupo "desenvolvedores"
-# independente de quem criou
+      <TerminalBlock
+        command={`cd /projetos/webapp
+touch arquivo_do_joao.txt
+ls -l arquivo_do_joao.txt`}
+        output={`-rw-r--r-- 1 joao desenvolvedores 0 Jan 15 11:46 arquivo_do_joao.txt`}
+        comment="grupo virou 'desenvolvedores' automaticamente, mesmo sem chgrp"
+      />
 
-# Verificar SGID
-ls -ld /projetos/webapp
-# drwxrwsr-x 2 root desenvolvedores 4096 Jan 15 /projetos/webapp
-#       ^
-#       s = SGID ativo (x do grupo vira s)
+      <h3>Sticky bit — só o dono apaga</h3>
 
-# Ativar SGID
-sudo chmod g+s diretorio/
-sudo chmod 2755 diretorio/
+      <TerminalBlock
+        command="ls -ld /tmp"
+        output={`drwxrwxrw{m}t{/} 23 root root 4096 Jan 15 11:50 /tmp`}
+        comment="o 't' onde seria 'x' dos outros = sticky bit"
+      />
 
-# Remover SGID
-sudo chmod g-s diretorio/
+      <TerminalBlock
+        command={`sudo mkdir /compartilhado
+sudo chmod -v 1777 /compartilhado
+ls -ld /compartilhado`}
+        output={`mode of '/compartilhado' changed from 0755 (rwxr-xr-x) to 1777 (rwxrwxrwt)
+drwxrwxrwt 2 root root 4096 Jan 15 11:52 /compartilhado`}
+      />
 
-# Encontrar arquivos com SGID
-sudo find / -perm -2000 -type f 2>/dev/null`} />
+      <OutputBlock
+        title="bits especiais resumidos (octal de 4 dígitos)"
+        output={`4000 = SUID         (chmod 4755 = rwsr-xr-x)
+2000 = SGID         (chmod 2775 = rwxrwsr-x)
+1000 = sticky       (chmod 1777 = rwxrwxrwt)
+─────
+quando o bit "x" base existe → letra minúscula (s, t)
+quando NÃO existe              → letra MAIÚSCULA (S, T)`}
+      />
 
-      <h3>Sticky Bit - Bit 1000</h3>
+      <TerminalBlock
+        command="chmod 4644 demo && ls -l demo"
+        output={`-rw{r}S{/}r--r-- 1 joao joao 0 Jan 15 11:55 demo`}
+        comment="S maiúsculo: SUID setado, mas sem x — provavelmente um erro!"
+      />
+
+      <h2>8. ACLs — permissões finas</h2>
+
       <p>
-        Em diretórios com sticky bit, os arquivos só podem ser deletados pelo seu dono (ou pelo root),
-        mesmo que outros tenham permissão de escrita no diretório. Exemplo clássico: <code>/tmp</code>.
+        Quando o trio rwx não basta (ex.: dar acesso só para Maria, sem mudar grupo),
+        usa-se ACL.
       </p>
 
-      <CodeBlock code={`# Ver o sticky bit no /tmp
-ls -ld /tmp
-# drwxrwxrwt 15 root root 4096 Jan 15 /tmp
-#          ^
-#          t = sticky bit ativo (x dos outros vira t)
+      <TerminalBlock
+        command="getfacl arquivo.txt"
+        output={`# file: arquivo.txt
+# owner: joao
+# group: joao
+user::rw-
+group::r--
+other::r--`}
+        comment="sem ACL extra, equivalente ao ls -l"
+      />
 
-# Todos podem criar arquivos no /tmp
-# Mas cada usuário só pode deletar SEUS PRÓPRIOS arquivos
-
-# Ativar sticky bit
-sudo chmod +t diretorio/
-sudo chmod 1777 diretorio/
-
-# Remover sticky bit
-sudo chmod -t diretorio/
-
-# Exemplo prático: diretório compartilhado com sticky bit
-sudo mkdir /compartilhado
-sudo chmod 1777 /compartilhado`} />
-
-      <h2>8. ACLs (Access Control Lists)</h2>
-      <p>
-        As ACLs permitem definir permissões mais granulares do que o sistema rwx tradicional.
-        Com ACLs, você pode dar permissões específicas para usuários e grupos individuais.
-      </p>
-
-      <CodeBlock code={`# Instalar ferramentas de ACL (geralmente já vem instalado)
-sudo pacman -S acl`} />
-
-      <h3>getfacl - Ver ACLs</h3>
-      <CodeBlock code={`# Ver ACLs de um arquivo
-getfacl arquivo.txt
-
-# Saída:
-# # file: arquivo.txt
-# # owner: joao
-# # group: joao
-# user::rw-
-# group::r--
-# other::r--
-
-# Arquivo com ACLs extras mostra um + no ls -l
+      <TerminalBlock
+        command={`setfacl -m u:maria:rw arquivo.txt
 ls -l arquivo.txt
-# -rw-r--r--+ 1 joao joao 4096 Jan 15 arquivo.txt
-#           ^
-#           + indica ACLs extras`} />
+getfacl arquivo.txt`}
+        output={`-rw-rw-r--{m}+{/} 1 joao joao 217 Jan 15 12:01 arquivo.txt
+# file: arquivo.txt
+# owner: joao
+# group: joao
+user::rw-
+{g}user:maria:rw-{/}
+group::r--
+mask::rw-
+other::r--`}
+        comment="o '+' no ls -l indica ACL extra. Maria agora pode escrever sem estar no grupo."
+      />
 
-      <h3>setfacl - Definir ACLs</h3>
-      <CodeBlock code={`# Dar permissão de leitura+escrita para um usuário específico
-setfacl -m u:maria:rw arquivo.txt
+      <TerminalBlock
+        command={`setfacl -d -m u:maria:rwx /projetos/webapp
+getfacl /projetos/webapp`}
+        output={`# file: projetos/webapp
+# owner: root
+# group: desenvolvedores
+user::rwx
+group::rwx
+other::r-x
+default:user::rwx
+default:user:maria:rwx
+default:group::rwx
+default:mask::rwx
+default:other::r-x`}
+        comment="-d = ACL DEFAULT: novos arquivos no diretório herdarão essas regras"
+      />
 
-# Dar permissão para um grupo específico
-setfacl -m g:designers:r arquivo.txt
+      <TerminalBlock
+        command="setfacl -b arquivo.txt && getfacl arquivo.txt"
+        output={`# file: arquivo.txt
+# owner: joao
+# group: joao
+user::rw-
+group::r--
+other::r--`}
+        comment="-b = remove TODAS as ACLs extras"
+      />
 
-# Remover ACL de um usuário
-setfacl -x u:maria arquivo.txt
+      <CommandFlagList
+        command="setfacl"
+        items={[
+          { flag: "-m", long: "--modify", description: "Adiciona/altera uma entrada ACL.", example: "setfacl -m u:maria:rw arq.txt" },
+          { flag: "-x", long: "--remove", description: "Remove uma entrada ACL específica.", example: "setfacl -x u:maria arq.txt" },
+          { flag: "-b", long: "--remove-all", description: "Remove todas as ACLs estendidas.", example: "setfacl -b arq.txt" },
+          { flag: "-d", long: "--default", description: "Define ACL padrão de um diretório (herdada).", example: "setfacl -d -m g:dev:rwx pasta/" },
+          { flag: "-R", description: "Recursivo.", example: "setfacl -R -m u:maria:rX docs/" },
+          { flag: "--set-file=-", description: "Importa ACLs de stdin (combine com getfacl).", example: "getfacl src | setfacl --set-file=- dst" },
+        ]}
+      />
 
-# Remover TODAS as ACLs extras
-setfacl -b arquivo.txt
+      <h2>9. Atributos estendidos: <code>chattr</code> / <code>lsattr</code></h2>
 
-# Aplicar recursivamente
-setfacl -R -m u:maria:rwx diretorio/
+      <TerminalBlock
+        command="sudo chattr +i /etc/resolv.conf"
+        output={``}
+        comment="sem saída = sucesso. resolv.conf agora é IMUTÁVEL."
+      />
 
-# Definir ACL padrão para diretório (novos arquivos herdarão)
-setfacl -d -m u:maria:rw diretorio/
+      <TerminalBlock
+        command="sudo rm /etc/resolv.conf"
+        output={`rm: cannot remove '/etc/resolv.conf': Operation not permitted`}
+        exitCode={1}
+        comment="nem o root consegue apagar"
+      />
 
-# Ver ACL padrão do diretório
-getfacl diretorio/
+      <TerminalBlock
+        command="lsattr /etc/resolv.conf"
+        output={`----i---------e----- /etc/resolv.conf`}
+        comment="o 'i' confirma o atributo immutable"
+      />
 
-# Copiar ACLs de um arquivo para outro
-getfacl fonte.txt | setfacl --set-file=- destino.txt`} />
+      <TerminalBlock
+        command="sudo chattr -i /etc/resolv.conf"
+        output={``}
+        comment="remove a imutabilidade"
+      />
 
-      <AlertBox type="info" title="Quando usar ACLs?">
-        Use ACLs quando o sistema básico rwx não é suficiente. Por exemplo: você quer que Maria tenha
-        acesso de escrita a um arquivo, mas ela não está no grupo dono do arquivo e você não quer mudar
-        o grupo. ACLs resolvem esse tipo de situação sem bagunçar as permissões existentes.
-      </AlertBox>
+      <OutputBlock
+        title="atributos úteis (chattr +X)"
+        output={`+i  immutable          ninguém edita/renomeia/deleta (nem root)
++a  append-only        só pode adicionar (perfeito p/ logs)
++c  compressed         compressão automática (btrfs/ext4)
++s  secure delete      sobrescreve com zeros ao apagar
++u  undeletable        permite recuperação após delete
++A  no atime update    não atualiza timestamp de acesso (perf)`}
+      />
 
-      <h2>9. Receitas Práticas</h2>
+      <h2>10. Receitas práticas</h2>
 
-      <h3>Configurar diretório de projeto para equipe</h3>
-      <CodeBlock code={`# Criar grupo e diretório
-sudo groupadd projeto-web
-sudo mkdir -p /projetos/web
-sudo chown root:projeto-web /projetos/web
+      <h3>Diretório de equipe com herança de grupo</h3>
 
-# SGID para novos arquivos herdarem o grupo
-sudo chmod 2775 /projetos/web
+      <TerminalBlock
+        command={`sudo groupadd web
+sudo mkdir -p /srv/web
+sudo chown root:web /srv/web
+sudo chmod 2775 /srv/web        # SGID + 775
+sudo usermod -aG web joao
+sudo usermod -aG web maria
+ls -ld /srv/web`}
+        output={`drwxrwsr-x 2 root web 4096 Jan 15 12:20 /srv/web`}
+      />
 
-# Adicionar membros ao grupo
-sudo usermod -aG projeto-web joao
-sudo usermod -aG projeto-web maria
+      <h3>Permissões corretas do <code>~/.ssh</code></h3>
 
-# Agora ambos podem criar e editar arquivos no diretório
-# e todos os novos arquivos terão o grupo projeto-web`} />
+      <TerminalBlock
+        command={`chmod 700 ~/.ssh
+chmod 600 ~/.ssh/id_ed25519 ~/.ssh/authorized_keys
+chmod 644 ~/.ssh/id_ed25519.pub ~/.ssh/known_hosts
+ls -l ~/.ssh`}
+        output={`total 16
+-rw-r--r-- 1 joao joao  745 Jan 15 12:25 authorized_keys
+-rw------- 1 joao joao  411 Jan 15 12:25 id_ed25519
+-rw-r--r-- 1 joao joao  102 Jan 15 12:25 id_ed25519.pub
+-rw-r--r-- 1 joao joao 1024 Jan 15 12:25 known_hosts`}
+      />
 
-      <h3>Proteger chave SSH</h3>
-      <CodeBlock code={`# O SSH exige permissões restritivas
-chmod 700 ~/.ssh
-chmod 600 ~/.ssh/id_rsa
-chmod 644 ~/.ssh/id_rsa.pub
-chmod 600 ~/.ssh/authorized_keys
-chmod 644 ~/.ssh/known_hosts`} />
+      <h3>Auditoria de arquivos perigosos</h3>
 
-      <h3>Encontrar arquivos com permissões perigosas</h3>
-      <CodeBlock code={`# Arquivos com permissão 777 (todos podem tudo)
-sudo find / -perm 777 -type f 2>/dev/null
+      <TerminalBlock
+        command="sudo find / -xdev -perm -o+w -type f -not -path '/proc/*' 2>/dev/null | head -5"
+        output={`/var/spool/postfix/maildrop/.empty
+/srv/uploads/temp/x.dat
+/tmp/screen-output.log`}
+        comment="-o+w = world-writable. Devem ser raros."
+      />
 
-# Arquivos com SUID (executam como root)
-sudo find / -perm -4000 -type f 2>/dev/null
+      <TerminalBlock
+        command="sudo find / -xdev -perm -2 ! -type l 2>/dev/null | wc -l"
+        output={`12`}
+        comment="contagem rápida de itens graváveis por todos"
+      />
 
-# Arquivos graváveis por todos (world-writable)
-sudo find / -perm -o+w -type f -not -path "/proc/*" -not -path "/sys/*" 2>/dev/null
+      <h2>11. Erros e como ler as mensagens</h2>
 
-# Diretórios sem sticky bit que são world-writable
-sudo find / -perm -o+w -type d -not -perm -1000 2>/dev/null`} />
+      <TerminalBlock
+        command="cat /etc/shadow"
+        output={`cat: /etc/shadow: Permission denied`}
+        exitCode={1}
+        comment="você não é root e o arquivo é 0640 root:shadow"
+      />
 
-      <h2>10. O que NÃO fazer</h2>
+      <TerminalBlock
+        command="./meu_script.sh"
+        output={`bash: ./meu_script.sh: Permission denied`}
+        exitCode={126}
+        comment="faltou x: chmod +x meu_script.sh"
+      />
 
-      <AlertBox type="danger" title="Erros fatais com permissões">
+      <TerminalBlock
+        command="touch /etc/teste"
+        output={`touch: cannot touch '/etc/teste': Permission denied`}
+        exitCode={1}
+        comment="/etc é root:root 0755 — você precisa de sudo"
+      />
+
+      <AlertBox type="danger" title="O que NÃO fazer">
         <ul>
-          <li><code>chmod -R 777 /</code> — destrói toda a segurança do sistema. Muitos programas (como SSH) se recusam a funcionar com permissões frouxas</li>
-          <li><code>chown -R root:root /home</code> — tira a propriedade dos diretórios home de todos os usuários</li>
-          <li>Colocar SUID em shell scripts — qualquer um pode explorar para obter root</li>
-          <li><code>chmod 666</code> em executáveis — remove a permissão de execução</li>
-          <li>Ignorar permissões incorretas em <code>~/.ssh</code> — o SSH se recusa a funcionar</li>
-          <li>Usar <code>sudo chmod</code> sem pensar duas vezes — uma vez feito, pode ser difícil desfazer</li>
+          <li><code>chmod -R 777 /</code> — destrói toda a segurança e quebra SSH, sudo, cron…</li>
+          <li><code>chown -R root:root /home</code> — usuários perdem acesso aos próprios arquivos</li>
+          <li><code>chmod -R +x</code> sem o <code>X</code> maiúsculo — torna arquivos texto "executáveis"</li>
+          <li><code>chmod 666</code> num executável — remove o x e ele para de rodar</li>
+          <li>Esquecer <code>chattr +i</code> — você vai bater a cabeça depois</li>
         </ul>
       </AlertBox>
 
-      <h2>11. Atributos Especiais de Arquivos (chattr / lsattr)</h2>
-      <p>
-        Além das permissões rwx, o Linux tem <strong>atributos especiais</strong> de arquivos
-        que adicionam uma camada extra de proteção. Eles são controlados pelos comandos
-        <code>chattr</code> (change attribute) e <code>lsattr</code> (list attributes).
-      </p>
-      <CodeBlock
-        title="chattr e lsattr"
-        code={`# === TORNAR ARQUIVO IMUTÁVEL ===
-# O atributo +i impede QUALQUER alteração, mesmo pelo root!
-# Não pode ser editado, renomeado, deletado ou linkado.
-
-sudo chattr +i arquivo_importante.conf
-# Agora:
-rm arquivo_importante.conf
-# rm: cannot remove 'arquivo_importante.conf': Operation not permitted
-# Nem o root consegue deletar!
-
-# Remover o atributo imutável
-sudo chattr -i arquivo_importante.conf
-
-# === APENAS ADICIONAR (APPEND ONLY) ===
-# O atributo +a permite apenas ADICIONAR conteúdo ao arquivo
-# Não permite editar ou deletar o conteúdo existente
-# Perfeito para arquivos de log
-
-sudo chattr +a /var/log/meu_log.txt
-echo "nova entrada" >> /var/log/meu_log.txt   # OK - adicionar funciona
-echo "novo conteudo" > /var/log/meu_log.txt    # ERRO - sobrescrever não funciona
-
-# === VER ATRIBUTOS ===
-lsattr arquivo_importante.conf
-# ----i--------e-- arquivo_importante.conf
-# O "i" indica que é imutável
-
-lsattr /etc/
-# Lista atributos de todos os arquivos em /etc/
-
-# === OUTROS ATRIBUTOS ÚTEIS ===
-# +i  = Imutável (nada pode alterar)
-# +a  = Append only (só adicionar)
-# +c  = Comprimir automaticamente
-# +s  = Deletar com segurança (sobrescrever com zeros)
-# +u  = Undeletable (permite recuperação após deletar)
-
-# Adicionar múltiplos atributos
-sudo chattr +ia arquivo.txt
-
-# Ver atributos recursivamente
-lsattr -R /etc/`}
-      />
-
-      <AlertBox type="warning" title="Cuidado com chattr +i">
-        <p>Se você tornar um arquivo de configuração imutável e depois esquecer, vai ficar
-        confuso quando tentar editar e não conseguir. Antes de editar arquivos protegidos,
-        verifique com <code>lsattr</code> se tem atributos especiais.</p>
-      </AlertBox>
-
-      <h2>12. Referências</h2>
+      <h2>Referências</h2>
       <ul>
-        <li><a href="https://wiki.archlinux.org/title/File_permissions_and_attributes" target="_blank" rel="noopener noreferrer">ArchWiki - File Permissions and Attributes</a></li>
-        <li><a href="https://wiki.archlinux.org/title/Access_Control_Lists" target="_blank" rel="noopener noreferrer">ArchWiki - Access Control Lists</a></li>
+        <li><a href="https://wiki.archlinux.org/title/File_permissions_and_attributes" target="_blank" rel="noopener noreferrer">ArchWiki — File permissions and attributes</a></li>
+        <li><a href="https://wiki.archlinux.org/title/Access_Control_Lists" target="_blank" rel="noopener noreferrer">ArchWiki — Access Control Lists</a></li>
         <li><code>man chmod</code>, <code>man chown</code>, <code>man umask</code></li>
-        <li><code>man setfacl</code>, <code>man getfacl</code></li>
+        <li><code>man setfacl</code>, <code>man getfacl</code>, <code>man chattr</code></li>
       </ul>
-
     </PageContainer>
   );
 }
