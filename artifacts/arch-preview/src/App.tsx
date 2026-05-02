@@ -26,6 +26,7 @@ import Processos from "@/pages/Processos";
 import Redes from "@/pages/Redes";
 import Ssh from "@/pages/Ssh";
 import Disco from "@/pages/Disco";
+import Hardware from "@/pages/Hardware";
 import ShellBash from "@/pages/ShellBash";
 import Redirecionamento from "@/pages/Redirecionamento";
 import Compressao from "@/pages/Compressao";
@@ -84,6 +85,7 @@ function Router() {
         <Route path="/processos" component={Processos} />
         <Route path="/redes" component={Redes} />
         <Route path="/ssh" component={Ssh} />
+        <Route path="/hardware" component={Hardware} />
         <Route path="/disco" component={Disco} />
         <Route path="/shell-bash" component={ShellBash} />
         <Route path="/redirecionamento" component={Redirecionamento} />

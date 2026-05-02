@@ -537,6 +537,367 @@ EOF"
         Sem isso, systemd usa a versão em cache.
       </AlertBox>
 
+      <h2>Comandos auxiliares do systemd (hostnamectl, timedatectl, localectl, loginctl)</h2>
+
+      <p>
+        Além do <code>systemctl</code> e <code>journalctl</code>, o systemd traz uma família de
+        utilitários <code>*ctl</code> que conversam com seus daemons via D-Bus. São os jeitos oficiais
+        (e idempotentes) de mexer em hostname, fuso, locale, teclado e sessões — sem editar arquivos
+        à mão.
+      </p>
+
+      <h3>hostnamectl — hostname, chassis e metadados da máquina</h3>
+
+      <p>
+        O systemd entende <strong>três tipos</strong> de hostname: <code>static</code> (em
+        <code> /etc/hostname</code>, persiste para sempre), <code>pretty</code> (rótulo bonito com
+        acentos/espaços, fica em <code>/etc/machine-info</code>) e <code>transient</code> (volátil, vem
+        do DHCP e some no reboot). O <code>hostnamectl</code> mostra os três e cuida de cada um.
+      </p>
+
+      <TerminalBlock
+        command="hostnamectl"
+        output={` Static hostname: archlinux
+ Pretty hostname: Meu Laptop
+       Icon name: computer-laptop
+         Chassis: laptop {dim}🖥{/}
+      Machine ID: 9b2f1c4e3d6a48bcb7e6f0c8e2d11a55
+         Boot ID: c1f7a8d24b8a4f1f9d6c0a1e2f3b4c5d
+Operating System: Arch Linux
+          Kernel: Linux 6.8.7-arch1-1
+    Architecture: x86-64
+ Hardware Vendor: LENOVO
+  Hardware Model: 20Y50029BR
+Firmware Version: R1MET69W (1.39 )
+   Firmware Date: Mon 2024-02-12
+    Firmware Age: 1month 3w 5d`}
+      />
+
+      <OutputBlock
+        title="Linhas-chave do hostnamectl explicadas"
+        annotations={[
+          { line: 0, note: "vai para /etc/hostname (persiste)" },
+          { line: 1, note: "rótulo livre em /etc/machine-info" },
+          { line: 3, note: "ícone exibido por GNOME/KDE" },
+          { line: 4, note: "machine-id único — gerado em /etc/machine-id" },
+          { line: 5, note: "muda a cada boot (em /proc/sys/kernel/random/boot_id)" },
+        ]}
+        output={` Static hostname: archlinux
+ Pretty hostname: Meu Laptop
+       Icon name: computer-laptop
+         Chassis: laptop
+      Machine ID: 9b2f1c4e3d6a48bcb7e6f0c8e2d11a55
+         Boot ID: c1f7a8d24b8a4f1f9d6c0a1e2f3b4c5d`}
+      />
+
+      <TerminalBlock
+        comment="muda o hostname static (escreve /etc/hostname e avisa o kernel)"
+        command="sudo hostnamectl set-hostname novo-nome"
+        output=""
+      />
+
+      <TerminalBlock
+        comment="rótulo bonito com acentos e espaços — só o pretty muda"
+        command={`sudo hostnamectl set-hostname --pretty "Meu Laptop"`}
+        output=""
+      />
+
+      <TerminalBlock
+        comment="define o tipo de chassis (afeta o ícone e dicas de energia)"
+        command="sudo hostnamectl set-chassis laptop"
+        output=""
+      />
+
+      <TerminalBlock
+        comment="checagem após mudar"
+        command="hostnamectl --static && hostnamectl --pretty"
+        output={`novo-nome
+Meu Laptop`}
+      />
+
+      <CommandFlagList
+        command="hostnamectl"
+        items={[
+          { flag: "(sem args)", description: "Mostra todos os metadados da máquina." },
+          { flag: "set-hostname NOME", description: "Define o hostname static (e o transient se ainda não houver)." },
+          { flag: "--static", description: "Lê/define apenas o static hostname.", example: "hostnamectl --static" },
+          { flag: "--pretty", description: "Lê/define apenas o pretty hostname (aceita acentos/espaços).", example: `hostnamectl set-hostname --pretty "Meu Notebook"` },
+          { flag: "--transient", description: "Lê/define apenas o transient (volátil, sobrescrito por DHCP/reboot)." },
+          { flag: "set-icon-name NOME", description: "Define o ícone (computer-laptop, computer-desktop, computer-server, etc.)." },
+          { flag: "set-chassis TIPO", description: "Tipo: desktop, laptop, server, tablet, handset, vm, container, embedded." },
+          { flag: "set-deployment AMB", description: "Marca o ambiente: development / integration / staging / production." },
+          { flag: "set-location LOCAL", description: "Texto livre de localização física (rack, sala, etc.)." },
+        ]}
+      />
+
+      <AlertBox type="info" title="static vs pretty vs transient (a confusão clássica)">
+        <strong>static</strong> é o nome canônico em <code>/etc/hostname</code> — só letras, números e
+        traços; persiste para sempre. <strong>pretty</strong> é um rótulo livre (acentos, emojis,
+        espaços) usado por interfaces gráficas — fica em <code>/etc/machine-info</code>.
+        <strong> transient</strong> é o que o kernel relata via <code>uname -n</code> em runtime;
+        normalmente é igual ao static, mas o DHCP pode sobrescrever. Mude o static para um nome
+        permanente e o pretty para mostrar bonito.
+      </AlertBox>
+
+      <h3>timedatectl — relógio, fuso e NTP</h3>
+
+      <TerminalBlock
+        command="timedatectl"
+        output={`               Local time: Wed 2024-03-20 17:04:31 -03
+           Universal time: Wed 2024-03-20 20:04:31 UTC
+                 RTC time: Wed 2024-03-20 20:04:31
+                Time zone: America/Sao_Paulo (-03, -0300)
+System clock synchronized: yes
+              NTP service: active
+          RTC in local TZ: no`}
+      />
+
+      <OutputBlock
+        title="Cada linha do timedatectl"
+        annotations={[
+          { line: 0, note: "horário do fuso configurado" },
+          { line: 1, note: "horário UTC equivalente" },
+          { line: 2, note: "relógio do hardware (CMOS) — idealmente em UTC" },
+          { line: 3, note: "fuso atual (link de /etc/localtime)" },
+          { line: 4, note: "yes = NTP sincronizou pelo menos uma vez" },
+          { line: 5, note: "active = systemd-timesyncd ou ntpd está rodando" },
+          { line: 6, note: "no = RTC em UTC (recomendado se só Linux)" },
+        ]}
+        output={`               Local time: Wed 2024-03-20 17:04:31 -03
+           Universal time: Wed 2024-03-20 20:04:31 UTC
+                 RTC time: Wed 2024-03-20 20:04:31
+                Time zone: America/Sao_Paulo (-03, -0300)
+System clock synchronized: yes
+              NTP service: active
+          RTC in local TZ: no`}
+      />
+
+      <TerminalBlock
+        command="timedatectl list-timezones | grep America/Sao"
+        output={`America/Sao_Paulo`}
+      />
+
+      <TerminalBlock
+        comment="define o fuso horário (cria symlink /etc/localtime → /usr/share/zoneinfo/...)"
+        command="sudo timedatectl set-timezone America/Sao_Paulo"
+        output=""
+      />
+
+      <TerminalBlock
+        comment="liga o NTP via systemd-timesyncd"
+        command="sudo timedatectl set-ntp true"
+        output=""
+      />
+
+      <TerminalBlock
+        comment="0 = RTC em UTC (recomendado); 1 = RTC no fuso local (só se houver dual-boot Windows)"
+        command="sudo timedatectl set-local-rtc 0"
+        output=""
+      />
+
+      <TerminalBlock
+        comment="inspeciona o estado do timesyncd (servidor, drift, jitter)"
+        command="timedatectl timesync-status"
+        output={`       Server: 162.159.200.1 (time.cloudflare.com)
+Poll interval: 34min 8s (min: 32s; max 34min 8s)
+         Leap: normal
+      Version: 4
+      Stratum: 3
+    Reference: A8C4DD58
+    Precision: 1us (-23)
+Root distance: 25.291ms (max: 5s)
+       Offset: -812us
+        Delay: 41.182ms
+       Jitter: 1.624ms
+ Packet count: 12
+    Frequency: -8.475ppm`}
+      />
+
+      <CommandFlagList
+        command="timedatectl"
+        items={[
+          { flag: "(sem args)", description: "Mostra status (local time, UTC, RTC, fuso, NTP)." },
+          { flag: "set-time HH:MM:SS", description: "Acerta manualmente (só funciona com NTP desligado).", example: "sudo timedatectl set-time '2024-03-20 17:00:00'" },
+          { flag: "set-timezone ZONA", description: "Define o fuso (use list-timezones para ver opções).", example: "sudo timedatectl set-timezone America/Sao_Paulo" },
+          { flag: "list-timezones", description: "Lista todos os fusos disponíveis." },
+          { flag: "set-ntp BOOL", description: "Liga (true) / desliga (false) sincronização NTP.", example: "sudo timedatectl set-ntp true" },
+          { flag: "set-local-rtc BOOL", description: "0 = RTC em UTC (Linux puro). 1 = RTC no fuso local (dual-boot Windows)." },
+          { flag: "timesync-status", description: "Status do systemd-timesyncd (servidor atual, offset, drift)." },
+          { flag: "show-timesync", description: "Mesma info em formato chave=valor (script-friendly)." },
+        ]}
+      />
+
+      <h3>localectl — locale e layout de teclado</h3>
+
+      <p>
+        O <code>localectl</code> mexe em <code>/etc/locale.conf</code> (idioma do sistema) e
+        <code> /etc/vconsole.conf</code> (teclado da console TTY), além do layout do X11.
+      </p>
+
+      <TerminalBlock
+        command="localectl"
+        output={`   System Locale: LANG=pt_BR.UTF-8
+       VC Keymap: br-abnt2
+      X11 Layout: br
+     X11 Variant: abnt2`}
+      />
+
+      <TerminalBlock
+        command="localectl list-locales | head -10"
+        output={`C.UTF-8
+en_US.UTF-8
+es_ES.UTF-8
+pt_BR.UTF-8
+pt_PT.UTF-8`}
+      />
+
+      <TerminalBlock
+        comment="define o idioma do sistema (escreve /etc/locale.conf)"
+        command="sudo localectl set-locale LANG=pt_BR.UTF-8"
+        output=""
+      />
+
+      <TerminalBlock
+        command="localectl list-keymaps | grep ^br"
+        output={`br-abnt
+br-abnt2
+br-latin1-abnt2
+br-latin1-us
+br-nodeadkeys`}
+      />
+
+      <TerminalBlock
+        comment="teclado da console TTY (/etc/vconsole.conf)"
+        command="sudo localectl set-keymap br-abnt2"
+        output=""
+      />
+
+      <TerminalBlock
+        comment="teclado do X11/Wayland (/etc/X11/xorg.conf.d/00-keyboard.conf)"
+        command="sudo localectl set-x11-keymap br abnt2"
+        output=""
+      />
+
+      <CommandFlagList
+        command="localectl"
+        items={[
+          { flag: "(sem args)", description: "Mostra locale do sistema, keymap da VC e layout X11." },
+          { flag: "list-locales", description: "Lista locales disponíveis (precisa estar habilitado em /etc/locale.gen)." },
+          { flag: "set-locale VAR=VALOR", description: "Define LANG, LC_TIME, LC_NUMERIC etc.", example: "sudo localectl set-locale LANG=pt_BR.UTF-8 LC_TIME=en_US.UTF-8" },
+          { flag: "list-keymaps", description: "Lista keymaps de console disponíveis." },
+          { flag: "set-keymap NOME", description: "Define o keymap da console TTY (e do X11 se não houver outro).", example: "sudo localectl set-keymap br-abnt2" },
+          { flag: "list-x11-keymap-models", description: "Lista modelos de teclado X11." },
+          { flag: "set-x11-keymap LAYOUT [MODELO [VARIANTE [OPÇÕES]]]", description: "Define layout X11/Wayland.", example: "sudo localectl set-x11-keymap br abnt2" },
+        ]}
+      />
+
+      <AlertBox type="warning" title="locale precisa estar gerado">
+        Antes de usar <code>set-locale LANG=pt_BR.UTF-8</code>, descomente a linha em
+        <code> /etc/locale.gen</code> e rode <code>sudo locale-gen</code>. Caso contrário você verá
+        <code> Failed to set locale: Invalid argument</code>.
+      </AlertBox>
+
+      <h3>loginctl — sessões, usuários e linger</h3>
+
+      <p>
+        O <code>loginctl</code> conversa com o <code>systemd-logind</code> — quem decide o que
+        acontece quando você loga, fecha a tampa do laptop ou aperta power. Também é como você
+        autoriza serviços de usuário a rodar mesmo sem você estar logado (<em>linger</em>).
+      </p>
+
+      <TerminalBlock
+        command="loginctl list-sessions"
+        output={`SESSION  UID USER SEAT  TTY
+      1 1000 joao seat0 tty1
+      2 1000 joao       pts/0
+      3 1001 maria      pts/1
+
+3 sessions listed.`}
+      />
+
+      <TerminalBlock
+        command="loginctl show-session 2"
+        output={`Id=2
+User=1000
+Name=joao
+Timestamp=Wed 2024-03-20 14:35:02 -03
+TimestampMonotonic=18432109
+VTNr=0
+Remote=no
+Service=sshd
+Leader=1247
+Audit=2
+Type=tty
+Class=user
+Active=yes
+State=active
+IdleHint=no
+LockedHint=no`}
+      />
+
+      <TerminalBlock
+        command="loginctl list-users"
+        output={`UID USER LINGER STATE
+1000 joao  no     active
+1001 maria no     active
+
+2 users listed.`}
+      />
+
+      <TerminalBlock
+        command="loginctl user-status joao"
+        output={`joao (1000)
+           Since: Wed 2024-03-20 14:32:18 -03; 2h 33min ago
+           State: active
+        Sessions: *1 2
+          Linger: no
+            Unit: user-1000.slice
+                  ├─session-1.scope
+                  │ ├─1102 /usr/lib/systemd/systemd --user
+                  │ └─1108 (sd-pam)
+                  └─user@1000.service
+                    └─app.slice
+                      └─pipewire.service
+                        └─1234 /usr/bin/pipewire`}
+      />
+
+      <TerminalBlock
+        comment="permite que serviços --user do joao rodem mesmo sem ele estar logado"
+        command="sudo loginctl enable-linger joao"
+        output=""
+      />
+
+      <TerminalBlock
+        comment="encerra uma sessão específica (manda SIGTERM no líder)"
+        command="sudo loginctl terminate-session 3"
+        output=""
+      />
+
+      <CommandFlagList
+        command="loginctl"
+        items={[
+          { flag: "list-sessions", description: "Lista todas as sessões abertas (TTY, SSH, gráficas)." },
+          { flag: "session-status [ID]", description: "Mostra status detalhado da sessão (default: a sua).", example: "loginctl session-status" },
+          { flag: "show-session ID", description: "Imprime todas as propriedades em formato chave=valor." },
+          { flag: "list-users", description: "Lista usuários com sessão ativa ou linger habilitado." },
+          { flag: "user-status [USER]", description: "Status do usuário (sessões, slice, processos)." },
+          { flag: "enable-linger USER", description: "Permite que o user manager (e seus services --user) rode sem login.", example: "sudo loginctl enable-linger joao" },
+          { flag: "disable-linger USER", description: "Desfaz o linger." },
+          { flag: "terminate-session ID", description: "Encerra a sessão (SIGTERM no líder)." },
+          { flag: "terminate-user USER", description: "Encerra todas as sessões do usuário." },
+          { flag: "lock-session [ID]", description: "Pede ao gerenciador de tela para travar." },
+          { flag: "kill-session ID", description: "Mata processos da sessão (com sinal customizável via --signal)." },
+        ]}
+      />
+
+      <AlertBox type="info" title="Para que serve enable-linger?">
+        Por padrão, quando você faz logout, o <code>systemd --user</code> e todos os seus serviços
+        de usuário (timers, daemons como Syncthing) são finalizados. Com
+        <code> sudo loginctl enable-linger joao</code>, o <code>user@1000.service</code> sobe junto
+        com o sistema e <strong>permanece</strong> mesmo sem login interativo — útil em servidores
+        headless, builds noturnos e sincronização contínua.
+      </AlertBox>
+
       <h2>Controle do sistema</h2>
 
       <TerminalBlock
