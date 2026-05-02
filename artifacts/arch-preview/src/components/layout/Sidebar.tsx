@@ -3,8 +3,12 @@ import { cn } from "@/lib/utils";
 import {
   BookOpen, Terminal, HardDrive, Shield, Settings,
   FileText, Users, Network, Cpu, Clock, History, PenTool,
-  Search, X, Folder, Lock, Package, Wrench, Code2, Wifi,
-  Eye, KeyRound, Archive, ChevronRight, GitBranch
+  Search, X, Folder, Lock, Package, Wrench, Code2,
+  Eye, KeyRound, Archive, ChevronRight, GitBranch,
+  Database, Server, Container, Globe, Languages, Activity,
+  Layers, Box, Save, Music, Gamepad2, Key, Zap, Boxes,
+  Workflow, Cloud, Edit3, ScrollText, Variable, Monitor,
+  Globe2, ShieldAlert, FileCode, Sparkles
 } from "lucide-react";
 
 const NAVIGATION = [
@@ -22,6 +26,8 @@ const NAVIGATION = [
       { path: "/instalacao", label: "Guia de Instalação", icon: HardDrive },
       { path: "/primeiros-passos", label: "Pós-Instalação", icon: Clock },
       { path: "/ambiente-grafico", label: "Ambiente Gráfico", icon: Settings },
+      { path: "/localizacao", label: "Localização (locale, timezone)", icon: Globe2 },
+      { path: "/ambientes-alternativos", label: "TTYs, tmux, distrobox", icon: Layers },
     ]
   },
   {
@@ -30,7 +36,9 @@ const NAVIGATION = [
       { path: "/navegacao", label: "Navegação", icon: Folder },
       { path: "/visualizacao", label: "Visualização", icon: Eye },
       { path: "/manipulacao-arquivos", label: "Manipulação de Arquivos", icon: FileText },
-      { path: "/editores", label: "Editores (nano, vim)", icon: PenTool },
+      { path: "/editores", label: "Editores (nano)", icon: PenTool },
+      { path: "/vim", label: "Vim — Tutorial", icon: Edit3 },
+      { path: "/man-pages", label: "Man Pages & Docs", icon: ScrollText },
     ]
   },
   {
@@ -45,13 +53,20 @@ const NAVIGATION = [
     items: [
       { path: "/pacman", label: "Pacman", icon: Package },
       { path: "/aur", label: "AUR & Helpers", icon: Package },
+      { path: "/codigo-fonte", label: "Compilar do Fonte", icon: FileCode },
+      { path: "/appimage", label: "AppImage", icon: Box },
+      { path: "/snap-flatpak", label: "Snap & Flatpak", icon: Boxes },
     ]
   },
   {
     title: "6. Sistema",
     items: [
       { path: "/systemd", label: "Systemd", icon: Cpu },
-      { path: "/processos", label: "Processos", icon: Cpu },
+      { path: "/boot", label: "Boot (GRUB, systemd-boot)", icon: Zap },
+      { path: "/kernel", label: "Kernel", icon: Cpu },
+      { path: "/journalctl", label: "JournalCtl & Logs", icon: ScrollText },
+      { path: "/cron", label: "Cron & Timers", icon: Clock },
+      { path: "/processos", label: "Processos", icon: Activity },
       { path: "/usuarios", label: "Usuários e Grupos", icon: Users },
     ]
   },
@@ -62,6 +77,11 @@ const NAVIGATION = [
       { path: "/redirecionamento", label: "Redirecionamento", icon: Terminal },
       { path: "/compressao", label: "Compressão", icon: Archive },
       { path: "/avancado", label: "Comandos Avançados", icon: Wrench },
+      { path: "/scripts-bash", label: "Scripts Bash", icon: FileCode },
+      { path: "/expansoes-bash", label: "Expansões do Bash", icon: Variable },
+      { path: "/variaveis-ambiente", label: "Variáveis de Ambiente", icon: Variable },
+      { path: "/aliases", label: "Aliases & Funções", icon: Sparkles },
+      { path: "/zsh", label: "Zsh & Oh-My-Zsh", icon: Terminal },
     ]
   },
   {
@@ -69,25 +89,93 @@ const NAVIGATION = [
     items: [
       { path: "/hardware", label: "Inspeção de Hardware", icon: Cpu },
       { path: "/disco", label: "Discos e Partições", icon: HardDrive },
+      { path: "/iostat", label: "IOStat & Performance", icon: Activity },
     ]
   },
   {
-    title: "9. Redes",
+    title: "9. Storage Avançado",
     items: [
-      { path: "/redes", label: "Redes", icon: Network },
+      { path: "/fstab", label: "Fstab & Mount", icon: HardDrive },
+      { path: "/particoes", label: "Particionamento", icon: HardDrive },
+      { path: "/luks", label: "LUKS — Criptografia", icon: Lock },
+      { path: "/lvm", label: "LVM — Logical Volumes", icon: Layers },
+      { path: "/backup", label: "Backup (rsync, borg)", icon: Save },
+      { path: "/timeshift", label: "Timeshift", icon: History },
+    ]
+  },
+  {
+    title: "10. Redes",
+    items: [
+      { path: "/redes", label: "Redes Básicas", icon: Network },
       { path: "/ssh", label: "SSH", icon: KeyRound },
+      { path: "/dns", label: "DNS", icon: Globe },
+      { path: "/vpn", label: "VPN (WireGuard)", icon: Shield },
+      { path: "/rede-avancada", label: "Rede Avançada (nft, ip)", icon: Network },
     ]
   },
   {
-    title: "10. Desenvolvimento",
+    title: "11. Servidores",
     items: [
+      { path: "/apache", label: "Apache HTTPD", icon: Server },
+      { path: "/nginx", label: "Nginx", icon: Server },
+      { path: "/samba", label: "Samba (SMB/CIFS)", icon: Server },
+    ]
+  },
+  {
+    title: "12. Containers & Virt",
+    items: [
+      { path: "/docker", label: "Docker", icon: Container },
+      { path: "/docker-compose", label: "Docker Compose", icon: Container },
+      { path: "/kvm", label: "KVM / QEMU", icon: Monitor },
+      { path: "/wine", label: "Wine", icon: Monitor },
+      { path: "/cloud-init", label: "Cloud-Init", icon: Cloud },
+    ]
+  },
+  {
+    title: "13. Bancos de Dados",
+    items: [
+      { path: "/postgresql", label: "PostgreSQL", icon: Database },
+      { path: "/mysql", label: "MySQL / MariaDB", icon: Database },
+    ]
+  },
+  {
+    title: "14. Linguagens",
+    items: [
+      { path: "/python", label: "Python", icon: Languages },
+      { path: "/nodejs", label: "Node.js", icon: Languages },
+      { path: "/php", label: "PHP", icon: Languages },
+      { path: "/java", label: "Java", icon: Languages },
+    ]
+  },
+  {
+    title: "15. DevOps",
+    items: [
+      { path: "/git", label: "Git", icon: GitBranch },
+      { path: "/vscode", label: "VS Code", icon: Code2 },
+      { path: "/ansible", label: "Ansible", icon: Workflow },
       { path: "/ambiente-dev", label: "Ambiente de Dev", icon: Code2 },
     ]
   },
   {
-    title: "11. Extras",
+    title: "16. Multimídia & Desktop",
     items: [
-      { path: "/seguranca", label: "Segurança", icon: Shield },
+      { path: "/multimedia", label: "Multimídia (PipeWire)", icon: Music },
+      { path: "/gaming", label: "Gaming (Steam, Proton)", icon: Gamepad2 },
+      { path: "/gnome-extensions", label: "GNOME Extensions", icon: Sparkles },
+    ]
+  },
+  {
+    title: "17. Segurança",
+    items: [
+      { path: "/seguranca", label: "Segurança (geral)", icon: Shield },
+      { path: "/apparmor", label: "AppArmor", icon: ShieldAlert },
+      { path: "/fail2ban", label: "Fail2Ban", icon: ShieldAlert },
+      { path: "/gpg", label: "GPG", icon: Key },
+    ]
+  },
+  {
+    title: "18. Extras",
+    items: [
       { path: "/troubleshooting", label: "Troubleshooting", icon: Wrench },
       { path: "/referencias", label: "Referências", icon: BookOpen },
     ]
