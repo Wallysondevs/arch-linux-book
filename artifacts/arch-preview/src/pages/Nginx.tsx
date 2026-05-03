@@ -14,6 +14,24 @@ export default function Nginx() {
       timeToRead="40 min"
       category="Servidores Web"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo pacman -S nginx</code>. Apache parado se rodando na 80.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Nginx</strong> — servidor web event-driven, criado para resolver o "C10K problem".
+      </p>
+      <p>
+        <strong>Server block</strong> — equivalente Nginx do "virtual host" do Apache. Ficam em <code>/etc/nginx/sites-available/</code> (Arch: convenção manual; padrão Arch é <code>/etc/nginx/nginx.conf</code> direto).
+      </p>
+      <p>
+        <strong>Upstream</strong> — grupo de servidores backend para load balancing.
+      </p>
+      <p>
+        <strong>Proxy reverso</strong> — Nginx repassa para Node/PHP-FPM/Python. Padrão moderno de produção.
+      </p>
+
       <p>
         O <strong>Nginx</strong> ("engine-x") é o servidor web/proxy reverso mais usado em
         produção moderna. Não tem <code>.htaccess</code>, mas é leve, assíncrono e brutal em

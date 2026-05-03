@@ -13,6 +13,24 @@ export default function Navegacao() {
       difficulty="iniciante"
       timeToRead="35 min"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com terminal. Conhecer o conceito de "diretório atual".
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>pwd</strong> — print working directory — diz onde você está.
+      </p>
+      <p>
+        <strong>cd</strong> — change directory. <code>cd -</code> volta ao anterior; <code>cd</code> sozinho vai pro home.
+      </p>
+      <p>
+        <strong>ls</strong> — lista. <code>-l</code> longo, <code>-a</code> oculto, <code>-h</code> tamanhos legíveis.
+      </p>
+      <p>
+        <strong>Path absoluto vs relativo</strong> — absoluto começa com <code>/</code>; relativo é a partir do <code>pwd</code>.
+      </p>
+
       <p>
         Navegar pelo sistema de arquivos é a habilidade mais fundamental que você precisa dominar no Linux.
         Diferente de um gerenciador gráfico, no terminal você se move com comandos de texto — e cada comando

@@ -14,6 +14,24 @@ export default function Particoes() {
       timeToRead="40 min"
       category="Storage"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo</code>. Cuidado <strong>extremo</strong>: ferramentas de particionamento podem destruir dados.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Tabela de partições</strong> — MBR (legado, máx 2 TB) ou GPT (moderno).
+      </p>
+      <p>
+        <strong>Partição primária / estendida / lógica</strong> — conceitos do MBR. GPT só tem partições "comuns".
+      </p>
+      <p>
+        <strong>parted / gdisk / fdisk / cfdisk</strong> — ferramentas CLI. <code>cfdisk</code> tem TUI amigável.
+      </p>
+      <p>
+        <strong>mkfs</strong> — formata uma partição com um filesystem (<code>mkfs.ext4</code>, <code>mkfs.btrfs</code>).
+      </p>
+
       <p>
         Particionar é dividir um disco em pedaços lógicos independentes, cada um com seu
         filesystem. No Arch isso normalmente acontece dentro do live ISO antes do{" "}

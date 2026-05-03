@@ -14,6 +14,27 @@ export default function RedeAvancada() {
       timeToRead="50 min"
       category="Redes"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo</code>. Útil ter visto <a href="#/redes">Redes</a>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>nftables</strong> — sucessor do iptables. Padrão moderno para firewall no Linux.
+      </p>
+      <p>
+        <strong>systemd-networkd</strong> — gerenciador de rede leve do systemd (alternativa ao NetworkManager).
+      </p>
+      <p>
+        <strong>NetworkManager</strong> — gerenciador GUI/CLI mais comum em desktops.
+      </p>
+      <p>
+        <strong>Bonding / Bridging</strong> — agregar interfaces (bond) ou criar pontes virtuais (bridge) para VMs/containers.
+      </p>
+      <p>
+        <strong>VLAN</strong> — segmentação lógica de rede via tag 802.1Q.
+      </p>
+
       <p>
         Diferente do Ubuntu (que usa <code>Netplan</code> sobre <code>systemd-networkd</code> ou
         <code> NetworkManager</code>), o Arch deixa <em>você</em> escolher. As três opções

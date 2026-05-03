@@ -14,6 +14,24 @@ export default function AppImage() {
       timeToRead="20 min"
       category="Pacotes Universais"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Desktop. Não exige <code>sudo</code> — basta marcar como executável. Pode precisar de <code>fuse2</code> instalado.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>AppImage</strong> — formato portátil: app + dependências em um único arquivo executável (sem instalar).
+      </p>
+      <p>
+        <strong>FUSE</strong> — sistema de arquivos em userspace que o AppImage usa para se montar em runtime.
+      </p>
+      <p>
+        <strong>AppImageLauncher</strong> — utilitário (no AUR) que integra AppImages ao menu de aplicativos.
+      </p>
+      <p>
+        <strong>Sandbox</strong> — AppImage <em>não</em> isola por padrão (diferente de Snap/Flatpak). É só empacotamento.
+      </p>
+
       <p>
         <strong>AppImage</strong> é um formato que empacota aplicativo + dependências em um
         único arquivo executável. Não precisa de root, não precisa instalar — basta dar

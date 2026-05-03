@@ -14,6 +14,27 @@ export default function Java() {
       timeToRead="35 min"
       category="Linguagens"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo</code>. JDK no Arch: <code>jdk-openjdk</code>, <code>jdk21-openjdk</code>, etc.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>JDK</strong> — Java Development Kit — compilador <code>javac</code> + runtime + ferramentas.
+      </p>
+      <p>
+        <strong>JRE</strong> — Java Runtime Environment — só para rodar.
+      </p>
+      <p>
+        <strong>OpenJDK</strong> — implementação livre. Padrão no Arch.
+      </p>
+      <p>
+        <strong>archlinux-java</strong> — utilitário Arch que escolhe a JDK ativa (<code>archlinux-java set java-21-openjdk</code>).
+      </p>
+      <p>
+        <strong>JAVA_HOME</strong> — variável que aponta para a raiz do JDK ativo.
+      </p>
+
       <p>
         O Arch oferece <strong>várias versões da OpenJDK</strong> simultaneamente, e fornece um
         utilitário próprio — <code>archlinux-java</code> — para escolher qual delas é a "padrão" do

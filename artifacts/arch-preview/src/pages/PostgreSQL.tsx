@@ -14,6 +14,24 @@ export default function PostgreSQL() {
       timeToRead="40 min"
       category="Bancos de Dados"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo pacman -S postgresql</code>. Inicialize com <code>sudo -iu postgres initdb -D /var/lib/postgres/data</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>PostgreSQL</strong> — banco objeto-relacional open-source, em desenvolvimento ativo desde 1986.
+      </p>
+      <p>
+        <strong>Cluster</strong> — instância do PostgreSQL com vários bancos.
+      </p>
+      <p>
+        <strong>Role</strong> — usuário/grupo (PostgreSQL unifica os dois).
+      </p>
+      <p>
+        <strong>pg_hba.conf</strong> — controle de autenticação por host/usuário/banco.
+      </p>
+
       <p>
         O <strong>PostgreSQL</strong> é o SGBD relacional mais avançado do ecossistema livre — usado por
         grandes empresas e projetos open source. No Arch, o pacote oficial é <code>postgresql</code>{" "}

@@ -14,6 +14,27 @@ export default function Boot() {
       timeToRead="50 min"
       category="Sistema"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch instalado, <code>sudo</code>. Útil ter visto <a href="#/systemd">Systemd</a>. Cuidado: erros em GRUB/systemd-boot podem deixar o sistema sem boot.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>UEFI / BIOS</strong> — firmware que inicia o hardware. UEFI é o moderno (gpt, secure boot); BIOS é o legado.
+      </p>
+      <p>
+        <strong>systemd-boot</strong> — bootloader minimalista padrão do Arch em UEFI (recomendado pelo wiki).
+      </p>
+      <p>
+        <strong>GRUB</strong> — bootloader clássico. Usado em sistemas BIOS legacy ou multi-boot complexo.
+      </p>
+      <p>
+        <strong>mkinitcpio</strong> — gera o initramfs do Arch. Hooks definem o que entra (encrypt, lvm2, btrfs).
+      </p>
+      <p>
+        <strong>Target</strong> — alvo do systemd que define o estado do boot.
+      </p>
+
       <p>
         Entender o boot é a diferença entre <em>"meu Arch não liga"</em> ser uma tragédia de horas ou
         um chroot de cinco minutos. O caminho é sempre o mesmo: <strong>firmware (UEFI/BIOS) →

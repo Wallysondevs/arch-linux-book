@@ -14,6 +14,24 @@ export default function Localizacao() {
       timeToRead="35 min"
       category="Sistema"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo</code>. <code>locale-gen</code> deve ser rodado após editar <code>/etc/locale.gen</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Locale</strong> — conjunto de regras de idioma, formato de data, moeda e codificação (<code>pt_BR.UTF-8</code>).
+      </p>
+      <p>
+        <strong>LANG / LC_*</strong> — LANG é o fallback geral; LC_TIME, LC_NUMERIC etc. sobrescrevem por categoria.
+      </p>
+      <p>
+        <strong>locale-gen</strong> — gera os locales habilitados em <code>/etc/locale.gen</code>.
+      </p>
+      <p>
+        <strong>Timezone</strong> — fuso horário. Configure com <code>timedatectl set-timezone America/Sao_Paulo</code>.
+      </p>
+
       <p>
         Logo após o <code>pacstrap</code>, todo Arch precisa ser localizado: idioma das mensagens
         (<em>locale</em>), layout do teclado no console TTY, hostname, fuso horário e configuração

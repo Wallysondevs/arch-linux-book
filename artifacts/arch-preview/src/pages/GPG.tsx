@@ -14,6 +14,27 @@ export default function GPG() {
       timeToRead="35 min"
       category="Segurança"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>gnupg</code> (já vem). Útil ter um par de chaves gerado.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>GPG</strong> — GNU Privacy Guard — implementação livre do OpenPGP.
+      </p>
+      <p>
+        <strong>Par de chaves</strong> — chave privada (segredo) + chave pública (compartilhar).
+      </p>
+      <p>
+        <strong>Keyring</strong> — base local de chaves conhecidas. <code>~/.gnupg/</code>.
+      </p>
+      <p>
+        <strong>Web of Trust</strong> — modelo de confiança descentralizado.
+      </p>
+      <p>
+        <strong>Pacman keys</strong> — Arch usa GPG para verificar assinaturas dos pacotes (<code>pacman-key</code>).
+      </p>
+
       <p>
         O <code>gpg</code> (GNU Privacy Guard) é a implementação livre do padrão OpenPGP. No Arch ele
         já vem instalado (parte do <code>base</code>) e é usado pelo próprio <code>pacman</code> para

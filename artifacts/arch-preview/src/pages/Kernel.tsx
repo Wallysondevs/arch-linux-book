@@ -14,6 +14,27 @@ export default function Kernel() {
       timeToRead="45 min"
       category="Sistema"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch instalado, <code>sudo</code>. Arch oferece vários kernels: <code>linux</code> (estável), <code>linux-lts</code> (LTS), <code>linux-zen</code> (gaming/desktop), <code>linux-hardened</code> (segurança).
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Kernel</strong> — núcleo do sistema operacional. No Arch o pacote chama <code>linux</code>.
+      </p>
+      <p>
+        <strong>linux-lts</strong> — versão long-term support — kernel mais antigo, mais estável.
+      </p>
+      <p>
+        <strong>linux-zen</strong> — patches voltados para responsividade desktop e gaming.
+      </p>
+      <p>
+        <strong>mkinitcpio</strong> — gera o initramfs sempre que o kernel atualiza (hook automático).
+      </p>
+      <p>
+        <strong>Módulo</strong> — driver carregável. <code>lsmod</code>, <code>modprobe</code>.
+      </p>
+
       <p>
         O Arch é uma das distros mais "kernel-friendly" — você pode ter quatro kernels instalados ao
         mesmo tempo e escolher no menu do bootloader qual rodar. Esta página cobre as variantes

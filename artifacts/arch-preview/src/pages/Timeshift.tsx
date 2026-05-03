@@ -14,6 +14,24 @@ export default function Timeshift() {
       timeToRead="40 min"
       category="Storage"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Desktop, <code>sudo</code>. <code>timeshift</code> está no AUR (<code>yay -S timeshift</code>). <strong>Não é backup de dados pessoais</strong> — é snapshot do sistema!
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Timeshift</strong> — equivalente Linux do System Restore do Windows.
+      </p>
+      <p>
+        <strong>rsync mode</strong> — funciona em qualquer filesystem.
+      </p>
+      <p>
+        <strong>btrfs mode</strong> — usa snapshots nativos do Btrfs — instantâneo.
+      </p>
+      <p>
+        <strong>snapper</strong> — alternativa nativa Btrfs (sem AUR), também muito usada no Arch.
+      </p>
+
       <p>
         Atualizar um Arch é, na maior parte do tempo, indolor — até a vez em que um upgrade de
         kernel quebra o módulo da Wi-Fi, ou um <code>pacman -Syu</code> deixa o GNOME piscando.

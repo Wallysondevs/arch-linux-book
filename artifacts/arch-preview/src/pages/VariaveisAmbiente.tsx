@@ -14,6 +14,27 @@ export default function VariaveisAmbiente() {
       timeToRead="35 min"
       category="Shell"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com terminal Bash/Zsh.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Variável de ambiente</strong> — par chave=valor herdado por processos filhos.
+      </p>
+      <p>
+        <strong>export</strong> — marca a variável para ser exportada aos filhos.
+      </p>
+      <p>
+        <strong>PATH</strong> — lista de diretórios onde o shell procura executáveis.
+      </p>
+      <p>
+        <strong>~/.bashrc vs ~/.bash_profile</strong> — <em>bashrc</em> roda em cada shell interativo; <em>bash_profile</em> só no login.
+      </p>
+      <p>
+        <strong>/etc/environment</strong> — variáveis globais do sistema.
+      </p>
+
       <p>
         Toda vez que você abre um terminal, o bash herda um conjunto de variáveis do
         processo pai (geralmente o login manager ou o seu emulador de terminal). Essas

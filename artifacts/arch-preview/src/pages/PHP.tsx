@@ -14,6 +14,27 @@ export default function PHP() {
       timeToRead="35 min"
       category="Linguagens"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo pacman -S php</code>. Para Apache: <code>php-apache</code>; para Nginx: <code>php-fpm</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>PHP</strong> — linguagem de scripting voltada para web, executada no servidor.
+      </p>
+      <p>
+        <strong>PHP-FPM</strong> — FastCGI Process Manager — recomendado em produção.
+      </p>
+      <p>
+        <strong>mod_php / php-apache</strong> — módulo Apache que roda PHP no mesmo processo.
+      </p>
+      <p>
+        <strong>php.ini</strong> — arquivo de configuração principal. Arch: <code>/etc/php/php.ini</code>.
+      </p>
+      <p>
+        <strong>composer</strong> — gerenciador de pacotes PHP — equivalente ao npm/pip.
+      </p>
+
       <p>
         O PHP no Arch é simples: um pacote <code>php</code> traz a CLI e o módulo Apache; pacotes
         opcionais como <code>php-fpm</code>, <code>php-gd</code>, <code>php-pgsql</code> adicionam

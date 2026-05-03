@@ -13,6 +13,24 @@ export default function ManPages() {
       timeToRead="30 min"
       category="Shell"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>man-db</code> instalado (vem em <code>base</code>).
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>man</strong> — manual do comando. Seções: 1 (user), 2 (syscalls), 5 (formatos), 8 (admin).
+      </p>
+      <p>
+        <strong>man -k</strong> — busca por palavra (apropos).
+      </p>
+      <p>
+        <strong>ArchWiki</strong> — wiki oficial — frequentemente mais útil que o man para temas Arch-específicos.
+      </p>
+      <p>
+        <strong>info</strong> — formato GNU mais detalhado, navegável (raramente usado hoje).
+      </p>
+
       <p>
         Cada utilitário do Linux vem com sua documentação <strong>localmente instalada</strong>.
         Aprender a navegar essas páginas é o que separa quem cola comandos do Stack Overflow de

@@ -14,6 +14,27 @@ export default function Systemd() {
       timeToRead="30 min"
       category="Sistema"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com systemd como init (padrão).
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>systemd</strong> — init e gerenciador de serviços moderno. Padrão do Arch.
+      </p>
+      <p>
+        <strong>Unit</strong> — unidade gerenciada: <code>.service</code>, <code>.timer</code>, <code>.mount</code>, <code>.target</code>.
+      </p>
+      <p>
+        <strong>systemctl</strong> — cliente principal: <code>start</code>, <code>stop</code>, <code>enable</code>, <code>disable</code>, <code>status</code>.
+      </p>
+      <p>
+        <strong>Target</strong> — agrupamento de unidades. <code>multi-user.target</code> = boot CLI; <code>graphical.target</code> = GUI.
+      </p>
+      <p>
+        <strong>Drop-in</strong> — override de unit em <code>/etc/systemd/system/nome.service.d/override.conf</code>.
+      </p>
+
       <h2>O que é o Systemd?</h2>
       <p>
         O <code>systemd</code> é o PID 1 do Arch — o primeiro processo iniciado pelo kernel.

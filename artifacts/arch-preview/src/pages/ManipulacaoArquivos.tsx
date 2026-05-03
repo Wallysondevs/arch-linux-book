@@ -13,6 +13,24 @@ export default function ManipulacaoArquivos() {
       difficulty="iniciante"
       timeToRead="40 min"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com terminal aberto.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>cp / mv / rm</strong> — copiar, mover, remover. <code>-r</code> para diretórios; <code>-i</code> pergunta antes de sobrescrever.
+      </p>
+      <p>
+        <strong>ln</strong> — cria links. <code>-s</code> = symlink; sem <code>-s</code> = hard link.
+      </p>
+      <p>
+        <strong>touch</strong> — cria arquivo vazio ou atualiza mtime/atime.
+      </p>
+      <p>
+        <strong>stat</strong> — mostra todos os metadados.
+      </p>
+
       <p>
         No Linux, "tudo é um arquivo". Saber criar, copiar, mover e deletar via linha de comando é
         obrigatório. Aqui, todo comando aparece com a saída <strong>real</strong> que ele produz quando

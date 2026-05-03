@@ -14,6 +14,27 @@ export default function ShellBash() {
       timeToRead="40 min"
       category="Shell Avançado"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com terminal aberto (Bash é o padrão da raiz, Zsh é comum em desktops).
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Shell</strong> — programa que interpreta seus comandos. Bash é padrão; Zsh, Fish populares.
+      </p>
+      <p>
+        <strong>Prompt</strong> — o que o shell desenha esperando comando.
+      </p>
+      <p>
+        <strong>Built-in</strong> — comando interno do shell (<code>cd</code>, <code>echo</code>, <code>export</code>).
+      </p>
+      <p>
+        <strong>Histórico</strong> — <code>history</code> + <kbd>Ctrl</kbd>+<kbd>R</kbd>.
+      </p>
+      <p>
+        <strong>bash-completion</strong> — pacote que adiciona autocompletar inteligente.
+      </p>
+
       <h2>O que é um shell?</h2>
       <p>
         Um shell é um programa que lê comandos do usuário, expande as construções

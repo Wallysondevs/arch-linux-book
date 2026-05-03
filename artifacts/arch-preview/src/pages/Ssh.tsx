@@ -13,6 +13,27 @@ export default function Ssh() {
       difficulty="intermediario"
       timeToRead="50 min"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>openssh</code> instalado (cliente vem em <code>base</code>; servidor: <code>sudo pacman -S openssh</code> + <code>sudo systemctl enable --now sshd</code>).
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>SSH</strong> — Secure SHell — protocolo para acesso remoto criptografado.
+      </p>
+      <p>
+        <strong>ssh-keygen</strong> — gera par de chaves. Padrão moderno: <code>ed25519</code>.
+      </p>
+      <p>
+        <strong>authorized_keys</strong> — chaves públicas autorizadas em <code>~/.ssh/</code>.
+      </p>
+      <p>
+        <strong>~/.ssh/config</strong> — apelidos e configurações por host.
+      </p>
+      <p>
+        <strong>Port forwarding</strong> — <code>-L</code> local, <code>-R</code> reverso, <code>-D</code> SOCKS.
+      </p>
+
       <p>
         O <strong>SSH</strong> é o protocolo padrão para shell remota criptografada. No Arch o pacote
         é o <code>openssh</code>, que traz tanto o cliente (<code>ssh</code>) quanto o servidor

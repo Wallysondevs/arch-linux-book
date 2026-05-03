@@ -14,6 +14,27 @@ export default function Backup() {
       timeToRead="40 min"
       category="Storage"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Linux com <code>sudo</code>. Espaço extra (HD externo, NAS, SSH remoto). <code>rsync</code> já vem instalado em <code>base</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Backup completo</strong> — copia tudo. Demora mais e ocupa mais espaço.
+      </p>
+      <p>
+        <strong>Incremental</strong> — copia só o que mudou desde o último backup.
+      </p>
+      <p>
+        <strong>Diferencial</strong> — copia o que mudou desde o último backup completo.
+      </p>
+      <p>
+        <strong>3-2-1</strong> — regra ouro: 3 cópias dos dados, 2 mídias diferentes, 1 fora do site.
+      </p>
+      <p>
+        <strong>rsync</strong> — utilitário que sincroniza diretórios transferindo só o delta. Aceita SSH como transporte.
+      </p>
+
       <p>
         Backup não é cópia. Backup é a sua versão futura conseguindo voltar a um momento
         passado — mesmo que o disco original tenha derretido, mesmo que o ransomware

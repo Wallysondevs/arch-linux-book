@@ -13,6 +13,24 @@ export default function IOStat() {
       timeToRead="40 min"
       category="Performance"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo pacman -S sysstat</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>iostat</strong> — mostra estatísticas de I/O por dispositivo (parte do <code>sysstat</code>).
+      </p>
+      <p>
+        <strong>%util</strong> — porcentagem de tempo que o disco esteve ocupado. Próximo de 100% = gargalo.
+      </p>
+      <p>
+        <strong>await</strong> — tempo médio (ms) que cada I/O esperou (queue + service).
+      </p>
+      <p>
+        <strong>IOPS</strong> — I/O Operations Per Second.
+      </p>
+
       <p>
         Quando o servidor lenta ou o desktop fica travando, a primeira pergunta é{" "}
         <em>onde está o gargalo?</em> CPU saturada, swap ativo, disco enfileirando,

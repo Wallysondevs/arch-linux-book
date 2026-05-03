@@ -14,6 +14,27 @@ export default function Vim() {
       timeToRead="60 min"
       category="Shell Avançado"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com Vim (<code>sudo pacman -S vim</code>) ou Neovim (<code>sudo pacman -S neovim</code>).
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Modo</strong> — Vim é modal. Os 4 principais: Normal, Insert, Visual, Command-line.
+      </p>
+      <p>
+        <strong>Buffer</strong> — arquivo aberto em memória.
+      </p>
+      <p>
+        <strong>~/.vimrc / init.lua</strong> — arquivos de configuração (Vim e Neovim).
+      </p>
+      <p>
+        <strong>Registrador</strong> — "área de transferência" nomeada do Vim.
+      </p>
+      <p>
+        <strong>Plugin manager</strong> — lazy.nvim (Neovim), vim-plug (Vim) — gerenciadores populares.
+      </p>
+
       <p>
         A página <em>Editores de Texto no Terminal</em> mostrou o suficiente para sair do vim
         sem fazer estrago. Esta aqui assume que você já sabe entrar em INSERT, salvar e sair, e

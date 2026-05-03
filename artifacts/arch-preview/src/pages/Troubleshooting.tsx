@@ -13,6 +13,27 @@ export default function Troubleshooting() {
       timeToRead="40 min"
       category="Extras"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch instalado, <code>sudo</code>. Tenha um pendrive ISO Arch para emergências.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>journalctl</strong> — <code>journalctl -xe</code> mostra erros recentes com contexto.
+      </p>
+      <p>
+        <strong>dmesg</strong> — mensagens do kernel — útil para hardware/driver.
+      </p>
+      <p>
+        <strong>systemctl status</strong> — estado de um serviço + últimas linhas de log.
+      </p>
+      <p>
+        <strong>Live ISO + arch-chroot</strong> — boot pelo pendrive, monte a partição em <code>/mnt</code>, faça <code>arch-chroot /mnt</code>.
+      </p>
+      <p>
+        <strong>ArchWiki</strong> — <strong>primeiro lugar</strong> a procurar — o wiki é referência mundial.
+      </p>
+
       <h2>Metodologia: leia, registre, isole</h2>
       <p>
         Quase todo problema no Arch deixa rastro em <code>journalctl</code>, <code>dmesg</code> ou

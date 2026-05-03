@@ -14,6 +14,24 @@ export default function Aliases() {
       timeToRead="20 min"
       category="Shell"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Linux com terminal aberto. Útil ter visto <a href="#/shell-bash">Shell Bash</a> e <a href="#/variaveis-ambiente">Variáveis de Ambiente</a>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Alias</strong> — atalho que substitui um comando longo por um nome curto. Existe só na sessão atual ou no shell que o definiu.
+      </p>
+      <p>
+        <strong>~/.bashrc / ~/.zshrc</strong> — arquivo lido a cada nova shell interativa. É onde aliases pessoais ficam permanentes.
+      </p>
+      <p>
+        <strong>unalias</strong> — remove um alias da sessão atual.
+      </p>
+      <p>
+        <strong>function</strong> — alternativa ao alias quando você precisa de argumentos posicionais ou lógica condicional.
+      </p>
+
       <p>
         Um <strong>alias</strong> é um nome curto para um comando longo. Toda vez que o
         bash vê o nome no início de uma linha, substitui pelo conteúdo do alias antes de

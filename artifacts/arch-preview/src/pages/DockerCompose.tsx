@@ -14,6 +14,24 @@ export default function DockerCompose() {
       timeToRead="35 min"
       category="Containers"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com Docker instalado e ativo. <code>sudo pacman -S docker-compose</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Docker Compose</strong> — ferramenta para definir e rodar aplicações multi-container via YAML.
+      </p>
+      <p>
+        <strong>docker-compose.yml</strong> — arquivo declarativo com services, networks, volumes.
+      </p>
+      <p>
+        <strong>Service</strong> — definição de um container.
+      </p>
+      <p>
+        <strong>compose vs swarm</strong> — Compose é desenvolvimento local; Swarm/Kubernetes são produção em cluster.
+      </p>
+
       <p>
         <strong>Docker Compose</strong> resolve o problema de digitar 5 <code>docker run</code>{" "}
         encadeados toda vez que sobe um stack. Você descreve services, redes e volumes em um{" "}

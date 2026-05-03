@@ -14,6 +14,27 @@ export default function KVM() {
       timeToRead="40 min"
       category="Virtualização"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com CPU que suporte virtualização (VT-x/AMD-V) — verifique com <code>egrep -c "(vmx|svm)" /proc/cpuinfo</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>KVM</strong> — Kernel-based Virtual Machine — hypervisor tipo 1 embutido no kernel Linux.
+      </p>
+      <p>
+        <strong>QEMU</strong> — emulador que combina com o KVM para fornecer hardware virtual à VM.
+      </p>
+      <p>
+        <strong>libvirt</strong> — API de alto nível para gerenciar VMs.
+      </p>
+      <p>
+        <strong>virt-manager</strong> — GUI para libvirt.
+      </p>
+      <p>
+        <strong>virsh</strong> — CLI do libvirt — para automação e servidores.
+      </p>
+
       <p>
         <strong>KVM</strong> (Kernel-based Virtual Machine) é o hypervisor type-1 embutido no
         kernel Linux. Ele transforma o kernel em hypervisor usando as extensões{" "}

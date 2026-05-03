@@ -14,6 +14,27 @@ export default function VPN() {
       timeToRead="40 min"
       category="Redes"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>VPN</strong> — Virtual Private Network — túnel criptografado.
+      </p>
+      <p>
+        <strong>OpenVPN</strong> — protocolo open-source clássico (<code>sudo pacman -S openvpn</code>).
+      </p>
+      <p>
+        <strong>WireGuard</strong> — protocolo moderno, rápido. Embutido no kernel.
+      </p>
+      <p>
+        <strong>Split tunneling</strong> — manda só parte do tráfego pelo VPN; o resto vai direto.
+      </p>
+      <p>
+        <strong>Kill switch</strong> — bloqueia tráfego fora do VPN se o túnel cair.
+      </p>
+
       <p>
         Uma VPN cria um túnel cifrado entre dois pontos. No Arch você tem dois protocolos
         principais: <strong>WireGuard</strong> (kernel-side, ~4 mil linhas de código,

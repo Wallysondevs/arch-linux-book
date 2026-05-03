@@ -14,6 +14,27 @@ export default function Redirecionamento() {
       timeToRead="25 min"
       category="Shell Avançado"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com terminal Bash/Zsh.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>stdin / stdout / stderr</strong> — descritores 0, 1, 2. Entrada, saída, erro.
+      </p>
+      <p>
+        <strong>{">"}</strong> — redireciona stdout para arquivo (sobrescreve). <code>{">>"}</code> anexa.
+      </p>
+      <p>
+        <strong>{"2>"}</strong> — redireciona stderr. <code>{"2>&1"}</code> manda stderr para onde foi stdout.
+      </p>
+      <p>
+        <strong>|</strong> — pipe — passa stdout do comando A como stdin do B.
+      </p>
+      <p>
+        <strong>tee</strong> — escreve no arquivo <em>e</em> também na tela.
+      </p>
+
       <h2>Os três fluxos padrão</h2>
       <p>
         Todo processo no Linux nasce com três descritores de arquivo abertos. Eles

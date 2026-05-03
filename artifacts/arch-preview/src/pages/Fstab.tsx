@@ -14,6 +14,24 @@ export default function Fstab() {
       timeToRead="35 min"
       category="Storage"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo</code>. Cuidado: erro em <code>/etc/fstab</code> pode impedir o boot. <code>genfstab -U /mnt</code> gera durante a instalação.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>fstab</strong> — file system table — <code>/etc/fstab</code> com partições montadas no boot.
+      </p>
+      <p>
+        <strong>UUID</strong> — identificador único da partição. Sempre prefira UUID a <code>/dev/sdaN</code>.
+      </p>
+      <p>
+        <strong>Mount options</strong> — <code>defaults</code>, <code>noatime</code>, <code>ro</code>, <code>user</code>, <code>nofail</code>, <code>compress=zstd</code>.
+      </p>
+      <p>
+        <strong>dump / pass</strong> — últimos campos: <code>dump</code> (backup) e <code>pass</code> (ordem do fsck no boot).
+      </p>
+
       <p>
         O <code>/etc/fstab</code> (<em>file system table</em>) é lido pelo systemd na
         montagem inicial — cada linha vira uma <code>.mount</code> unit. Errar uma vírgula

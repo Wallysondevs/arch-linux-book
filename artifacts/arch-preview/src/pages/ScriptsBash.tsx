@@ -14,6 +14,27 @@ export default function ScriptsBash() {
       timeToRead="45 min"
       category="Shell"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com terminal.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Shebang</strong> — primeira linha <code>#!/bin/bash</code> ou <code>#!/usr/bin/env bash</code>.
+      </p>
+      <p>
+        <strong>chmod +x</strong> — dá permissão de execução para o script.
+      </p>
+      <p>
+        <strong>Argumentos posicionais</strong> — <code>{"\$1, \$2, \$@"}</code> — argumentos individuais e a lista completa.
+      </p>
+      <p>
+        <strong>set -euo pipefail</strong> — boas práticas: erra ao primeiro erro, ao usar var indefinida, e dentro de pipe.
+      </p>
+      <p>
+        <strong>Função</strong> — bloco reutilizável definido com <code>{"nome() { ... }"}</code>.
+      </p>
+
       <p>
         Um <em>script</em> é apenas um arquivo de texto com comandos que o shell executa
         em ordem. No Arch o <code>bash</code> já vem instalado por padrão (pacote{" "}

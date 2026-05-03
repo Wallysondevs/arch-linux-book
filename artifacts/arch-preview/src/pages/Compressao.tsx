@@ -13,6 +13,24 @@ export default function Compressao() {
       timeToRead="25 min"
       category="Shell Avançado"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com terminal. <code>tar</code>, <code>gzip</code>, <code>zstd</code> já vêm em <code>base</code>. Pacotes Arch usam <code>.pkg.tar.zst</code> (zstd).
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>tar</strong> — "tape archive". Junta vários arquivos em um só (não comprime sozinho).
+      </p>
+      <p>
+        <strong>gzip / bzip2 / xz / zstd</strong> — algoritmos. <code>zstd</code> é o moderno equilibrado (Arch adotou para pacotes).
+      </p>
+      <p>
+        <strong>.tar.gz / .tar.zst</strong> — tar comprimido com gzip / zstd respectivamente.
+      </p>
+      <p>
+        <strong>zip</strong> — formato Windows-friendly. Comprime e arquiva em um só passo.
+      </p>
+
       <h2>Arquivar ≠ Comprimir</h2>
       <p>
         São duas operações distintas que quase sempre andam juntas:

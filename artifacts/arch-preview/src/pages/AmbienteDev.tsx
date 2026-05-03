@@ -12,6 +12,24 @@ export default function AmbienteDev() {
       difficulty="intermediario"
       timeToRead="40 min"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Linux instalado, conexão com a internet, <code>sudo</code>. Útil ter visto <a href="#/pacman">Pacman</a> e <a href="#/aur">AUR</a>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Toolchain</strong> — conjunto base de compilação: <code>base-devel</code> agrupa <code>gcc</code>, <code>make</code>, <code>binutils</code>, etc.
+      </p>
+      <p>
+        <strong>LSP</strong> — Language Server Protocol — backend que entende código (autocomplete, goto-def). VS Code/Neovim/Helix usam.
+      </p>
+      <p>
+        <strong>Editor</strong> — Neovim, Helix, VS Code, Zed, Emacs — Arch tem todos no repo oficial ou no AUR.
+      </p>
+      <p>
+        <strong>Container dev</strong> — Docker / Podman / distrobox para isolar ambientes sem poluir o sistema.
+      </p>
+
       <p>
         Esta página mostra como instalar e validar cada stack — sempre exibindo o output real do
         terminal, do <code>pacman -S</code> ao primeiro <code>cargo build</code>. Os exemplos

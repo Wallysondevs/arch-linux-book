@@ -13,6 +13,27 @@ export default function ExpansoesBash() {
       timeToRead="30 min"
       category="Shell"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com terminal Bash. Útil ter visto <a href="#/shell-bash">Shell Bash</a>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Expansão</strong> — transformação que o Bash faz na linha <em>antes</em> de executar o comando.
+      </p>
+      <p>
+        <strong>Brace expansion</strong> — <code>{"{1..5}"}</code> vira <code>1 2 3 4 5</code>. Acontece <em>antes</em> de tudo.
+      </p>
+      <p>
+        <strong>Tilde expansion</strong> — <code>~</code> vira <code>$HOME</code>; <code>~user</code> vira o home do usuário.
+      </p>
+      <p>
+        <strong>Glob</strong> — <code>*</code>, <code>?</code>, <code>[]</code> — casamento de padrões em nomes de arquivos.
+      </p>
+      <p>
+        <strong>Command substitution</strong> — <code>$(comando)</code> ou <code>`comando`</code> — substitui pela saída.
+      </p>
+
       <p>
         Antes de executar um comando, o bash faz uma sequência de <em>expansões</em> sobre
         a linha que você digitou. Conhecer cada tipo — e a ordem em que ocorrem — é o que

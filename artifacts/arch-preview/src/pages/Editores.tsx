@@ -12,6 +12,27 @@ export default function Editores() {
       difficulty="iniciante"
       timeToRead="35 min"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Linux. Vim já vem; Neovim/Helix/VS Code instalam com <code>pacman -S neovim helix code</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>vi/vim</strong> — o clássico modal — vem em quase todo Linux. Vim é a versão melhorada.
+      </p>
+      <p>
+        <strong>Neovim</strong> — fork moderno do Vim com Lua nativo, LSP embutido e plugins poderosos.
+      </p>
+      <p>
+        <strong>Helix</strong> — editor modal "kakoune-style" — multi-cursor first, sem precisar de plugins para LSP.
+      </p>
+      <p>
+        <strong>VS Code</strong> — editor gráfico da Microsoft. <code>code</code> no repo extra; <code>vscodium-bin</code> no AUR.
+      </p>
+      <p>
+        <strong>nano</strong> — editor simplíssimo para edição rápida (<code>Ctrl+O</code> salva, <code>Ctrl+X</code> sai).
+      </p>
+
       <p>
         Mais cedo ou mais tarde você vai precisar editar <code>/etc/fstab</code>, <code>/etc/pacman.conf</code>{" "}
         ou <code>~/.bashrc</code> direto no terminal — durante uma instalação, dentro de um chroot, em um

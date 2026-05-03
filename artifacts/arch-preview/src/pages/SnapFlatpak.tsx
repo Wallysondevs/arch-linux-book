@@ -14,6 +14,27 @@ export default function SnapFlatpak() {
       timeToRead="25 min"
       category="Pacotes Universais"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Desktop. Snap não é oficial no Arch (AUR); Flatpak instala com <code>sudo pacman -S flatpak</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Snap</strong> — formato Canonical. No Arch só via AUR (<code>snapd</code>) — pouco usado.
+      </p>
+      <p>
+        <strong>Flatpak</strong> — formato universal mantido pela comunidade. Padrão recomendado fora do pacman/AUR.
+      </p>
+      <p>
+        <strong>Sandbox</strong> — o app roda isolado e só vê o que a política permite (Portals).
+      </p>
+      <p>
+        <strong>Flathub</strong> — store mais usada de Flatpaks.
+      </p>
+      <p>
+        <strong>Quando usar qual</strong> — apps gráficos proprietários (Steam, Spotify, Slack) costumam estar bem no Flatpak.
+      </p>
+
       <p>
         Além de <code>pacman</code> e do AUR, o Arch suporta dois formatos universais que
         rodam o mesmo binário em qualquer distro Linux: <strong>Flatpak</strong> (apoiado

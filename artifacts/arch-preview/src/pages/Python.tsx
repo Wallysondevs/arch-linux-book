@@ -14,6 +14,27 @@ export default function Python() {
       timeToRead="35 min"
       category="Linguagens"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch já vem com Python 3 (<code>python</code> = Python 3, diferente de Ubuntu).
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Python</strong> — linguagem interpretada, generalista, com sintaxe limpa.
+      </p>
+      <p>
+        <strong>python</strong> — no Arch <code>python</code> aponta para Python 3 (sem <code>python3</code> separado).
+      </p>
+      <p>
+        <strong>pip</strong> — gerenciador. <code>python-pip</code>. Desde Python 3.11 só funciona em venv (PEP 668).
+      </p>
+      <p>
+        <strong>venv</strong> — ambiente virtual isolado. <strong>Sempre use venv para projetos.</strong>
+      </p>
+      <p>
+        <strong>pipx</strong> — instala apps Python isoladamente — recomendado para CLIs.
+      </p>
+
       <p>
         O Arch <strong>já vem com Python 3</strong> — ele é dependência do <code>pacman</code> e de
         muito hook do sistema. Por isso a regra de ouro: <strong>nunca</strong> rode{" "}

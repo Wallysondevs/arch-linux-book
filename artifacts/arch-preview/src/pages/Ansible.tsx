@@ -14,6 +14,27 @@ export default function Ansible() {
       timeToRead="45 min"
       category="Dev & DevOps"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch/qualquer Linux com Python 3 nos nós gerenciados. Acesso SSH com chave para os hosts. Útil ter visto <a href="#/ssh">SSH</a>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Ansible</strong> — ferramenta de automação agentless: usa SSH em vez de instalar agente em cada máquina.
+      </p>
+      <p>
+        <strong>Inventory</strong> — arquivo (INI ou YAML) que lista os hosts gerenciados, agrupados por função.
+      </p>
+      <p>
+        <strong>Playbook</strong> — arquivo YAML que descreve as tarefas a executar nos hosts.
+      </p>
+      <p>
+        <strong>Role</strong> — playbook estruturado e reutilizável (tasks, handlers, vars, templates) — padrão da comunidade.
+      </p>
+      <p>
+        <strong>Idempotência</strong> — rodar o playbook várias vezes deixa o sistema no mesmo estado. Pilar do Ansible.
+      </p>
+
       <p>
         O <code>ansible</code> é uma ferramenta de automação <strong>agentless</strong>: você
         descreve o estado desejado dos seus servidores em arquivos YAML (<em>playbooks</em>) e o

@@ -14,6 +14,27 @@ export default function Wine() {
       timeToRead="30 min"
       category="Compatibilidade"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Desktop com multilib habilitado (<code>/etc/pacman.conf</code>). <code>sudo pacman -S wine wine-mono wine-gecko winetricks</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Wine</strong> — Wine Is Not an Emulator — implementa a API do Windows no Linux.
+      </p>
+      <p>
+        <strong>Prefix</strong> — pasta com "C:\\" virtual. Padrão: <code>~/.wine/</code>.
+      </p>
+      <p>
+        <strong>winetricks</strong> — script que automatiza instalação de DLLs e fontes do Windows.
+      </p>
+      <p>
+        <strong>Proton</strong> — fork do Wine usado pelo Steam para rodar jogos Windows.
+      </p>
+      <p>
+        <strong>Lutris</strong> — frontend que gerencia prefixes e instala jogos automaticamente.
+      </p>
+
       <p>
         <strong>Wine</strong> (Wine Is Not an Emulator) é uma camada de compatibilidade que
         traduz chamadas Win32/Win64 para chamadas POSIX em tempo real. Não é um emulador —

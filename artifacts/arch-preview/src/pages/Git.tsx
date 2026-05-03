@@ -14,6 +14,27 @@ export default function Git() {
       timeToRead="40 min"
       category="Dev & DevOps"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo pacman -S git</code>. Útil ter conta no GitHub/GitLab/Bitbucket.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Git</strong> — sistema de controle de versão distribuído criado por Linus Torvalds para o kernel Linux.
+      </p>
+      <p>
+        <strong>Repositório</strong> — pasta com <code>.git/</code> dentro — guarda toda a história.
+      </p>
+      <p>
+        <strong>Commit</strong> — snapshot atômico do projeto com hash SHA-1 único.
+      </p>
+      <p>
+        <strong>Branch</strong> — ponteiro móvel para um commit. <code>main</code>/<code>master</code> é o padrão.
+      </p>
+      <p>
+        <strong>Remote</strong> — repositório em outro lugar. <code>origin</code> é o nome padrão.
+      </p>
+
       <p>
         O <code>git</code> é a ferramenta universal de controle de versão hoje — quase todo projeto
         de software (incluindo o próprio Arch, AUR e o kernel Linux) vive em um repositório git.

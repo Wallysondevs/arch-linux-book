@@ -13,6 +13,27 @@ export default function Processos() {
       difficulty="intermediario"
       timeToRead="35 min"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com terminal. Comandos básicos não exigem sudo; matar processos de outro usuário sim.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Processo</strong> — instância em execução de um programa. Cada um tem PID único.
+      </p>
+      <p>
+        <strong>PID / PPID</strong> — process ID e parent. PID 1 é o init (systemd no Arch).
+      </p>
+      <p>
+        <strong>ps / top / htop / btop</strong> — listar processos. <code>htop</code> e <code>btop</code> são interativos.
+      </p>
+      <p>
+        <strong>Sinal</strong> — mensagem para o processo: <code>SIGTERM</code> pede para encerrar, <code>SIGKILL</code> mata sem dó.
+      </p>
+      <p>
+        <strong>nice / renice</strong> — ajusta prioridade do scheduler.
+      </p>
+
       <p>
         Tudo que executa no Linux é um <strong>processo</strong>: um PID único, um pai (PPID), uma identidade
         (UID/GID), um estado, prioridade (<code>nice</code>), memória mapeada, file descriptors abertos e um

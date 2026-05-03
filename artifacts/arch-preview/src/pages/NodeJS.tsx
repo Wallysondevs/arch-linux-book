@@ -14,6 +14,24 @@ export default function NodeJS() {
       timeToRead="30 min"
       category="Linguagens"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo pacman -S nodejs npm</code>. Para várias versões: <code>nvm</code> via AUR ou <code>fnm</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Node.js</strong> — runtime JavaScript fora do navegador, baseado no V8.
+      </p>
+      <p>
+        <strong>npm</strong> — Node Package Manager.
+      </p>
+      <p>
+        <strong>nvm / fnm</strong> — gerenciadores de versões do Node.
+      </p>
+      <p>
+        <strong>package.json</strong> — manifesto do projeto: dependências, scripts, metadados.
+      </p>
+
       <p>
         O Node.js é o runtime JavaScript do servidor — base de Express, Next.js, NestJS, Vite, etc.
         No Arch há duas formas: o pacote oficial <code>nodejs</code> (sempre na última LTS ou current)

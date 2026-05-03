@@ -14,6 +14,27 @@ export default function Zsh() {
       timeToRead="35 min"
       category="Shell"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo pacman -S zsh</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Zsh</strong> — Z shell — mais moderno que Bash, com features extras.
+      </p>
+      <p>
+        <strong>Oh My Zsh</strong> — framework de configs e plugins para Zsh.
+      </p>
+      <p>
+        <strong>Powerlevel10k</strong> — tema poderoso e rápido.
+      </p>
+      <p>
+        <strong>~/.zshrc</strong> — equivalente do <code>.bashrc</code>.
+      </p>
+      <p>
+        <strong>chsh</strong> — muda seu shell padrão. <code>chsh -s $(which zsh)</code>.
+      </p>
+
       <p>
         O <strong>Z shell</strong> (<code>zsh</code>) é um superset do bash: aceita 99% da
         sintaxe bash mas adiciona globbing avançado, parameter expansion mais rica,

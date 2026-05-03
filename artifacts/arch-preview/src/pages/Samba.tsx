@@ -14,6 +14,24 @@ export default function Samba() {
       timeToRead="45 min"
       category="Servidores"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo pacman -S samba</code>. Útil ter rede local com Windows ou outros Linux.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Samba</strong> — implementação livre dos protocolos SMB/CIFS.
+      </p>
+      <p>
+        <strong>SMB / CIFS</strong> — protocolo de compartilhamento de arquivos do Windows.
+      </p>
+      <p>
+        <strong>smb.conf</strong> — configuração principal — <code>/etc/samba/smb.conf</code>.
+      </p>
+      <p>
+        <strong>smbpasswd</strong> — define a senha Samba do usuário (separada da do sistema).
+      </p>
+
       <p>
         Samba é a implementação livre do protocolo <strong>SMB/CIFS</strong> — o mesmo que o
         Windows usa para compartilhar pastas e impressoras na rede local. Com ele, seu Arch

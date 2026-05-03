@@ -13,6 +13,27 @@ export default function Permissoes() {
       timeToRead="30 min"
       category="Sistema de Arquivos"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com terminal. Útil entender que cada arquivo tem um <strong>dono</strong>, um <strong>grupo</strong> e <strong>outros</strong>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>rwx</strong> — read, write, execute. Para diretórios: r=listar, w=criar/remover, x=entrar.
+      </p>
+      <p>
+        <strong>chmod</strong> — altera permissões. Octal (<code>755</code>) ou simbólico (<code>u+x</code>).
+      </p>
+      <p>
+        <strong>chown</strong> — altera dono e grupo (<code>chown user:group arquivo</code>).
+      </p>
+      <p>
+        <strong>umask</strong> — máscara que define permissões padrão de arquivos novos.
+      </p>
+      <p>
+        <strong>SUID/SGID/Sticky</strong> — bits especiais (<code>chmod 4755</code>, <code>2755</code>, <code>1777</code>).
+      </p>
+
       <p>
         O sistema de permissões do Linux é o mecanismo fundamental de segurança. Cada arquivo e
         diretório tem um <strong>dono</strong>, um <strong>grupo</strong> associado e três

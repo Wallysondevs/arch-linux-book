@@ -13,6 +13,24 @@ export default function Visualizacao() {
       difficulty="iniciante"
       timeToRead="40 min"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com terminal.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>cat / less / more</strong> — mostrar arquivos. <code>less</code> permite scroll bidirecional.
+      </p>
+      <p>
+        <strong>head / tail</strong> — mostra início/fim. <code>tail -f</code> acompanha em tempo real.
+      </p>
+      <p>
+        <strong>bat</strong> — cat moderno com syntax highlight (<code>sudo pacman -S bat</code>).
+      </p>
+      <p>
+        <strong>grep / rg</strong> — <code>grep</code> clássico; <code>ripgrep</code> (<code>rg</code>) é o moderno e ultra rápido.
+      </p>
+
       <p>
         Tudo no Linux é arquivo de texto: logs, configurações, código-fonte. Saber escolher o comando
         certo para ler cada tipo de arquivo, e <strong>entender o que cada coluna da saída significa</strong>,

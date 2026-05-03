@@ -14,6 +14,24 @@ export default function AppArmor() {
       timeToRead="35 min"
       category="Segurança"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Linux. AppArmor não vem por padrão no Arch — ative com <code>sudo pacman -S apparmor</code> e adicione <code>lsm=...,apparmor</code> no kernel cmdline.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>AppArmor</strong> — MAC (Mandatory Access Control) baseado em caminhos de arquivo.
+      </p>
+      <p>
+        <strong>Profile</strong> — política que define o que um binário pode acessar. Fica em <code>/etc/apparmor.d/</code>.
+      </p>
+      <p>
+        <strong>enforce / complain</strong> — modos: <em>enforce</em> bloqueia, <em>complain</em> apenas registra no log.
+      </p>
+      <p>
+        <strong>aa-status</strong> — mostra perfis carregados e seus modos.
+      </p>
+
       <p>
         O <code>AppArmor</code> é um <strong>LSM</strong> (Linux Security Module) que aplica políticas
         baseadas em caminho — diferente do SELinux (baseado em rótulos). Cada profile descreve o que um

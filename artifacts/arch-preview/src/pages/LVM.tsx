@@ -14,6 +14,24 @@ export default function LVM() {
       timeToRead="35 min"
       category="Storage"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo pacman -S lvm2</code>. Útil ter feito <a href="#/disco">Disco</a> e <a href="#/particoes">Partições</a>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>PV (Physical Volume)</strong> — disco/partição física registrada no LVM.
+      </p>
+      <p>
+        <strong>VG (Volume Group)</strong> — pool de PVs. É a "piscina" de espaço total.
+      </p>
+      <p>
+        <strong>LV (Logical Volume)</strong> — volume lógico criado dentro de uma VG.
+      </p>
+      <p>
+        <strong>Snapshot</strong> — cópia point-in-time de um LV. Útil para backup consistente.
+      </p>
+
       <p>
         O <strong>LVM</strong> insere uma camada entre as partições físicas e os
         filesystems. Em vez de fixar "esta partição tem 200G", você cria volumes

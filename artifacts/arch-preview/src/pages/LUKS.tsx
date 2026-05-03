@@ -14,6 +14,27 @@ export default function LUKS() {
       timeToRead="40 min"
       category="Storage"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo</code> e <code>cryptsetup</code> (já vem). Cuidado: criptografar disco existente <em>destrói</em> os dados — backup antes!
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>LUKS</strong> — Linux Unified Key Setup — padrão de criptografia full-disk.
+      </p>
+      <p>
+        <strong>cryptsetup</strong> — ferramenta CLI para criar e gerenciar volumes LUKS.
+      </p>
+      <p>
+        <strong>Header</strong> — metadados (algoritmo, slots de chave) no início do volume. Backup é vital.
+      </p>
+      <p>
+        <strong>Key slot</strong> — LUKS suporta até 8 senhas/keyfiles para o mesmo volume.
+      </p>
+      <p>
+        <strong>/etc/crypttab</strong> — equivalente do fstab para volumes criptografados.
+      </p>
+
       <p>
         <strong>LUKS</strong> (Linux Unified Key Setup) é o padrão de criptografia full-disk
         do Linux. O kernel usa <code>dm-crypt</code> para mapear o device cifrado em um

@@ -14,6 +14,24 @@ export default function AmbientesAlternativos() {
       timeToRead="40 min"
       category="Shell Avançado"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Linux com <code>sudo</code>. Útil ter visto <a href="#/ambiente-grafico">Ambiente Gráfico</a>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Tiling WM</strong> — organiza janelas em mosaico, sem sobreposição: i3, Sway, Hyprland, bspwm, dwm.
+      </p>
+      <p>
+        <strong>Floating WM</strong> — modelo tradicional janelas-flutuantes (Openbox, Fluxbox).
+      </p>
+      <p>
+        <strong>Compositor</strong> — no Wayland, é o WM; no X11, é separado (picom, compton).
+      </p>
+      <p>
+        <strong>Status bar</strong> — Polybar, Waybar, eww — barra customizável de informações.
+      </p>
+
       <p>
         Toda vez que você abre o "Terminal" do GNOME está rodando dentro de uma sessão gráfica.
         Mas o Linux te dá <em>vários</em> outros ambientes para rodar shell — TTYs virtuais que

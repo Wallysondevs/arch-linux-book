@@ -13,6 +13,24 @@ export default function GNOMEExtensions() {
       timeToRead="25 min"
       category="Desktop"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com GNOME instalado (<code>sudo pacman -S gnome</code>). Pacote auxiliar: <code>gnome-shell-extensions</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Extension</strong> — plugin JavaScript que estende o GNOME Shell.
+      </p>
+      <p>
+        <strong>extensions.gnome.org</strong> — site oficial — instala via toggle no navegador (precisa <code>gnome-browser-connector</code>).
+      </p>
+      <p>
+        <strong>Extension Manager</strong> — app gráfico recomendado: <code>extension-manager</code> (no AUR/extras).
+      </p>
+      <p>
+        <strong>Compatibilidade</strong> — extensões podem quebrar a cada release do GNOME — sempre cheque a versão.
+      </p>
+
       <p>
         O GNOME Shell é deliberadamente minimalista. <strong>Extensões</strong> são pequenos JS+CSS que
         injetam funcionalidades: tray icons, dock estilo macOS, monitor de sistema, controles de mídia,

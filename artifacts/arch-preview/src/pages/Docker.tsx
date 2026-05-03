@@ -14,6 +14,27 @@ export default function Docker() {
       timeToRead="40 min"
       category="Containers"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo pacman -S docker</code>, depois <code>sudo systemctl enable --now docker</code>. Adicione seu usuário ao grupo: <code>sudo usermod -aG docker $USER</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Container</strong> — processo isolado (namespaces + cgroups) com seu próprio FS.
+      </p>
+      <p>
+        <strong>Imagem</strong> — snapshot read-only de um FS. Containers são instâncias mutáveis dela.
+      </p>
+      <p>
+        <strong>Dockerfile</strong> — receita para construir uma imagem.
+      </p>
+      <p>
+        <strong>Volume</strong> — pasta persistente fora do container.
+      </p>
+      <p>
+        <strong>Compose</strong> — orquestrador local (<code>docker-compose-plugin</code>).
+      </p>
+
       <p>
         Docker empacota uma aplicação e <strong>todas</strong> suas dependências (libs, configs,
         runtime) em uma imagem imutável que roda igual em qualquer kernel Linux 4.x+. No Arch o

@@ -12,6 +12,24 @@ export default function AmbienteGrafico() {
       timeToRead="30 min"
       category="Instalação"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Linux instalado em modo CLI. <code>sudo</code>. Útil ter conexão e <a href="#/pacman">Pacman</a> dominado.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>DE (Desktop Environment)</strong> — pacote completo: GNOME, KDE Plasma, XFCE, Cinnamon. Inclui WM + apps.
+      </p>
+      <p>
+        <strong>WM (Window Manager)</strong> — só gerencia janelas: i3, Sway, Hyprland, bspwm.
+      </p>
+      <p>
+        <strong>X11 vs Wayland</strong> — X11 é o legado; Wayland é o moderno. Hyprland e Sway são puro Wayland.
+      </p>
+      <p>
+        <strong>Display Manager</strong> — tela de login: GDM (GNOME), SDDM (KDE), LightDM (XFCE), greetd (TTY).
+      </p>
+
       <h2>Visão geral — três peças</h2>
       <p>
         Para sair do tty preto e ter uma interface gráfica, três componentes precisam coexistir:

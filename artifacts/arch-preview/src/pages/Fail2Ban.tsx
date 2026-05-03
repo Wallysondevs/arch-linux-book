@@ -14,6 +14,24 @@ export default function Fail2Ban() {
       timeToRead="30 min"
       category="Segurança"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Server, <code>sudo pacman -S fail2ban</code>, SSH habilitado.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Fail2Ban</strong> — daemon Python que monitora logs e bane IPs suspeitos via iptables/nftables/firewalld.
+      </p>
+      <p>
+        <strong>Jail</strong> — regra que combina filtro + ação. Cada serviço (sshd, apache) tem sua jail.
+      </p>
+      <p>
+        <strong>Filter</strong> — expressão regular que reconhece falhas no log do serviço.
+      </p>
+      <p>
+        <strong>jail.local</strong> — sobrescreve <code>jail.conf</code>. Sempre edite o <code>.local</code>, nunca o <code>.conf</code>.
+      </p>
+
       <p>
         O <code>fail2ban</code> é um daemon Python que <strong>monitora arquivos de log</strong> com regex
         e, quando detecta padrões de ataque (login SSH falho, 401 abusivo no nginx, etc), aciona uma

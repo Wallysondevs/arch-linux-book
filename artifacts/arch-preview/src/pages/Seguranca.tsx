@@ -14,6 +14,27 @@ export default function Seguranca() {
       timeToRead="35 min"
       category="Extras"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Server ou Desktop exposto à internet. <code>sudo</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Hardening</strong> — processo de reduzir superfície de ataque do sistema.
+      </p>
+      <p>
+        <strong>ufw / nftables / iptables</strong> — firewall. Arch padrão é <code>nftables</code>; <code>ufw</code> é frontend amigável.
+      </p>
+      <p>
+        <strong>AppArmor / SELinux</strong> — MAC opcional no Arch (não vem por padrão como no Ubuntu/Fedora).
+      </p>
+      <p>
+        <strong>Reflector / pacman-key</strong> — mantém mirrors confiáveis e verifica assinaturas.
+      </p>
+      <p>
+        <strong>Princípio do menor privilégio</strong> — dar a cada usuário/serviço só o que ele precisa, nada mais.
+      </p>
+
       <h2>Filosofia de Segurança no Arch</h2>
       <p>
         O Arch entrega o sistema <em>cru</em>: sem firewall ativo, sem MAC, sem políticas restritivas.

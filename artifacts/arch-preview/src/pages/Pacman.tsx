@@ -14,6 +14,27 @@ export default function Pacman() {
       timeToRead="25 min"
       category="Pacotes"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Linux instalado, <code>sudo</code>. Conexão à internet para sincronizar repos.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>pacman</strong> — package manager — gerenciador oficial do Arch. Comando único <code>pacman</code>.
+      </p>
+      <p>
+        <strong>Repositório</strong> — core, extra, multilib são os oficiais. <code>/etc/pacman.conf</code> habilita/desabilita.
+      </p>
+      <p>
+        <strong>Mirror</strong> — espelho de download. Ordem em <code>/etc/pacman.d/mirrorlist</code>. Otimize com <code>reflector</code>.
+      </p>
+      <p>
+        <strong>Sync vs Update</strong> — <code>-Sy</code> só sincroniza db, <code>-Syu</code> atualiza tudo. <strong>Nunca rode -Sy sozinho!</strong>
+      </p>
+      <p>
+        <strong>.pkg.tar.zst</strong> — formato dos pacotes do Arch — tar comprimido com zstd.
+      </p>
+
       <p>
         O <code>pacman</code> combina um formato simples de pacotes binários (<code>.pkg.tar.zst</code>)
         com um sistema de construção fácil de usar. Ele resolve dependências, executa hooks, valida

@@ -13,6 +13,27 @@ export default function Usuarios() {
       difficulty="intermediario"
       timeToRead="30 min"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo</code>. <code>sudo</code> não vem por padrão — instale com <code>pacman -S sudo</code> e edite <code>/etc/sudoers</code> com <code>visudo</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Usuário</strong> — identidade no sistema com UID, home e shell. Definido em <code>/etc/passwd</code>.
+      </p>
+      <p>
+        <strong>Grupo</strong> — coleção de usuários. <code>/etc/group</code>.
+      </p>
+      <p>
+        <strong>Senha hash</strong> — em <code>/etc/shadow</code> (só root lê).
+      </p>
+      <p>
+        <strong>useradd</strong> — no Arch use <code>useradd -m -G wheel,users -s /bin/bash usuario</code>.
+      </p>
+      <p>
+        <strong>wheel</strong> — grupo administrativo padrão. Habilite no <code>/etc/sudoers</code> via <code>visudo</code>.
+      </p>
+
       <p>
         O Linux é multiusuário desde sua concepção: o kernel separa permissões por <code>UID</code>/<code>GID</code>,
         e cada processo, arquivo e socket carrega uma identidade. Saber ler <code>/etc/passwd</code>, <code>/etc/shadow</code>,

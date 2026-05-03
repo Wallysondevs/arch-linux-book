@@ -13,6 +13,24 @@ export default function Disco() {
       difficulty="intermediario"
       timeToRead="35 min"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com terminal e <code>sudo</code>. Conhecer caminhos de arquivos.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Partição</strong> — fatia lógica de um disco físico. Vira device em <code>/dev</code> (<code>/dev/sda1</code>, <code>/dev/nvme0n1p1</code>).
+      </p>
+      <p>
+        <strong>Filesystem</strong> — formato em que a partição armazena arquivos. Comuns no Arch: <code>ext4</code>, <code>btrfs</code>, <code>xfs</code>.
+      </p>
+      <p>
+        <strong>Mount point</strong> — pasta onde a partição é encaixada na árvore.
+      </p>
+      <p>
+        <strong>Inode</strong> — estrutura de metadados. Acabar inode = não consegue criar arquivo, mesmo com espaço sobrando.
+      </p>
+
       <p>
         No Linux, cada disco é um arquivo dentro de <code>/dev/</code>. Cada partição também. O kernel expõe
         atributos pelos subsistemas <code>block</code>, <code>scsi</code> e <code>nvme</code>; ferramentas como

@@ -14,6 +14,27 @@ export default function JournalCtl() {
       timeToRead="40 min"
       category="Sistema"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo</code>. Já vem com systemd. Útil ter visto <a href="#/systemd">Systemd</a>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>journalctl</strong> — cliente para ler o journal binário do systemd.
+      </p>
+      <p>
+        <strong>journal</strong> — log estruturado, indexado e binário do <code>systemd-journald</code>.
+      </p>
+      <p>
+        <strong>Persistente vs volátil</strong> — sem <code>/var/log/journal/</code> os logs morrem no reboot. Crie a pasta para persistir.
+      </p>
+      <p>
+        <strong>Unidade</strong> — filtre logs com <code>-u nome.service</code>.
+      </p>
+      <p>
+        <strong>Prioridades</strong> — 0=emerg ... 7=debug. Filtre com <code>-p err</code>.
+      </p>
+
       <p>
         Em um Arch moderno quase todos os logs convergem para o <code>systemd-journald</code>:
         kernel (substitui <code>dmesg</code>), serviços (substituem o <code>/var/log/syslog</code>),

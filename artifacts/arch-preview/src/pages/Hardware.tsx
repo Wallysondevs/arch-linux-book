@@ -13,6 +13,24 @@ export default function Hardware() {
       difficulty="intermediario"
       timeToRead="45 min"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch instalado, terminal. Alguns comandos exigem <code>sudo</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>lshw</strong> — lista hardware detalhado. <code>sudo pacman -S lshw</code>.
+      </p>
+      <p>
+        <strong>lscpu / lsblk / lspci / lsusb</strong> — versões focadas em CPU / blocos / PCI / USB. Vêm em <code>util-linux</code>/<code>pciutils</code>/<code>usbutils</code>.
+      </p>
+      <p>
+        <strong>dmidecode</strong> — lê tabelas SMBIOS/DMI da BIOS — útil para placa-mãe e RAM.
+      </p>
+      <p>
+        <strong>inxi</strong> — resumo amigável e colorido. <code>sudo pacman -S inxi</code>.
+      </p>
+
       <p>
         Antes de instalar driver, ajustar performance ou diagnosticar travamento, você precisa saber
         <em> exatamente</em> qual hardware está embaixo do Arch. Esta página percorre as ferramentas

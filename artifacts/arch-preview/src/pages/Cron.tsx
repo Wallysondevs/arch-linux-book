@@ -14,6 +14,24 @@ export default function Cron() {
       timeToRead="40 min"
       category="Sistema"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Linux. <code>cronie</code> não vem por padrão — instale com <code>sudo pacman -S cronie</code> e habilite com <code>sudo systemctl enable --now cronie</code>. Alternativa moderna: systemd timers.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>cron</strong> — daemon que executa comandos em horários definidos.
+      </p>
+      <p>
+        <strong>cronie</strong> — implementação cron padrão do Arch (porta do Vixie cron com extras).
+      </p>
+      <p>
+        <strong>crontab</strong> — tabela de tarefas por usuário. Edite com <code>crontab -e</code>.
+      </p>
+      <p>
+        <strong>systemd timer</strong> — alternativa moderna a cron, integrada ao journal.
+      </p>
+
       <p>
         Diferente de Ubuntu/Debian, o Arch <strong>não traz nenhum cron pré-instalado</strong>. Se você
         quer agendamento recorrente, escolhe entre <code>cronie</code> (o cron clássico mais usado),{" "}

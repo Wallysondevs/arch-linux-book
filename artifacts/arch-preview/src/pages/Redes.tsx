@@ -12,6 +12,27 @@ export default function Redes() {
       difficulty="intermediario"
       timeToRead="45 min"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com terminal. Alguns comandos exigem <code>sudo</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Interface</strong> — dispositivo de rede: <code>enp3s0</code> (cabo), <code>wlp2s0</code> (Wi-Fi), <code>lo</code> (loopback).
+      </p>
+      <p>
+        <strong>IP</strong> — endereço único na rede. IPv4 e IPv6.
+      </p>
+      <p>
+        <strong>Gateway</strong> — roteador padrão para sair da rede local.
+      </p>
+      <p>
+        <strong>ip / iw</strong> — <code>ip</code> é o moderno (vem em <code>iproute2</code>); <code>iw</code> é específico para Wi-Fi.
+      </p>
+      <p>
+        <strong>ping / traceroute / ss</strong> — testar conectividade, rastrear rota, listar sockets.
+      </p>
+
       <p>
         No Arch Linux a rede não vem configurada como em distros amigáveis: você precisa entender as
         ferramentas modernas (<code>iproute2</code>, <code>iwd</code>, <code>systemd-resolved</code>,{" "}

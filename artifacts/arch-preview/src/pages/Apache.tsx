@@ -14,6 +14,24 @@ export default function Apache() {
       timeToRead="40 min"
       category="Servidores Web"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Linux Server/Desktop com acesso <code>sudo</code>. Porta 80 e 443 livres. Pacote: <code>sudo pacman -S apache</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Apache HTTP Server</strong> — servidor web maduro com mais de 25 anos. No Arch o pacote chama <code>apache</code> e o serviço <code>httpd</code>.
+      </p>
+      <p>
+        <strong>Virtual Host</strong> — configuração que permite servir vários sites no mesmo IP. Ficam em <code>/etc/httpd/conf/extra/httpd-vhosts.conf</code>.
+      </p>
+      <p>
+        <strong>Módulo</strong> — extensão (<code>mod_rewrite</code>, <code>mod_ssl</code>, <code>mod_php</code>). Habilite descomentando <code>LoadModule</code> em <code>httpd.conf</code>.
+      </p>
+      <p>
+        <strong>DocumentRoot</strong> — pasta raiz pública. Padrão Arch: <code>/srv/http</code>.
+      </p>
+
       <p>
         O <strong>Apache HTTP Server</strong> está há décadas no topo. No Arch ele é instalado pelo
         pacote <code>apache</code>, e o binário/serviço/config se chamam{" "}

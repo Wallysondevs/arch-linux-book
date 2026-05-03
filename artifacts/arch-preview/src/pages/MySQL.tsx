@@ -14,6 +14,27 @@ export default function MySQL() {
       timeToRead="35 min"
       category="Bancos de Dados"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo</code>. Pacote: <code>sudo pacman -S mariadb</code> (Arch oficialmente entrega MariaDB; MySQL fica no AUR).
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>MySQL</strong> — banco relacional open-source. Oracle dona desde 2009.
+      </p>
+      <p>
+        <strong>MariaDB</strong> — fork drop-in. <strong>Padrão no Arch.</strong>
+      </p>
+      <p>
+        <strong>InnoDB</strong> — engine padrão. Suporta transações, foreign keys, row-level locking.
+      </p>
+      <p>
+        <strong>my.cnf</strong> — arquivo de configuração principal. No Arch fica em <code>/etc/my.cnf.d/</code>.
+      </p>
+      <p>
+        <strong>mysqldump / mariadb-dump</strong> — utilitário para backup lógico.
+      </p>
+
       <AlertBox type="info" title="MySQL ou MariaDB?">
         O repositório oficial do Arch <strong>não traz MySQL</strong> — traz o{" "}
         <strong>MariaDB</strong>, fork drop-in compatível mantido pelos criadores originais do MySQL.

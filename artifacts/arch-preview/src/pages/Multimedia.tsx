@@ -13,6 +13,24 @@ export default function Multimedia() {
       timeToRead="35 min"
       category="Multimídia"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Desktop com PipeWire ou PulseAudio. <code>sudo pacman -S pipewire pipewire-pulse pipewire-jack wireplumber</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>PipeWire</strong> — servidor multimídia moderno: substitui PulseAudio + JACK ao mesmo tempo.
+      </p>
+      <p>
+        <strong>PulseAudio</strong> — servidor de áudio legado. Ainda funciona via <code>pipewire-pulse</code>.
+      </p>
+      <p>
+        <strong>ALSA</strong> — camada baixo nível do kernel — todo som passa por ela.
+      </p>
+      <p>
+        <strong>GStreamer / FFmpeg</strong> — frameworks de mídia que muitos apps usam por baixo.
+      </p>
+
       <p>
         Arch entrega um stack multimídia <em>limpo</em> — você instala apenas o que usa. Esta página
         cobre: <strong>ffmpeg</strong> (canivete suíço), <strong>mpv/vlc</strong> (players),

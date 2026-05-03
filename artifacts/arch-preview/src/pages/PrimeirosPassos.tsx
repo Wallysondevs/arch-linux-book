@@ -13,6 +13,24 @@ export default function PrimeirosPassos() {
       timeToRead="35 min"
       category="Instalação"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch instalado (Desktop ou Server). Acesso a teclado/tela ou SSH.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Sessão</strong> — sua conta de usuário logada — gráfica ou terminal.
+      </p>
+      <p>
+        <strong>Terminal</strong> — aplicativo onde você digita comandos.
+      </p>
+      <p>
+        <strong>sudo</strong> — executar comando como root. Pede sua senha (não a do root).
+      </p>
+      <p>
+        <strong>Atualização</strong> — <code>sudo pacman -Syu</code> — sincroniza db e atualiza todo o sistema.
+      </p>
+
       <p>
         Logou no Arch e vê só um cursor piscando? Ótimo. Significa que nada está rodando além do
         essencial. Esse guia vai do <em>tty1</em> ao desktop em poucas etapas.

@@ -14,6 +14,24 @@ export default function CloudInit() {
       timeToRead="35 min"
       category="Dev & DevOps"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Imagem Arch Cloud (raro mas existe). Mais comum: configurar manualmente para nuvem com <code>cloud-init</code> do AUR/extras.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>cloud-init</strong> — padrão de inicialização para imagens cloud. Lê metadados na primeira boot.
+      </p>
+      <p>
+        <strong>user-data</strong> — YAML que você passa para a VM dizendo o que fazer na primeira boot.
+      </p>
+      <p>
+        <strong>datasource</strong> — de onde o cloud-init lê os metadados (EC2, NoCloud, OpenStack).
+      </p>
+      <p>
+        <strong>#cloud-config</strong> — primeira linha obrigatória do user-data YAML.
+      </p>
+
       <p>
         O <code>cloud-init</code> é o canivete suíço da inicialização em nuvem: na primeira vez que
         a VM sobe, ele lê metadados do provedor (AWS EC2 metadata, ConfigDrive de OpenStack, NoCloud

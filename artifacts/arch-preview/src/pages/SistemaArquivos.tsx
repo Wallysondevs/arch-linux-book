@@ -12,6 +12,27 @@ export default function SistemaArquivos() {
       timeToRead="30 min"
       category="Sistema de Arquivos"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch instalado.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>Filesystem</strong> — formato de organização de dados em uma partição.
+      </p>
+      <p>
+        <strong>ext4</strong> — maduro, rápido, com journal.
+      </p>
+      <p>
+        <strong>btrfs</strong> — snapshots nativos, compressão, checksums — popular no Arch.
+      </p>
+      <p>
+        <strong>xfs</strong> — escala bem em arquivos grandes; padrão do RHEL.
+      </p>
+      <p>
+        <strong>FHS</strong> — Filesystem Hierarchy Standard — define onde cada coisa mora.
+      </p>
+
       <p>
         No Linux, tudo é organizado a partir de um único ponto: a raiz <code>/</code>.
         Não existem letras de unidade como <code>C:</code> ou <code>D:</code> do Windows.

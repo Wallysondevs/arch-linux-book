@@ -13,6 +13,27 @@ export default function Instalacao() {
       timeToRead="60 min"
       category="Instalação"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Pendrive USB (mínimo 4 GB), conexão de rede, máquina x86_64. Backup do que importa antes!
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>ISO</strong> — imagem do instalador Arch — só CLI, sem GUI. Baixe em archlinux.org.
+      </p>
+      <p>
+        <strong>archinstall</strong> — script Python interativo que automatiza a instalação (vem na ISO desde 2021).
+      </p>
+      <p>
+        <strong>chroot</strong> — mudar a raiz para <code>/mnt</code> e configurar como se já estivesse no sistema novo.
+      </p>
+      <p>
+        <strong>mkinitcpio</strong> — gera o initramfs final.
+      </p>
+      <p>
+        <strong>Bootloader</strong> — systemd-boot (UEFI minimal) ou GRUB (legacy/multi-boot).
+      </p>
+
       <h2>Antes de começar</h2>
       <p>
         Este guia foca na <strong>instalação manual</strong> (a que ensina). Para a versão assistida,

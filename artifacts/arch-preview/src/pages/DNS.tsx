@@ -14,6 +14,24 @@ export default function DNS() {
       timeToRead="40 min"
       category="Redes"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch com <code>sudo</code>. <code>systemd-resolved</code> não vem ativo por padrão — depende da configuração.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>DNS</strong> — sistema que traduz nomes em IPs.
+      </p>
+      <p>
+        <strong>systemd-resolved</strong> — resolvedor opcional do systemd (<code>127.0.0.53</code>).
+      </p>
+      <p>
+        <strong>/etc/resolv.conf</strong> — arquivo padrão. No Arch sem resolved é gerenciado direto pelo NetworkManager/dhcpcd.
+      </p>
+      <p>
+        <strong>dig / nslookup / drill</strong> — utilitários para consultar DNS. Arch costuma trazer <code>drill</code> (pacote <code>ldns</code>).
+      </p>
+
       <p>
         Toda vez que você digita <code>archlinux.org</code>, alguém precisa traduzir esse nome para
         um IP. No Arch Linux, isso é feito por uma cadeia de componentes: <code>nss</code> (libc) →

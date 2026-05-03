@@ -14,6 +14,27 @@ export default function Aur() {
       timeToRead="25 min"
       category="Pacotes"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Linux com <code>base-devel</code> e <code>git</code> instalados (<code>sudo pacman -S --needed base-devel git</code>).
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>AUR</strong> — Arch User Repository — repositório comunitário com <em>build scripts</em> (não pacotes prontos).
+      </p>
+      <p>
+        <strong>PKGBUILD</strong> — script bash que descreve como compilar/empacotar. Sempre leia antes de instalar!
+      </p>
+      <p>
+        <strong>makepkg</strong> — utilitário oficial que executa o PKGBUILD e produz um <code>.pkg.tar.zst</code>.
+      </p>
+      <p>
+        <strong>AUR helper</strong> — wrapper que automatiza busca + makepkg + pacman. Populares: <code>yay</code>, <code>paru</code>.
+      </p>
+      <p>
+        <strong>Confiança</strong> — AUR não é auditado pela equipe Arch — qualquer um envia. Sempre revise PKGBUILDs.
+      </p>
+
       <h2>O que é o AUR?</h2>
       <p>
         O AUR (<strong>Arch User Repository</strong>) é um repositório mantido pela comunidade que

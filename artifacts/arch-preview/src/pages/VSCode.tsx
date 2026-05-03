@@ -14,6 +14,27 @@ export default function VSCode() {
       timeToRead="30 min"
       category="Dev & DevOps"
     >
+      <AlertBox type="info" title="Pré-requisitos">
+        Arch Desktop. Pacote oficial Microsoft via AUR (<code>visual-studio-code-bin</code>); livre: <code>code</code> (open-source) ou <code>vscodium-bin</code>.
+      </AlertBox>
+
+      <h2>Glossário rápido</h2>
+      <p>
+        <strong>VS Code</strong> — editor da Microsoft, baseado em Electron. Versão "oss" tem licença MIT.
+      </p>
+      <p>
+        <strong>VSCodium</strong> — rebuild sem telemetria Microsoft.
+      </p>
+      <p>
+        <strong>Extensions</strong> — plugins. Marketplace integrado (Codium usa OpenVSX).
+      </p>
+      <p>
+        <strong>Remote SSH</strong> — editar arquivos em servidor remoto como se fossem locais.
+      </p>
+      <p>
+        <strong>settings.json</strong> — config em JSON — sincroniza com sua conta.
+      </p>
+
       <p>
         O VS Code (ou simplesmente <em>Code</em>) virou o editor padrão de boa parte da indústria.
         No Arch existem <strong>duas variantes principais</strong> e elas confundem muita gente —
